@@ -4,7 +4,7 @@
 #' results to disk for downstream consumption.
 #' @export
 score_pkg <- function(
-  pkg,  # github repo url, tarball, other ways to pass a pkg...
+  pkg,  # probably just tarball, maybe other ways to pass a pkg eventually...
   out_dir,
   pkg_info = NULL  # optional manually filled info, probably as JSON/YAML
 ) {
@@ -14,8 +14,8 @@ score_pkg <- function(
   res <- create_score_list_from_riskmetric(pkg)
 
   # run check and covr and write results to disk
-  res$testing$check <- add_rcmdcheck(pkg, out_dir)
-  res$testing$check <- add_coverage(pkg, out_dir)
+  res$scores$testing$check <- add_rcmdcheck(pkg, out_dir)
+  res$scores$testing$check <- add_coverage(pkg, out_dir)
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this
@@ -25,9 +25,12 @@ score_pkg <- function(
     res <- add_pkg_info(res, pkg_info)
   }
 
+  # calculate overall scores
+  res <- calc_overall_scores(res) # TODO: do we want this algorithm to be configurable? If so, what's the interface?
+
   # and writes out to a JSON file for other functions to consume
   writeLines(
-    jsonlite::toJSON(res),
+    jsonlite::toJSON(res, pretty = TRUE, auto_unbox = TRUE),
     file.path(out_dir, paste0(res$pkg_name, ".scorecard.json"))
   )
 

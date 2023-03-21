@@ -10,24 +10,26 @@ create_score_list_from_riskmetric <- function(pkgpath) {
     pkg_name = risk_res$ref$name,
     pkg_version = as.character(risk_res$ref$version),
     # for results
-    testing = list(),
-    documentation = list(),
-    maintenance = list(),
-    transparency = list()
+    scores = list(
+      testing = list(),
+      documentation = list(),
+      maintenance = list(),
+      transparency = list()
+    )
   )
 
   # add riskmetric outputs
-  res$documentation <- extract_score_list(
+  res$scores$documentation <- extract_score_list(
     risk_res,
     c("has_vignettes", "has_website", "has_news") #, export_help)
   )
 
-  res$maintenance <- extract_score_list(
+  res$scores$maintenance <- extract_score_list(
     risk_res,
-    c("has_maintainer", "news_current", "last_30_bugs_status")
+    c("has_maintainer", "news_current")#, "last_30_bugs_status")
   )
 
-  res$transparency <- extract_score_list(
+  res$scores$transparency <- extract_score_list(
     risk_res,
     c("has_source_control", "has_bug_reports_url")
   )
@@ -48,7 +50,7 @@ pkg_riskmetric <- function(pkg) {
     assessments = list(
       #riskmetric::assess_export_help, # we should have this, see below
       riskmetric::assess_has_bug_reports_url,
-      riskmetric::assess_last_30_bugs_status, # this could be good, but hits the API so maybe not...
+      #riskmetric::assess_last_30_bugs_status, # probably want this, but need to decide how to handle NAs. Also hits the API so maybe not worth it...
       riskmetric::assess_has_maintainer,
       riskmetric::assess_has_news,
       riskmetric::assess_has_source_control, # R/pkg_ref_cache_source_control_url.R
