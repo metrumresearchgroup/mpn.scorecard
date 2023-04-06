@@ -6,7 +6,7 @@ Packages:
   - devtools
   - pkgdown
   - styler
-  - XML
+  # - XML
   # - readr
 
 Repos:
