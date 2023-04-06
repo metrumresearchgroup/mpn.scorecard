@@ -11,10 +11,12 @@ Encoding: UTF-8
 Imports:
     checkmate,
     dplyr,
+    flextable,
     fs,
     here,
     knitr,
     magrittr,
+    markdown,
     purrr,
     rcmdcheck,
     riskmetric,
