@@ -1,22 +1,28 @@
-# Run covr and potentially save results to disk
-#
-# Depending on how involved this gets, consider combining with check.R
-
-# this is a stub...
-add_coverage <- function(pkg, out_dir) {
+#' Run covr and potentially save results to disk
+#'
+#' @param source_dir package installation directory
+#' @param out_dir directory for saving results
+#'
+#' @keywords internal
+add_coverage <- function(source_dir, out_dir) {
   # run covr
-  pkgname <- basename(pkg)
-  res <- list(
-    name = pkgname,
-    coverage = round(runif(1, 0.4, 0.8), 3)
+  pkg_name <- basename(source_dir)
+
+  coverage <- covr::package_coverage(source_dir, type = "tests")
+  coverage_list <- covr::coverage_to_list(coverage)
+
+  cov_res <- list(
+    name = pkg_name,
+    coverage = coverage_list
   )
 
-  # potentially write results to RDS?
-  # saveRDS(
-  #   res,
-  #   file.path(out_dir, paste0(pkgname, ".coverage.RDS"))
-  # )
 
-  # return percent coverage
-  return(res$coverage)
+  # write results to RDS
+  saveRDS(
+    cov_res,
+    file.path(out_dir, paste0(pkg_name, ".coverage.RDS"))
+  )
+
+  # return total coverage as fraction
+  return(coverage_list$totalcoverage/100)
 }

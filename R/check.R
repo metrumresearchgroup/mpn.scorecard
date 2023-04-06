@@ -1,20 +1,54 @@
-# Run R CMD CHECK
+#' Run R CMD CHECK
+#'
+#'
+#' @param source_dir package installation directory
+#' @param out_dir directory for saving results
+#' @param use_lib library path. Defaults to `.libPaths()`
+#'
+#' @details
+#' rcmdcheck takes either a tarball or an installation directory
+#'
+#' @keywords internal
+add_rcmdcheck <- function(source_dir, out_dir, use_lib = .libPaths()) {
 
-# this is a stub...
-add_rcmdcheck <- function(pkg, out_dir) {
+  # rcmdcheck takes either a tarball or an installation directory
+  # use installation directory so we dont have to pass the pacakge name as an additional argument
+
   # run rcmdcheck
-  pkgname <- basename(pkg)
-  res <- list(name = pkgname)
+  pkg_name <- basename(source_dir)
+
+  withr::with_libpaths(new = use_lib, {
+    res_check <- tryCatch({
+      rcmdcheck::rcmdcheck(source_dir, quiet = TRUE)
+    },
+    error = function(cond){
+      return(cond)
+    },
+    warning = function(cond){
+      return(cond)
+    }
+    )
+  })
 
   # write results to RDS
   saveRDS(
     res,
-    file.path(out_dir, paste0(pkgname, ".check.rds"))
+    file.path(out_dir, paste0(pkg_name, ".rcmdcheck.rds"))
   )
 
-  # return 1 if passed, 0 if not.
-  # TODO: do we want anything more granular than this? riskmetric has some weighting system...
-  return(1)
+  # Note that res_check$status is the opposite of what we want (1 means failure, 0 means passing)
+
+  # 1 if no errors or warnings (ignore notes)
+  # 0.5 if any warnings, but no errors
+  # 0 if any errors, or if the call failed
+  status <- case_when(
+    rlang::is_empty(res_check$warnings) & rlang::is_empty(res_check$errors) & res_check$status == 0 ~ 1,
+    !rlang::is_empty(res_check$warnings) & rlang::is_empty(res_check$errors) ~ 0.5,
+    !rlang::is_empty(res_check$errors) | res_check$status == 1 ~ 0,
+    TRUE ~ NA_integer_
+  )
+
+  return(status)
 }
 
 #### Code from toolchain repo to work off of...
