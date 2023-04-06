@@ -4,7 +4,27 @@
 \alias{score_pkg}
 \title{Generate scorecard metrics for package}
 \usage{
-score_pkg(pkg, out_dir, pkg_info = NULL)
+score_pkg(
+  pkg,
+  out_dir,
+  pkg_info = NULL,
+  use_lib = .libPaths(),
+  overwrite = FALSE
+)
+}
+\arguments{
+\item{pkg}{a package tarball}
+
+\item{out_dir}{output directory for saving results and json}
+
+\item{pkg_info}{optional manually filled info}
+
+\item{use_lib}{library path. Defaults to \code{.libPaths()}}
+
+\item{overwrite}{Logical (T/F). Whether or not to overwrite existing scorecard results}
+}
+\value{
+a file path to a json file containing all scores
 }
 \description{
 Returns collected metrics as a named list, and also writes

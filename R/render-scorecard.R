@@ -38,7 +38,11 @@ render_scorecard <- function(
     output_dir = out_dir,
     output_file = out_file,
     quiet = TRUE,
-    params = list(pkg_scores = formatted_pkg_scores)
+    params = list(
+      pkg_scores = formatted_pkg_scores,
+      risk_breaks = risk_breaks,
+      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
+      )
   )
 
   # Render to PDF, invisibly return the path to the PDF
@@ -77,32 +81,64 @@ format_scores_for_render <- function(pkg_scores, risk_breaks) {
 }
 
 #' Use risk_breaks to map scores into character strings
-map_risk <- function(scores, risk_breaks) {
+#'
+#' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
+#' @param risk_breaks breaks determining low, medium, and high risk
+#' @param desc Logical (T/F). If `TRUE`, sort `risk_breaks` in descending order.
+#'
+#' @details
+#' Use `desc = TRUE` for color coding coverage and other parameters that follow and inverse relationship with risk.
+#'
+#' @keywords internal
+map_risk <- function(scores, risk_breaks, desc = FALSE) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
-  risk_breaks <- sort(risk_breaks)
-  purrr::map_chr(scores, ~ {
-    if (.x < risk_breaks[1]) {
-      "Low Risk"
-    } else if (.x < risk_breaks[2]) {
-      "Medium Risk"
-    } else {
-      "High Risk"
+  if(isTRUE(desc)){
+    risk_breaks <- sort(risk_breaks, decreasing = TRUE)
+    purrr::map_chr(scores, ~ {
+      if (.x > risk_breaks[1]) {
+        "Low Risk"
+      } else if (.x > risk_breaks[2]) {
+        "Medium Risk"
+      } else {
+        "High Risk"
+      }
+    })
+  }else{
+    risk_breaks <- sort(risk_breaks)
+    purrr::map_chr(scores, ~ {
+      if (.x < risk_breaks[1]) {
+        "Low Risk"
+      } else if (.x < risk_breaks[2]) {
+        "Medium Risk"
+      } else {
+        "High Risk"
+      }
+    })
+  }
+
+
+}
+
+#' Use answer_breaks to map binary results into character strings
+#'
+#' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
+#' @param answer_breaks breaks determining 'Yes' or 'No'
+#'
+#' @details
+#' If value is not found in `answer_breaks`, it is skipped over
+#'
+#' @keywords internal
+map_answer <- function(results, answer_breaks = c(0, 1)) {
+  checkmate::assert_numeric(results, lower = 0, upper = 1)
+  answer_breaks <- sort(answer_breaks)
+  purrr::map_chr(results, ~ {
+    if (.x == answer_breaks[1]) {
+      "No"
+    } else if(.x == answer_breaks[2]){
+      "Yes"
+    }else{
+      .x
     }
   })
 }
 
-
-#' #' Use risk_breaks to map scores into character strings
-#' map_categories <- function(scores, risk_breaks) {
-#'   checkmate::assert_numeric(scores, lower = 0, upper = 1)
-#'   risk_breaks <- sort(risk_breaks)
-#'   purrr::map_chr(scores, ~ {
-#'     if (.x < risk_breaks[1]) {
-#'       "Low"
-#'     } else if (.x < risk_breaks[2]) {
-#'       "Medium"
-#'     } else {
-#'       "High"
-#'     }
-#'   })
-#' }

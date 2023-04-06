@@ -2,17 +2,46 @@
 #'
 #' Returns collected metrics as a named list, and also writes
 #' results to disk for downstream consumption.
+#'
+#' @param pkg a package tarball
+#' @param out_dir output directory for saving results and json
+#' @param pkg_info optional manually filled info
+#' @param use_lib library path. Defaults to `.libPaths()`
+#' @param overwrite Logical (T/F). Whether or not to overwrite existing scorecard results
+#'
+#' @returns a file path to a json file containing all scores
+#'
 #' @export
 score_pkg <- function(
-  pkg,  # probably just tarball, maybe other ways to pass a pkg eventually...
+  pkg,
   out_dir,
   pkg_info = NULL,  # optional manually filled info, probably as JSON/YAML
+  use_lib = .libPaths(),
   overwrite = FALSE
 ) {
-  # TODO: some input checking
+  # Input checking
+  checkmate::assert_string(pkg)
+  checkmate::assert_file_exists(pkg)
+  checkmate::assert_directory_exists(use_lib)
+  checkmate::assert_string(out_dir)
+
+  # unpack tarball
+  source_tar_dir <- file.path(tempdir(), "scorecard", gsub(".tar.gz", "", basename(pkg)))
+  utils::untar(pkg, exdir = source_tar_dir)
+
+  # make helper to determine package name
+  source_dir <- dir_ls(source_tar_dir)
+
+  # Confirm tar is unpackacked in expected directory
+  checkmate::assert_string(source_dir)
+  checkmate::assert_directory_exists(source_dir)
+
+  pkg_name <- basename(source_dir)
 
   # start building up scorecard list
-  res <- create_score_list_from_riskmetric(pkg)
+  res <- create_score_list_from_riskmetric(source_dir)
+
+  if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top.
@@ -21,8 +50,8 @@ score_pkg <- function(
   check_exists_and_overwrite(out_path, overwrite)
 
   # run check and covr and write results to disk
-  res$scores$testing$check <- add_rcmdcheck(pkg, out_dir)
-  res$scores$testing$check <- add_coverage(pkg, out_dir)
+  res$scores$testing$check <- add_rcmdcheck(source_dir, out_dir, use_lib)
+  res$scores$testing$covr <- add_coverage(source_dir, out_dir)
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this
@@ -41,5 +70,6 @@ score_pkg <- function(
     out_path
   )
 
-  return(invisible(res))
+
+  return(invisible(out_path))
 }
