@@ -8,8 +8,9 @@ score_pkg(
   pkg,
   out_dir,
   pkg_info = NULL,
-  use_lib = .libPaths(),
-  overwrite = FALSE
+  overwrite = FALSE,
+  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE, error_on =
+    "never")
 )
 }
 \arguments{
@@ -19,9 +20,9 @@ score_pkg(
 
 \item{pkg_info}{optional manually filled info}
 
-\item{use_lib}{library path. Defaults to \code{.libPaths()}}
-
 \item{overwrite}{Logical (T/F). Whether or not to overwrite existing scorecard results}
+
+\item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck}}
 }
 \value{
 a file path to a json file containing all scores

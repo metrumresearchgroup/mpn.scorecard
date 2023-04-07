@@ -3,16 +3,18 @@
 #' Format riskmetric results into scorecard list
 #'
 #' @param pkg_path path to installed/untarred package
+#' @param pkg_name character string defining the package name
+#' @param pkg_ver character string defining the package version
 #'
 #' @keywords internal
-create_score_list_from_riskmetric <- function(pkg_path) {
+create_score_list_from_riskmetric <- function(pkg_path, pkg_name, pkg_ver) {
   risk_res <- pkg_riskmetric(pkg_path)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top
   res <- list(
-    pkg_name = risk_res$ref$name,
-    pkg_version = as.character(risk_res$ref$version),
+    pkg_name = pkg_name,
+    pkg_version = pkg_ver,
     pkg_path = pkg_path,
     # for results
     scores = list(

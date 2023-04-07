@@ -4,10 +4,14 @@
 \alias{create_score_list_from_riskmetric}
 \title{Format riskmetric results into scorecard list}
 \usage{
-create_score_list_from_riskmetric(pkg_path)
+create_score_list_from_riskmetric(pkg_path, pkg_name, pkg_ver)
 }
 \arguments{
 \item{pkg_path}{path to installed/untarred package}
+
+\item{pkg_name}{character string defining the package name}
+
+\item{pkg_ver}{character string defining the package version}
 }
 \description{
 Format riskmetric results into scorecard list

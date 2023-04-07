@@ -3,13 +3,12 @@
 #'
 #' @param pkg_path package installation directory
 #' @param out_dir directory for saving results
-#' @param use_lib library path. Defaults to `.libPaths()`
 #'
 #' @details
 #' rcmdcheck takes either a tarball or an installation directory
 #'
 #' @keywords internal
-add_rcmdcheck <- function(pkg_path, out_dir, use_lib = .libPaths()) {
+add_rcmdcheck <- function(pkg_path, out_dir, rcmdcheck_args) {
 
   # rcmdcheck takes either a tarball or an installation directory
   # use installation directory so we dont have to pass the pacakge name as an additional argument
@@ -17,18 +16,16 @@ add_rcmdcheck <- function(pkg_path, out_dir, use_lib = .libPaths()) {
   # run rcmdcheck
   pkg_name <- basename(pkg_path)
 
-  withr::with_libpaths(new = use_lib, {
-    res_check <- tryCatch({
-      rcmdcheck::rcmdcheck(pkg_path, quiet = TRUE)
-    },
-    error = function(cond){
-      return(cond)
-    },
-    warning = function(cond){
-      return(cond)
-    }
-    )
-  })
+  res_check <- tryCatch({
+    do.call(rcmdcheck::rcmdcheck, rcmdcheck_args)
+  },
+  error = function(cond){
+    return(cond)
+  },
+  warning = function(cond){
+    return(cond)
+  }
+  )
 
   # write results to RDS
   saveRDS(
@@ -42,9 +39,9 @@ add_rcmdcheck <- function(pkg_path, out_dir, use_lib = .libPaths()) {
   # 0.5 if any warnings, but no errors
   # 0 if any errors, or if the call failed
   status <- dplyr::case_when(
-    rlang::is_empty(res_check$warnings) & rlang::is_empty(res_check$errors) & res_check$status == 0 ~ 1,
-    !rlang::is_empty(res_check$warnings) & rlang::is_empty(res_check$errors) ~ 0.5,
-    !rlang::is_empty(res_check$errors) | res_check$status == 1 ~ 0,
+    rlang::is_empty(res_check$warnings) && rlang::is_empty(res_check$errors) && res_check$status == 0 ~ 1,
+    !rlang::is_empty(res_check$warnings) && rlang::is_empty(res_check$errors) ~ 0.5,
+    !rlang::is_empty(res_check$errors) || res_check$status == 1 ~ 0,
     TRUE ~ NA_integer_
   )
 

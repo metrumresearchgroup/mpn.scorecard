@@ -6,8 +6,8 @@
 #' @param pkg a package tarball
 #' @param out_dir output directory for saving results and json
 #' @param pkg_info optional manually filled info
-#' @param use_lib library path. Defaults to `.libPaths()`
 #' @param overwrite Logical (T/F). Whether or not to overwrite existing scorecard results
+#' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`
 #'
 #' @returns a file path to a json file containing all scores
 #'
@@ -16,17 +16,32 @@ score_pkg <- function(
   pkg,
   out_dir,
   pkg_info = NULL,  # optional manually filled info, probably as JSON/YAML
-  use_lib = .libPaths(),
-  overwrite = FALSE
+  overwrite = FALSE,
+  rcmdcheck_args = list(
+    timeout = Inf,
+    args = "--no-manual",
+    quiet = TRUE,
+    error_on = "never"
+  )
 ) {
   # Input checking
   checkmate::assert_string(pkg)
   checkmate::assert_file_exists(pkg)
-  checkmate::assert_directory_exists(use_lib)
   checkmate::assert_string(out_dir)
+  checkmate::assert_list(rcmdcheck_args)
+
+  pkg_desc <- get_pkg_desc(pkg_path)
+  pkg_name <- pkg_desc$Package
+  pkg_ver <- pkg_desc$Version
+  pkg_name_ver <- paste0(pkg_name, "_", pkg_ver)
+
+  # Create temporary location for package installation
+  temp_pkg_dir <- tempfile("PACKAGES")
+  if (!dir.create(temp_pkg_dir)) stop("unable to create ", temp_pkg_dir)
+  on.exit(unlink(temp_pkg_dir, recursive = TRUE), add = TRUE)
 
   # unpack tarball
-  source_tar_dir <- file.path(tempdir(), "scorecard", gsub(".tar.gz", "", basename(pkg)))
+  source_tar_dir <- file.path(temp_pkg_dir, "scorecard", pkg_name_ver)
   utils::untar(pkg, exdir = source_tar_dir)
 
   # unpackacked package path
@@ -36,10 +51,9 @@ score_pkg <- function(
   checkmate::assert_string(pkg_path)
   checkmate::assert_directory_exists(pkg_path)
 
-  pkg_name <- basename(pkg_path)
 
   # start building up scorecard list
-  res <- create_score_list_from_riskmetric(pkg_path)
+  res <- create_score_list_from_riskmetric(pkg_path, pkg_name, pkg_ver)
 
   if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
@@ -50,8 +64,9 @@ score_pkg <- function(
   check_exists_and_overwrite(out_path, overwrite)
 
   # run check and covr and write results to disk
-  res$scores$testing$check <- add_rcmdcheck(pkg_path, out_dir, use_lib)
-  res$scores$testing$covr <- add_coverage(pkg_path, out_dir, use_lib)
+  rcmdcheck_args$path <- pkg
+  res$scores$testing$check <- add_rcmdcheck(pkg_path, out_dir, rcmdcheck_args) # use tarball
+  res$scores$testing$covr <- add_coverage(pkg_path, out_dir) # must use untarred package dir
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this

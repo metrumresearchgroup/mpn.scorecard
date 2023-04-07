@@ -32,3 +32,24 @@ get_result_path <- function(
 
   file.path(out_dir, paste0(pkg_name,".",ext))
 }
+
+#' Read Description file and parse the package name and version
+#'
+#' @param pkg_path path to installed/untarred package
+#'
+#' @keywords internal
+get_pkg_desc <- function(pkg_path, fields = NULL){
+
+  pkg_desc_path <- file.path(pkg_path, "DESCRIPTION")
+  desc_file <- tryCatch(read.dcf(pkg_desc_path, fields = fields)[1L,], error = identity)
+  if (!inherits(desc_file, "error")) {
+    pkg_desc <- as.list(desc_file)
+  }else{
+    message(gettextf("reading DESCRIPTION for package %s failed with message:\n  %s",
+                     sQuote(basename(dirname(pkg_desc_path))), conditionMessage(desc_file)),
+            domain = NA)
+    pkg_desc <- NULL # TODO: maybe add error handling for this later
+  }
+
+  return(pkg_desc)
+}
