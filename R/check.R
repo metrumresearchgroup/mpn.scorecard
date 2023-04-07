@@ -32,7 +32,7 @@ add_rcmdcheck <- function(pkg_path, out_dir, use_lib = .libPaths()) {
 
   # write results to RDS
   saveRDS(
-    res,
+    res_check,
     get_result_path(out_dir, pkg_path, "check.rds")
   )
 

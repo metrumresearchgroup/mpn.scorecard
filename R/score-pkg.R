@@ -29,7 +29,7 @@ score_pkg <- function(
   source_tar_dir <- file.path(tempdir(), "scorecard", gsub(".tar.gz", "", basename(pkg)))
   utils::untar(pkg, exdir = source_tar_dir)
 
-  # make helper to determine package name
+  # unpackacked package path
   pkg_path <- dir_ls(source_tar_dir)
 
   # Confirm tar is unpackacked in expected directory
