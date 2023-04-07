@@ -1,28 +1,37 @@
 #' Run covr and potentially save results to disk
 #'
-#' @param source_dir package installation directory
+#' @param pkg_path package installation directory
 #' @param out_dir directory for saving results
+#' @param use_lib library path. Defaults to `.libPaths()`
 #'
 #' @keywords internal
-add_coverage <- function(source_dir, out_dir) {
+add_coverage <- function(pkg_path, out_dir, use_lib = .libPaths()) {
   # run covr
-  pkg_name <- basename(source_dir)
+  pkg_name <- basename(pkg_path)
 
-  coverage <- covr::package_coverage(source_dir, type = "tests")
-  coverage_list <- covr::coverage_to_list(coverage)
-
-  cov_res <- list(
-    name = pkg_name,
-    coverage = coverage_list
-  )
+  withr::with_libpaths(new = use_lib, {
+    res_cov <- tryCatch({
+      coverage <- covr::package_coverage(pkg_path, type = "tests")
+      coverage_list <- covr::coverage_to_list(coverage)
+      list(name = pkg_name, coverage = coverage_list)
+    },
+    error = function(cond){
+      coverage_list <- list(filecoverage = cond, totalcoverage = NA_real_)
+      list(name = pkg_name, coverage = coverage_list)
+    },
+    warning = function(cond){
+      coverage_list <- list(filecoverage = cond, totalcoverage = NA_real_)
+      list(name = pkg_name, coverage = coverage_list)
+    })
+  })
 
 
   # write results to RDS
   saveRDS(
-    cov_res,
-    file.path(out_dir, paste0(pkg_name, ".coverage.RDS"))
+    res_cov,
+    get_result_path(out_dir, pkg_path, "covr.rds")
   )
 
   # return total coverage as fraction
-  return(coverage_list$totalcoverage/100)
+  return(res_cov$coverage$totalcoverage/100)
 }

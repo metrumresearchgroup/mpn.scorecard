@@ -4,12 +4,14 @@
 \alias{add_coverage}
 \title{Run covr and potentially save results to disk}
 \usage{
-add_coverage(source_dir, out_dir)
+add_coverage(pkg_path, out_dir, use_lib = .libPaths())
 }
 \arguments{
-\item{source_dir}{package installation directory}
+\item{pkg_path}{package installation directory}
 
 \item{out_dir}{directory for saving results}
+
+\item{use_lib}{library path. Defaults to \code{.libPaths()}}
 }
 \description{
 Run covr and potentially save results to disk

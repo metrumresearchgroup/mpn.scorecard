@@ -26,7 +26,7 @@
 #'
 #' @return a formatted flextable
 #'
-#' @export
+#' @keywords internal
 flextable_formatted <- function(tab,
                                 autofit = TRUE,
                                 pg_width = 5,
@@ -183,9 +183,9 @@ format_testing_scores <- function(testing_df){
   testing_df <- testing_df %>%
     dplyr::mutate(
       Risk = map_risk(.data$Result, risk_breaks, desc = TRUE),
-      Result = case_when(
-        Result %in% c(0,1) ~ map_answer(.data$Result),
-        Criteria == "covr" ~ paste0(Result*100, "%")
+      Result = dplyr::case_when(
+        Criteria == "covr" ~ paste0(Result*100, "%"),
+        Result %in% c(0, 0.5, 1) ~ map_answer(.data$Result)
       ),
       Criteria = ifelse(Criteria == "check", "R CMD CHECK passing", "Coverage")
     )

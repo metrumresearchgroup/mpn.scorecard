@@ -30,28 +30,28 @@ score_pkg <- function(
   utils::untar(pkg, exdir = source_tar_dir)
 
   # make helper to determine package name
-  source_dir <- dir_ls(source_tar_dir)
+  pkg_path <- dir_ls(source_tar_dir)
 
   # Confirm tar is unpackacked in expected directory
-  checkmate::assert_string(source_dir)
-  checkmate::assert_directory_exists(source_dir)
+  checkmate::assert_string(pkg_path)
+  checkmate::assert_directory_exists(pkg_path)
 
-  pkg_name <- basename(source_dir)
+  pkg_name <- basename(pkg_path)
 
   # start building up scorecard list
-  res <- create_score_list_from_riskmetric(source_dir)
+  res <- create_score_list_from_riskmetric(pkg_path)
 
   if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top.
   # We'll also need to remove the pkg_name and pkg_version from create_score_list_from_riskmetric()
-  out_path <- file.path(out_dir, paste0(res$pkg_name, ".scorecard.json"))
+  out_path <- get_result_path(out_dir, pkg_path, "scorecard.json")
   check_exists_and_overwrite(out_path, overwrite)
 
   # run check and covr and write results to disk
-  res$scores$testing$check <- add_rcmdcheck(source_dir, out_dir, use_lib)
-  res$scores$testing$covr <- add_coverage(source_dir, out_dir)
+  res$scores$testing$check <- add_rcmdcheck(pkg_path, out_dir, use_lib)
+  res$scores$testing$covr <- add_coverage(pkg_path, out_dir, use_lib)
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this

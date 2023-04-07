@@ -4,8 +4,14 @@
 \alias{pkg_riskmetric}
 \title{Run all relevant riskmetric checks}
 \usage{
-pkg_riskmetric(pkg)
+pkg_riskmetric(pkg_path)
+}
+\arguments{
+\item{pkg_path}{path to installed/untarred package}
+}
+\value{
+raw riskmetric outputs
 }
 \description{
-and return raw riskmetric outputs
+Run all relevant riskmetric checks
 }

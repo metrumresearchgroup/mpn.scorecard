@@ -4,8 +4,12 @@
 \alias{create_score_list_from_riskmetric}
 \title{Format riskmetric results into scorecard list}
 \usage{
-create_score_list_from_riskmetric(pkgpath)
+create_score_list_from_riskmetric(pkg_path)
+}
+\arguments{
+\item{pkg_path}{path to installed/untarred package}
 }
 \description{
 Format riskmetric results into scorecard list
 }
+\keyword{internal}

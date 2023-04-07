@@ -1,14 +1,19 @@
 
 
 #' Format riskmetric results into scorecard list
-create_score_list_from_riskmetric <- function(pkgpath) {
-  risk_res <- pkg_riskmetric(pkgpath)
+#'
+#' @param pkg_path path to installed/untarred package
+#'
+#' @keywords internal
+create_score_list_from_riskmetric <- function(pkg_path) {
+  risk_res <- pkg_riskmetric(pkg_path)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top
   res <- list(
     pkg_name = risk_res$ref$name,
     pkg_version = as.character(risk_res$ref$version),
+    pkg_path = pkg_path,
     # for results
     scores = list(
       testing = list(),
@@ -40,10 +45,12 @@ create_score_list_from_riskmetric <- function(pkgpath) {
 
 #' Run all relevant riskmetric checks
 #'
-#' and return raw riskmetric outputs
-pkg_riskmetric <- function(pkg) {
+#' @inheritParams create_score_list_from_riskmetric
+#'
+#' @returns raw riskmetric outputs
+pkg_riskmetric <- function(pkg_path) {
 
-  pref <- riskmetric::pkg_ref(pkg)
+  pref <- riskmetric::pkg_ref(pkg_path)
 
   passess <- riskmetric::pkg_assess(
     pref,

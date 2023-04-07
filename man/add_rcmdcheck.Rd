@@ -4,10 +4,10 @@
 \alias{add_rcmdcheck}
 \title{Run R CMD CHECK}
 \usage{
-add_rcmdcheck(source_dir, out_dir, use_lib = .libPaths())
+add_rcmdcheck(pkg_path, out_dir, use_lib = .libPaths())
 }
 \arguments{
-\item{source_dir}{package installation directory}
+\item{pkg_path}{package installation directory}
 
 \item{out_dir}{directory for saving results}
 

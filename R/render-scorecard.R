@@ -26,9 +26,8 @@ render_scorecard <- function(
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
 
-  out_file <- paste0(pkg_scores$pkg_name, ".scorecard.pdf")
-  out_path <- file.path(out_dir, out_file)
-  check_exists_and_overwrite(out_path, overwrite)
+  out_file <- get_result_path(out_dir, pkg_scores$pkg_path, "scorecard.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
 
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
@@ -36,13 +35,13 @@ render_scorecard <- function(
   rmarkdown::render(
     SCORECARD_RMD_TEMPLATE, # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = out_dir,
-    output_file = out_file,
+    output_file = basename(out_file),
     quiet = TRUE,
     params = list(
       pkg_scores = formatted_pkg_scores,
       risk_breaks = risk_breaks,
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
-      )
+    )
   )
 
   # Render to PDF, invisibly return the path to the PDF
@@ -115,8 +114,6 @@ map_risk <- function(scores, risk_breaks, desc = FALSE) {
       }
     })
   }
-
-
 }
 
 #' Use answer_breaks to map binary results into character strings
@@ -127,14 +124,18 @@ map_risk <- function(scores, risk_breaks, desc = FALSE) {
 #' @details
 #' If value is not found in `answer_breaks`, it is skipped over
 #'
+#' Note: A result of 0.5 indicates an answer of 'Yes' with warnings. This is a special case for rmdcheck
+#'
 #' @keywords internal
-map_answer <- function(results, answer_breaks = c(0, 1)) {
+map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
   checkmate::assert_numeric(results, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
   purrr::map_chr(results, ~ {
     if (.x == answer_breaks[1]) {
       "No"
-    } else if(.x == answer_breaks[2]){
+    }else if(.x == answer_breaks[2]){
+      "Yes (warnings occurred)"
+    }else if(.x == answer_breaks[3]){
       "Yes"
     }else{
       .x

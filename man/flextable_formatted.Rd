@@ -46,3 +46,4 @@ flextable_word(column_width = c("col1" = 2, "col2" = 3))
 \code{flextable} by default will make the tables as wide as possible in word. This function will correct the \code{autofit()} feature and make the contents fit.
 Other formatting corrections are done depending on the specified \code{doc_type}
 }
+\keyword{internal}

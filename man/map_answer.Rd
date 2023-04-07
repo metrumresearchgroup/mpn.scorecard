@@ -4,7 +4,7 @@
 \alias{map_answer}
 \title{Use answer_breaks to map binary results into character strings}
 \usage{
-map_answer(results, answer_breaks = c(0, 1))
+map_answer(results, answer_breaks = c(0, 0.5, 1))
 }
 \arguments{
 \item{answer_breaks}{breaks determining 'Yes' or 'No'}
@@ -16,5 +16,7 @@ Use answer_breaks to map binary results into character strings
 }
 \details{
 If value is not found in \code{answer_breaks}, it is skipped over
+
+Note: A result of 0.5 indicates an answer of 'Yes' with warnings. This is a special case for rmdcheck
 }
 \keyword{internal}
