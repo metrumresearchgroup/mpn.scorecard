@@ -4,7 +4,7 @@
 #' different metrics, etc. We also need to consider if we want
 #' this algorithm (i.e. the weights) to be configurable be the user...
 #'
-#' @param scorelist named list of socres
+#' @param scorelist a complete named list of scores. Should contain all the elementary blocks and just need to be summarized
 #'
 #' @keywords internal
 calc_overall_scores <- function(scorelist) {
