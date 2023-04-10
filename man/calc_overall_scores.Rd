@@ -6,8 +6,12 @@
 \usage{
 calc_overall_scores(scorelist)
 }
+\arguments{
+\item{scorelist}{named list of socres}
+}
 \description{
 This is where we'll need to build the algorithm for weighting
 different metrics, etc. We also need to consider if we want
 this algorithm (i.e. the weights) to be configurable be the user...
 }
+\keyword{internal}

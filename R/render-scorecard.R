@@ -8,6 +8,7 @@
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
 #' @param mitigation (Optional) path to a plain text file with any explanation
 #'   necessary for justifying use of a potentially "high risk" package.
+#' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
 #' @export
 render_scorecard <- function(
     json_path, # should this just be a package name? we name the JSON ourselves, so we can infer the path
@@ -48,7 +49,12 @@ render_scorecard <- function(
 
 
 #' Prepare the raw scores to be rendered into PDF
-format_scores_for_render <- function(pkg_scores, risk_breaks) {
+#'
+#' @param pkg_scores named list of all scores
+#' @inheritParams render_scorecard
+#'
+#' @keywords internal
+format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
 
   # build list of formatted tibbles
   pkg_scores$formatted <- list()

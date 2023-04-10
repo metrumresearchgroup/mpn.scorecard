@@ -4,8 +4,18 @@
 \alias{format_scores_for_render}
 \title{Prepare the raw scores to be rendered into PDF}
 \usage{
-format_scores_for_render(pkg_scores, risk_breaks)
+format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
+}
+\arguments{
+\item{pkg_scores}{named list of all scores}
+
+\item{risk_breaks}{A numeric vector of length 2, with both numbers being
+between 0 and 1. These are used for the "breaks" when classifying scores
+into Risk categories. For example, for the default value of \code{c(0.3, 0.7)},
+for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0.7}
+is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 }
 \description{
 Prepare the raw scores to be rendered into PDF
 }
+\keyword{internal}

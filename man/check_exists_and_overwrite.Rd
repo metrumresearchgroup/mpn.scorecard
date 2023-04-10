@@ -7,7 +7,13 @@ if overwrite is TRUE}
 \usage{
 check_exists_and_overwrite(path, overwrite)
 }
+\arguments{
+\item{path}{a file path to check if it exists}
+
+\item{overwrite}{Logical (T/F). If \code{TRUE}, delete the file at the specified path}
+}
 \description{
 Check if a path exists and delete the file
 if overwrite is TRUE
 }
+\keyword{internal}

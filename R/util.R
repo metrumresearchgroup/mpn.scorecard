@@ -1,5 +1,9 @@
 #' Check if a path exists and delete the file
 #' if overwrite is TRUE
+#' @param path a file path to check if it exists
+#' @param overwrite Logical (T/F). If `TRUE`, delete the file at the specified path
+#'
+#' @keywords internal
 check_exists_and_overwrite <- function(path, overwrite) {
   checkmate::assert_string(path)
   checkmate::assert_logical(overwrite, len = 1)

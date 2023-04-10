@@ -22,6 +22,8 @@ is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
 \item{mitigation}{(Optional) path to a plain text file with any explanation
 necessary for justifying use of a potentially "high risk" package.}
+
+\item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
 }
 \description{
 Take a JSON from score_pkg() and render a pdf

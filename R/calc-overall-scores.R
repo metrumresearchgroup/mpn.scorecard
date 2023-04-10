@@ -3,6 +3,10 @@
 #' This is where we'll need to build the algorithm for weighting
 #' different metrics, etc. We also need to consider if we want
 #' this algorithm (i.e. the weights) to be configurable be the user...
+#'
+#' @param scorelist named list of socres
+#'
+#' @keywords internal
 calc_overall_scores <- function(scorelist) {
   scorelist$overall <- list()
 
