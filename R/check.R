@@ -11,22 +11,13 @@
 #' @keywords internal
 add_rcmdcheck <- function(out_dir, rcmdcheck_args) {
 
-  # rcmdcheck takes either a tarball or an installation directory
-  # use installation directory so we dont have to pass the pacakge name as an additional argument
+  # We never want the rcmdcheck to fail
+  rcmdcheck_args$error_on <- "never"
 
   # run rcmdcheck
   pkg_name <- basename(out_dir)
 
-  res_check <- tryCatch({
-    do.call(rcmdcheck::rcmdcheck, rcmdcheck_args)
-  },
-  error = function(cond){
-    return(cond)
-  },
-  warning = function(cond){
-    return(cond)
-  }
-  )
+  res_check <- do.call(rcmdcheck::rcmdcheck, rcmdcheck_args)
 
   # write results to RDS
   saveRDS(

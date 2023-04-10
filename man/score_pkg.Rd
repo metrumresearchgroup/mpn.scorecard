@@ -9,8 +9,7 @@ score_pkg(
   out_dir,
   pkg_info = NULL,
   overwrite = FALSE,
-  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE, error_on =
-    "never")
+  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE)
 )
 }
 \arguments{
@@ -22,7 +21,8 @@ score_pkg(
 
 \item{overwrite}{Logical (T/F). Whether or not to overwrite existing scorecard results}
 
-\item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck}}
+\item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck}. \strong{Note} that the tarball \code{path} and \code{error_on = "never"}
+are automatically appended to this list.}
 }
 \value{
 a file path to a json file containing all scores

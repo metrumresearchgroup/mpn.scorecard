@@ -7,7 +7,8 @@
 #' @param out_dir output directory for saving results and json
 #' @param pkg_info optional manually filled info
 #' @param overwrite Logical (T/F). Whether or not to overwrite existing scorecard results
-#' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`
+#' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`. **Note** that the tarball `path` and `error_on = "never"`
+#'        are automatically appended to this list.
 #'
 #' @returns a file path to a json file containing all scores
 #'
@@ -20,8 +21,7 @@ score_pkg <- function(
   rcmdcheck_args = list(
     timeout = Inf,
     args = "--no-manual",
-    quiet = TRUE,
-    error_on = "never"
+    quiet = TRUE
   )
 ) {
   # Input checking
