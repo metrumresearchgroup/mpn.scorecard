@@ -7,7 +7,7 @@ check_exists_and_overwrite <- function(path, overwrite) {
     if (isTRUE(overwrite)) {
       fs::file_delete(path)
     } else {
-      abort(glue("{path} already exists. Pass overwrite = TRUE to overwrite it."))
+      abort(glue::glue("{path} already exists. Pass overwrite = TRUE to overwrite it."))
     }
   }
 }

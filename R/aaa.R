@@ -1,2 +1,3 @@
 
-SCORECARD_RMD_TEMPLATE <- system.file("templates", "scorecard-template.Rmd", package = "mpn.scorecard")
+
+SCORECARD_RMD_TEMPLATE <- file.path("templates", "scorecard-template.Rmd")
