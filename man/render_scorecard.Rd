@@ -6,7 +6,6 @@
 \usage{
 render_scorecard(
   json_path,
-  out_dir,
   risk_breaks = c(0.3, 0.7),
   mitigation = NULL,
   overwrite = FALSE
@@ -14,8 +13,6 @@ render_scorecard(
 }
 \arguments{
 \item{json_path}{Path to a JSON file created by \code{\link[=score_pkg]{score_pkg()}}}
-
-\item{out_dir}{Path to output directory}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores

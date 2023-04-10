@@ -1,7 +1,6 @@
 #' Take a JSON from score_pkg() and render a pdf
 #'
 #' @param json_path Path to a JSON file created by [score_pkg()]
-#' @param out_dir Path to output directory
 #' @param risk_breaks A numeric vector of length 2, with both numbers being
 #'   between 0 and 1. These are used for the "breaks" when classifying scores
 #'   into Risk categories. For example, for the default value of `c(0.3, 0.7)`,
@@ -12,21 +11,20 @@
 #' @export
 render_scorecard <- function(
     json_path, # should this just be a package name? we name the JSON ourselves, so we can infer the path
-    out_dir,
     risk_breaks = c(0.3, 0.7),
     mitigation = NULL,
     overwrite = FALSE
 ) {
   # input checking
   checkmate::assert_string(json_path)
-  checkmate::assert_string(out_dir)
   checkmate::assert_string(mitigation, null.ok = TRUE)
   checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
 
-  out_file <- get_result_path(out_dir, pkg_scores$pkg_path, "scorecard.pdf")
+  checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
+  out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
   # map scores to risk and format into tables to be written to PDF
@@ -34,7 +32,7 @@ render_scorecard <- function(
 
   rmarkdown::render(
     SCORECARD_RMD_TEMPLATE, # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = out_dir,
+    output_dir = pkg_scores$out_dir,
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(

@@ -15,32 +15,33 @@ check_exists_and_overwrite <- function(path, overwrite) {
 #' Assign output file path for various outputs during scorecard rendering
 #'
 #' @param out_dir output directory for saving results and json
-#' @param pkg_path path to installed/untarred package
 #' @param ext file name and extension
+#'
+#' @details
+#' The basename of `out_dir` should be the package name and version pasted together
 #'
 #' @keywords internal
 get_result_path <- function(
     out_dir,
-    pkg_path,
     ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds")
 ){
 
-  # Directory contains version, pkg_path does not
-  pkg_name <- basename(dirname(pkg_path))
-
   ext <- match.arg(ext)
+
+  pkg_name <- basename(out_dir)
 
   file.path(out_dir, paste0(pkg_name,".",ext))
 }
 
 #' Read Description file and parse the package name and version
 #'
-#' @param pkg_path path to installed/untarred package
+#' @param pkg_source_path path to package source code (untarred)
 #'
 #' @keywords internal
-get_pkg_desc <- function(pkg_path, fields = NULL){
+get_pkg_desc <- function(pkg_source_path, fields = NULL){
 
-  pkg_desc_path <- file.path(pkg_path, "DESCRIPTION")
+  pkg_desc_path <- file.path(pkg_source_path, "DESCRIPTION")
+
   desc_file <- tryCatch(read.dcf(pkg_desc_path, fields = fields)[1L,], error = identity)
   if (!inherits(desc_file, "error")) {
     pkg_desc <- as.list(desc_file)
@@ -53,3 +54,31 @@ get_pkg_desc <- function(pkg_path, fields = NULL){
 
   return(pkg_desc)
 }
+
+#' Untar package and return installation directory
+#'
+#' @param pkg_tar path to tarball package
+#' @param temp_file_name name of `tempfile`
+#'
+#' @keywords internal
+unpack_tarball <- function(pkg_tar, temp_file_name = "SCORECARD_"){
+  # Create temporary location for package installation
+  temp_pkg_dir <- tempfile(temp_file_name)
+  if (!dir.create(temp_pkg_dir)) stop("unable to create ", temp_pkg_dir)
+
+  source_tar_dir <- file.path(temp_pkg_dir)
+
+  # unpack tarball
+
+  utils::untar(pkg_tar, exdir = source_tar_dir)
+
+  # unpackacked package path
+  pkg_source_path <- dir_ls(source_tar_dir)
+
+  # Confirm tar is unpackacked in expected directory
+  checkmate::assert_string(pkg_source_path)
+  checkmate::assert_directory_exists(pkg_source_path)
+
+  return(pkg_source_path)
+}
+

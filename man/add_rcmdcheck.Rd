@@ -4,17 +4,19 @@
 \alias{add_rcmdcheck}
 \title{Run R CMD CHECK}
 \usage{
-add_rcmdcheck(pkg_path, out_dir, rcmdcheck_args)
+add_rcmdcheck(out_dir, rcmdcheck_args)
 }
 \arguments{
-\item{pkg_path}{package installation directory}
-
 \item{out_dir}{directory for saving results}
+
+\item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck::rcmdcheck}}
 }
 \description{
 Run R CMD CHECK
 }
 \details{
-rcmdcheck takes either a tarball or an installation directory
+rcmdcheck takes either a tarball or an installation directory.
+
+The basename of \code{out_dir} should be the package name and version pasted together
 }
 \keyword{internal}

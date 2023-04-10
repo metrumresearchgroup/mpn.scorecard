@@ -4,10 +4,10 @@
 \alias{pkg_riskmetric}
 \title{Run all relevant riskmetric checks}
 \usage{
-pkg_riskmetric(pkg_path)
+pkg_riskmetric(pkg_source_path)
 }
 \arguments{
-\item{pkg_path}{path to installed/untarred package}
+\item{pkg_source_path}{path to package source code (untarred)}
 }
 \value{
 raw riskmetric outputs

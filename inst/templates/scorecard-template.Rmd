@@ -47,7 +47,7 @@ format_package_details(formatted_pkg_scores)
 
 ### Testing
 ```{r}
-format_testing_scores(formatted_pkg_scores$formatted$scores$testing)
+format_testing_scores(formatted_pkg_scores$formatted$scores$testing, risk_breaks)
 ```
 
 \newpage

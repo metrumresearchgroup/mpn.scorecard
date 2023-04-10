@@ -2,20 +2,24 @@
 
 #' Format riskmetric results into scorecard list
 #'
-#' @param pkg_path path to installed/untarred package
+#' @param pkg a package tarball
+#' @param pkg_source_path path to package source code (untarred)
 #' @param pkg_name character string defining the package name
 #' @param pkg_ver character string defining the package version
+#' @param out_dir output directory for saving results
 #'
 #' @keywords internal
-create_score_list_from_riskmetric <- function(pkg_path, pkg_name, pkg_ver) {
-  risk_res <- pkg_riskmetric(pkg_path)
+create_score_list_from_riskmetric <- function(pkg, pkg_source_path, pkg_name, pkg_ver, out_dir) {
+  risk_res <- pkg_riskmetric(pkg_source_path)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top
   res <- list(
     pkg_name = pkg_name,
     pkg_version = pkg_ver,
-    pkg_path = pkg_path,
+    out_dir = out_dir,
+    pkg_source_path = pkg_source_path,
+    md5sum_check = tools::md5sum(pkg),
     # for results
     scores = list(
       testing = list(),
@@ -50,9 +54,9 @@ create_score_list_from_riskmetric <- function(pkg_path, pkg_name, pkg_ver) {
 #' @inheritParams create_score_list_from_riskmetric
 #'
 #' @returns raw riskmetric outputs
-pkg_riskmetric <- function(pkg_path) {
+pkg_riskmetric <- function(pkg_source_path) {
 
-  pref <- riskmetric::pkg_ref(pkg_path)
+  pref <- riskmetric::pkg_ref(pkg_source_path)
 
   passess <- riskmetric::pkg_assess(
     pref,

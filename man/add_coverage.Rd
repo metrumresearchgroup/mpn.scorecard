@@ -4,14 +4,17 @@
 \alias{add_coverage}
 \title{Run covr and potentially save results to disk}
 \usage{
-add_coverage(pkg_path, out_dir)
+add_coverage(pkg_source_path, out_dir)
 }
 \arguments{
-\item{pkg_path}{package installation directory}
+\item{pkg_source_path}{package installation directory}
 
 \item{out_dir}{directory for saving results}
 }
 \description{
 Run covr and potentially save results to disk
+}
+\details{
+The basename of \code{out_dir} should be the package name and version pasted together
 }
 \keyword{internal}

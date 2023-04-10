@@ -6,18 +6,18 @@
 \usage{
 get_result_path(
   out_dir,
-  pkg_path,
   ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds")
 )
 }
 \arguments{
 \item{out_dir}{output directory for saving results and json}
 
-\item{pkg_path}{path to installed/untarred package}
-
 \item{ext}{file name and extension}
 }
 \description{
 Assign output file path for various outputs during scorecard rendering
+}
+\details{
+The basename of \code{out_dir} should be the package name and version pasted together
 }
 \keyword{internal}

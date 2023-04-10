@@ -175,11 +175,12 @@ format_package_details <- function(formatted_pkg_scores){
 #' Format testing scores
 #'
 #' @param testing_df dataframe returned by `formatted_pkg_scores$formatted$scores$testing`
+#' @inheritParams render_scorecard
 #'
 #' @returns a formatted flextable object
 #'
 #' @keywords internal
-format_testing_scores <- function(testing_df){
+format_testing_scores <- function(testing_df, risk_breaks){
   testing_df <- testing_df %>%
     dplyr::mutate(
       Risk = map_risk(.data$Result, risk_breaks, desc = TRUE),

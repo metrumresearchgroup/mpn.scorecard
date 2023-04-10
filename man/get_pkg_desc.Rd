@@ -4,10 +4,10 @@
 \alias{get_pkg_desc}
 \title{Read Description file and parse the package name and version}
 \usage{
-get_pkg_desc(pkg_path, fields = NULL)
+get_pkg_desc(pkg_source_path, fields = NULL)
 }
 \arguments{
-\item{pkg_path}{path to installed/untarred package}
+\item{pkg_source_path}{path to package source code (untarred)}
 }
 \description{
 Read Description file and parse the package name and version

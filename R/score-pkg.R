@@ -30,43 +30,33 @@ score_pkg <- function(
   checkmate::assert_string(out_dir)
   checkmate::assert_list(rcmdcheck_args)
 
-  pkg_desc <- get_pkg_desc(pkg_path)
+  # Unpack tarball
+  pkg_source_path <- unpack_tarball(pkg)
+  on.exit(unlink(dirname(pkg_source_path), recursive = TRUE), add = TRUE)
+
+  # Get package name and version
+  pkg_desc <- get_pkg_desc(pkg_source_path)
   pkg_name <- pkg_desc$Package
   pkg_ver <- pkg_desc$Version
   pkg_name_ver <- paste0(pkg_name, "_", pkg_ver)
 
-  # Create temporary location for package installation
-  temp_pkg_dir <- tempfile("PACKAGES")
-  if (!dir.create(temp_pkg_dir)) stop("unable to create ", temp_pkg_dir)
-  on.exit(unlink(temp_pkg_dir, recursive = TRUE), add = TRUE)
-
-  # unpack tarball
-  source_tar_dir <- file.path(temp_pkg_dir, "scorecard", pkg_name_ver)
-  utils::untar(pkg, exdir = source_tar_dir)
-
-  # unpackacked package path
-  pkg_path <- dir_ls(source_tar_dir)
-
-  # Confirm tar is unpackacked in expected directory
-  checkmate::assert_string(pkg_path)
-  checkmate::assert_directory_exists(pkg_path)
-
+  # Add pkg_name subdirectory and create if it doesnt exist
+  out_dir <- file.path(out_dir, pkg_name_ver)
+  if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
   # start building up scorecard list
-  res <- create_score_list_from_riskmetric(pkg_path, pkg_name, pkg_ver)
-
-  if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
+  res <- create_score_list_from_riskmetric(pkg, pkg_source_path, pkg_name, pkg_ver, out_dir)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top.
   # We'll also need to remove the pkg_name and pkg_version from create_score_list_from_riskmetric()
-  out_path <- get_result_path(out_dir, pkg_path, "scorecard.json")
+  out_path <- get_result_path(out_dir, "scorecard.json")
   check_exists_and_overwrite(out_path, overwrite)
 
   # run check and covr and write results to disk
   rcmdcheck_args$path <- pkg
-  res$scores$testing$check <- add_rcmdcheck(pkg_path, out_dir, rcmdcheck_args) # use tarball
-  res$scores$testing$covr <- add_coverage(pkg_path, out_dir) # must use untarred package dir
+  res$scores$testing$check <- add_rcmdcheck(out_dir, rcmdcheck_args) # use tarball
+  res$scores$testing$covr <- add_coverage(pkg_source_path, out_dir) # must use untarred package dir
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this
