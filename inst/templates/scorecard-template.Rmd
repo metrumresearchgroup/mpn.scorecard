@@ -1,0 +1,58 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+params:
+  pkg_scores: "`r list()`"
+  risk_breaks: "`r c(0.3, 0.7)`"
+  set_title: "Scorecard"
+title: "`r params$set_title`"
+subtitle: 'MPN Scorecard'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
+                      fig.height = 8, fig.width = 10, ft.keepnext = FALSE)
+library(dplyr)
+library(flextable)
+set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4)
+```
+
+```{r setup_data}
+formatted_pkg_scores <- params$pkg_scores
+risk_breaks <- params$risk_breaks
+metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
+```
+
+<br>
+
+This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
+
+## Overview
+
+```{r}
+format_overall_scores(formatted_pkg_scores)
+```
+
+\newpage
+
+## Details
+
+### Documentation, Maintenance & Transparency
+```{r, raw scores}
+format_package_details(formatted_pkg_scores)
+```
+
+### Testing
+```{r}
+format_testing_scores(formatted_pkg_scores$formatted$scores$testing, risk_breaks)
+```
+
+\newpage
+
+## System Info
+```{r}
+format_metadata(formatted_pkg_scores$metadata)
+```

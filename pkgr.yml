@@ -1,0 +1,19 @@
+Version: 1
+Descriptions:
+  - DESCRIPTION
+
+Packages:
+  - devtools
+  - pkgdown
+  - styler
+  # - XML
+  # - readr
+
+Repos:
+  - CRAN: https://cran.rstudio.com
+  - MPN: https://mpn.metworx.com/snapshots/stable/2022-10-20 # used for metrum packages
+
+Lockfile:
+  Type: renv
+
+

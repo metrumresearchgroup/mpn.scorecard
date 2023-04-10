@@ -4,7 +4,28 @@
 \alias{score_pkg}
 \title{Generate scorecard metrics for package}
 \usage{
-score_pkg(pkg, out_dir, pkg_info = NULL)
+score_pkg(
+  pkg,
+  out_dir,
+  pkg_info = NULL,
+  overwrite = FALSE,
+  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE)
+)
+}
+\arguments{
+\item{pkg}{a package tarball}
+
+\item{out_dir}{output directory for saving results and json}
+
+\item{pkg_info}{optional manually filled info}
+
+\item{overwrite}{Logical (T/F). Whether or not to overwrite existing scorecard results}
+
+\item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck}. \strong{Note} that the tarball \code{path} and \code{error_on = "never"}
+are automatically appended to this list.}
+}
+\value{
+a file path to a json file containing all scores
 }
 \description{
 Returns collected metrics as a named list, and also writes

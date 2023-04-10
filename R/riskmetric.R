@@ -1,14 +1,25 @@
 
 
 #' Format riskmetric results into scorecard list
-create_score_list_from_riskmetric <- function(pkgpath) {
-  risk_res <- pkg_riskmetric(pkgpath)
+#'
+#' @param pkg a package tarball
+#' @param pkg_source_path path to package source code (untarred)
+#' @param pkg_name character string defining the package name
+#' @param pkg_ver character string defining the package version
+#' @param out_dir output directory for saving results
+#'
+#' @keywords internal
+create_score_list_from_riskmetric <- function(pkg, pkg_source_path, pkg_name, pkg_ver, out_dir) {
+  risk_res <- pkg_riskmetric(pkg_source_path)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top
   res <- list(
-    pkg_name = risk_res$ref$name,
-    pkg_version = as.character(risk_res$ref$version),
+    pkg_name = pkg_name,
+    pkg_version = pkg_ver,
+    out_dir = out_dir,
+    pkg_source_path = pkg_source_path,
+    md5sum_check = tools::md5sum(pkg),
     # for results
     scores = list(
       testing = list(),
@@ -40,10 +51,12 @@ create_score_list_from_riskmetric <- function(pkgpath) {
 
 #' Run all relevant riskmetric checks
 #'
-#' and return raw riskmetric outputs
-pkg_riskmetric <- function(pkg) {
+#' @inheritParams create_score_list_from_riskmetric
+#'
+#' @returns raw riskmetric outputs
+pkg_riskmetric <- function(pkg_source_path) {
 
-  pref <- riskmetric::pkg_ref(pkg)
+  pref <- riskmetric::pkg_ref(pkg_source_path)
 
   passess <- riskmetric::pkg_assess(
     pref,
@@ -85,7 +98,7 @@ riskmetric_tibble <- function(pkg_risk) {
                  value = purrr::map_dbl(unname(res_list), ~ {
                    attributes(.x) <- NULL
                    .x
-                 })) %>% dplyr::rename(!!basename(pkg) := value)
+                 })) %>% dplyr::rename(!!basename(.data$pkg) := .data$value)
 }
 
 # extract score value from riskmetric score object
