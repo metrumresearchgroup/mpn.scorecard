@@ -4,24 +4,12 @@
 \alias{create_score_list_from_riskmetric}
 \title{Format riskmetric results into scorecard list}
 \usage{
-create_score_list_from_riskmetric(
-  pkg,
-  pkg_source_path,
-  pkg_name,
-  pkg_ver,
-  out_dir
-)
+create_score_list_from_riskmetric(res, pkg_source_path)
 }
 \arguments{
-\item{pkg}{a package tarball}
+\item{res}{a named list containing the initial build up of score elements}
 
 \item{pkg_source_path}{path to package source code (untarred)}
-
-\item{pkg_name}{character string defining the package name}
-
-\item{pkg_ver}{character string defining the package version}
-
-\item{out_dir}{output directory for saving results}
 }
 \description{
 Format riskmetric results into scorecard list
