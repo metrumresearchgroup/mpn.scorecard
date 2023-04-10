@@ -1,11 +1,11 @@
 ---
 output:
   pdf_document:
-    latex_engine: xelatex
     toc: true
     toc_depth: 3
 params:
   pkg_scores: "`r list()`"
+  mitigation_block: "r NULL"
   risk_breaks: "`r c(0.3, 0.7)`"
   set_title: "Scorecard"
 title: "`r params$set_title`"
@@ -26,11 +26,11 @@ risk_breaks <- params$risk_breaks
 metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
 ```
 
-<br>
-
-This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
+<br/>
 
 ## Overview
+
+This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
 
 ```{r}
 format_overall_scores(formatted_pkg_scores)
@@ -51,6 +51,11 @@ format_testing_scores(formatted_pkg_scores$formatted$scores$testing, risk_breaks
 ```
 
 \newpage
+
+```{r, results = "asis"}
+format_mitigation(params$mitigation_block)
+```
+
 
 ## System Info
 ```{r}

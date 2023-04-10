@@ -31,6 +31,13 @@ render_scorecard <- function(
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
+  # mitigation (if any)
+  if(!is.null(mitigation)){
+    mitigation_block <- readLines(mitigation)
+  }else{
+    mitigation_block <- NULL
+  }
+
   rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = pkg_scores$out_dir,
@@ -38,6 +45,7 @@ render_scorecard <- function(
     quiet = TRUE,
     params = list(
       pkg_scores = formatted_pkg_scores,
+      mitigation_block = mitigation_block,
       risk_breaks = risk_breaks,
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
     )

@@ -245,3 +245,36 @@ format_metadata <- function(metadata_list){
 
   return(system_info_flextable)
 }
+
+
+#' Format vector of mitigation text
+#'
+#' @param mitigation_block character vector of mitigation text. Can include bullets
+#'
+#' @keywords internal
+format_mitigation <- function(mitigation_block){
+  header_str <- "\n## Mitigation\n\n"
+
+  # If specified in bullet format, we need to make sure there is a new line after the header
+  # to be formatted correctly
+  starts_with_bullet <- function(str){
+    grepl("^[[:space:]]*[-+*]", str)
+  }
+
+  if(is.null(mitigation_block)){
+    cat(NULL)
+  }else{
+    if(length(mitigation_block) > 0){
+      cat(header_str)
+      for(i in seq_along(mitigation_block)){
+        if(i > 1){
+          if(starts_with_bullet(mitigation_block[[i]]) && !starts_with_bullet(mitigation_block[[i-1]]) && nzchar(mitigation_block[[i-1]])){
+            cat("\n")
+          }
+        }
+        cat(mitigation_block[[i]])
+        cat("\n")
+      }
+    }
+  }
+}
