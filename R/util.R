@@ -46,15 +46,8 @@ get_pkg_desc <- function(pkg_source_path, fields = NULL){
 
   pkg_desc_path <- file.path(pkg_source_path, "DESCRIPTION")
 
-  desc_file <- tryCatch(read.dcf(pkg_desc_path, fields = fields)[1L,], error = identity)
-  if (!inherits(desc_file, "error")) {
-    pkg_desc <- as.list(desc_file)
-  }else{
-    message(gettextf("reading DESCRIPTION for package %s failed with message:\n  %s",
-                     sQuote(basename(dirname(pkg_desc_path))), conditionMessage(desc_file)),
-            domain = NA)
-    pkg_desc <- NULL # TODO: maybe add error handling for this later
-  }
+  desc_file <- read.dcf(pkg_desc_path, fields = fields)[1L,]
+  pkg_desc <- as.list(desc_file)
 
   return(pkg_desc)
 }

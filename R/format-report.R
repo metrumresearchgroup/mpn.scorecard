@@ -84,8 +84,8 @@ format_overall_scores <- function(formatted_pkg_scores){
   # Create overall table
   overall_tbl <- formatted_pkg_scores$formatted$overall %>%
     mutate(
-      Risk = factor(Risk, levels = c("High Risk", "Medium Risk", "Low Risk")),
-      Category = stringr::str_to_title(Category)
+      Risk = factor(.data$Risk, levels = c("High Risk", "Medium Risk", "Low Risk")),
+      Category = stringr::str_to_title(.data$Category)
     ) %>% as.data.frame()
 
   overall_flextable <-
@@ -93,14 +93,14 @@ format_overall_scores <- function(formatted_pkg_scores){
       overall_tbl,
       show_coltype = FALSE
     ) %>%
-    bg(bg = "#ffffff", part = "all") %>%
-    align(align = "center", part = "all") %>%
-    color(color = "black", part = "body") %>%
-    color(color = "darkgreen", j = 2, i = ~ `Risk` == 'Low Risk') %>%
-    color(color = "orange", j = 2, i = ~ `Risk` == 'Medium Risk') %>%
-    color(color = "red", j = 2, i = ~ `Risk` == 'High Risk') %>%
-    set_header_labels(Category = "Category", Risk = "Risk Level") %>%
-    set_caption("Package Risk Metrics Summary")
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body") %>%
+    flextable::color(color = "darkgreen", j = 2, i = ~ `Risk` == 'Low Risk') %>%
+    flextable::color(color = "orange", j = 2, i = ~ `Risk` == 'Medium Risk') %>%
+    flextable::color(color = "red", j = 2, i = ~ `Risk` == 'High Risk') %>%
+    flextable::set_header_labels(Category = "Category", Risk = "Risk Level") %>%
+    flextable::set_caption("Package Risk Metrics Summary")
 
   return(overall_flextable)
 }
@@ -113,12 +113,14 @@ format_overall_scores <- function(formatted_pkg_scores){
 #'
 #' @returns a character string in the format of <category>: <risk>
 #'
+#' @importFrom dplyr mutate
+#'
 #' @keywords internal
 get_overall_labels <- function(formatted_pkg_scores, category){
   overall_df <- formatted_pkg_scores$formatted$overall
   checkmate::assert_true(category %in% unique(overall_df$Category))
   overall_df <- overall_df %>% mutate(
-    category_label = paste0(stringr::str_to_title(Category), ": ", Risk)
+    category_label = paste0(stringr::str_to_title(.data$Category), ": ", .data$Risk)
   )
   cat_label <- overall_df$category_label[grep(category, overall_df$Category)]
   return(cat_label)
@@ -148,25 +150,25 @@ format_package_details <- function(formatted_pkg_scores){
   scores_df <- rbind(maintenance_df, transparency_df, documentation_df) %>%
     dplyr::mutate(
       Result = map_answer(.data$Result),
-      Category = purrr::map_chr(Category, ~ get_overall_labels(formatted_pkg_scores, .x))
+      Category = purrr::map_chr(.data$Category, ~ get_overall_labels(formatted_pkg_scores, .x))
     )
 
   # Group by category
-  scores_df <- as_grouped_data(scores_df, groups = "Category")
+  scores_df <- flextable::as_grouped_data(scores_df, groups = "Category")
 
   category_scores_flextable <-
     flextable_formatted(
       scores_df,
       hide_grouplabel = TRUE
     ) %>%
-    bg(bg = "#ffffff", part = "all") %>%
-    align(align = "center", part = "all") %>%
-    color(color = "black", part = "body") %>%
-    color(color = "darkgreen", j = 2, i = ~ Result == "Yes") %>%
-    color(color = "darkred", j = 2, i = ~ Result == "No") %>%
-    align(i = ~ !is.na(Category), align = "center") %>%
-    bold(i = ~ !is.na(Category)) %>%
-    set_caption("Package Details")
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body") %>%
+    flextable::color(color = "darkgreen", j = 2, i = ~ Result == "Yes") %>%
+    flextable::color(color = "darkred", j = 2, i = ~ Result == "No") %>%
+    flextable::align(i = ~ !is.na(Category), align = "center") %>%
+    flextable::bold(i = ~ !is.na(Category)) %>%
+    flextable::set_caption("Package Details")
 
   return(category_scores_flextable)
 }
@@ -188,7 +190,7 @@ format_testing_scores <- function(testing_df, risk_breaks){
         Criteria == "covr" ~ paste0(Result*100, "%"),
         Result %in% c(0, 0.5, 1) ~ map_answer(.data$Result)
       ),
-      Criteria = ifelse(Criteria == "check", "R CMD CHECK passing", "Coverage")
+      Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
     )
 
   testing_scores_flextable <-
@@ -197,13 +199,13 @@ format_testing_scores <- function(testing_df, risk_breaks){
       as_flextable = FALSE,
       col_keys = c("Criteria", "Result")
     ) %>%
-    bg(bg = "#ffffff", part = "all") %>%
-    align(align = "center", part = "all") %>%
-    color(color = "black", part = "body") %>%
-    color(color = "darkgreen", j = 2, i = ~ Risk == "Low Risk") %>%
-    color(color = "orange", j = 2, i = ~ Risk == "Medium Risk") %>%
-    color(color = "darkred", j = 2, i = ~ Risk == "High Risk") %>%
-    set_caption(paste("Testing:", unique(testing_df$Risk)))
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body") %>%
+    flextable::color(color = "darkgreen", j = 2, i = ~ Risk == "Low Risk") %>%
+    flextable::color(color = "orange", j = 2, i = ~ Risk == "Medium Risk") %>%
+    flextable::color(color = "darkred", j = 2, i = ~ Risk == "High Risk") %>%
+    flextable::set_caption(paste("Testing:", unique(testing_df$Risk)))
 
   return(testing_scores_flextable)
 }
@@ -235,11 +237,11 @@ format_metadata <- function(metadata_list){
       all_info_tbl,
       show_coltype = FALSE
     ) %>%
-    bg(bg = "#ffffff", part = "all") %>%
-    align(align = "center", part = "all") %>%
-    color(color = "black", part = "body") %>%
-    set_header_labels(Category = "Category", Value = "Value") %>%
-    set_caption("System Information")
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body") %>%
+    flextable::set_header_labels(Category = "Category", Value = "Value") %>%
+    flextable::set_caption("System Information")
 
   return(system_info_flextable)
 }

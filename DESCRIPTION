@@ -10,11 +10,13 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     checkmate,
+    covr,
     dplyr,
     flextable,
     fs,
     glue,
     here,
+    jsonlite,
     knitr,
     magrittr,
     markdown,
@@ -23,6 +25,7 @@ Imports:
     riskmetric,
     rlang,
     rmarkdown,
+    stringr,
     tibble
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3

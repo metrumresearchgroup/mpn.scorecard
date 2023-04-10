@@ -98,7 +98,7 @@ riskmetric_tibble <- function(pkg_risk) {
                  value = purrr::map_dbl(unname(res_list), ~ {
                    attributes(.x) <- NULL
                    .x
-                 })) %>% dplyr::rename(!!basename(pkg) := value)
+                 })) %>% dplyr::rename(!!basename(.data$pkg) := .data$value)
 }
 
 # extract score value from riskmetric score object

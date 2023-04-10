@@ -35,7 +35,7 @@ score_pkg <- function(
   on.exit(unlink(dirname(pkg_source_path), recursive = TRUE), add = TRUE)
 
   # Get package name and version
-  pkg_desc <- get_pkg_desc(pkg_source_path)
+  pkg_desc <- get_pkg_desc(pkg_source_path, fields = c("Package", "Version"))
   pkg_name <- pkg_desc$Package
   pkg_ver <- pkg_desc$Version
   pkg_name_ver <- paste0(pkg_name, "_", pkg_ver)
