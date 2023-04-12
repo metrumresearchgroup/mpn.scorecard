@@ -4,16 +4,10 @@
 \alias{format_testing_scores}
 \title{Format testing scores}
 \usage{
-format_testing_scores(testing_df, risk_breaks)
+format_testing_scores(formatted_pkg_scores)
 }
 \arguments{
-\item{testing_df}{dataframe returned by \code{formatted_pkg_scores$formatted$scores$testing}}
-
-\item{risk_breaks}{A numeric vector of length 2, with both numbers being
-between 0 and 1. These are used for the "breaks" when classifying scores
-into Risk categories. For example, for the default value of \code{c(0.3, 0.7)},
-for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0.7}
-is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
+\item{formatted_pkg_scores}{list containing all scores}
 }
 \value{
 a formatted flextable object

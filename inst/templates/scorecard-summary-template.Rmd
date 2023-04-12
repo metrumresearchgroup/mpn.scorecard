@@ -1,0 +1,24 @@
+---
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+params:
+  pkg_scores: "`r list()`"
+  set_subtitle: "MPN snapshot xxxx-xx-xx"
+title: "Scorecard Summary"
+subtitle: "`r params$set_subtitle`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
+                      fig.height = 8, fig.width = 10, ft.keepnext = FALSE)
+library(dplyr)
+library(flextable)
+set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4)
+```
+
+
+# Summary
+This document contains evidence that all packages on MPN Snapshot <snapshot date> are validated for use on <Metworx version> and contains a summary of proof points in support of the Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community. 
+

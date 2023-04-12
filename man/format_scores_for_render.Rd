@@ -2,12 +2,12 @@
 % Please edit documentation in R/render-scorecard.R
 \name{format_scores_for_render}
 \alias{format_scores_for_render}
-\title{Prepare the raw scores to be rendered into PDF}
+\title{Prepare the raw risk scores to be rendered into PDF}
 \usage{
 format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
 }
 \arguments{
-\item{pkg_scores}{named list of all scores}
+\item{pkg_scores}{named list of all scores and risks}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores
@@ -16,6 +16,6 @@ for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0
 is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 }
 \description{
-Prepare the raw scores to be rendered into PDF
+Formats the risks, not the original scores
 }
 \keyword{internal}

@@ -8,6 +8,7 @@
 #'        If specified, set these column widths before fitting to word document
 #' @param doc_type Word, PDF, or HTML. Controls font size
 #' @param as_flextable logical (T/F). if `TRUE`, use `as_flextable` instead of `flextable`, which has different args and is necessary for grouped data
+#' @param digits numeric. Number of digits to round to. If `NULL`, and `as_flextable = TRUE`, flextable will round to one digit.
 #' @param ... additional args to be passed to `as_flextable` or `flextable`
 #'
 #' @details
@@ -33,6 +34,7 @@ flextable_formatted <- function(tab,
                                 column_width = NULL,
                                 doc_type = "PDF",
                                 as_flextable = TRUE,
+                                digits = NULL,
                                 ...){
 
   if(isTRUE(as_flextable)){
@@ -41,6 +43,11 @@ flextable_formatted <- function(tab,
   }else{
     tab_out <- tab %>% flextable::flextable(...) #%>%
     # flextable::theme_vanilla()
+  }
+
+  if(!is.null(digits)){
+    checkmate::assert_numeric(digits)
+    tab_out <- tab_out %>% colformat_double(digits = digits)
   }
 
 
@@ -84,23 +91,73 @@ format_overall_scores <- function(formatted_pkg_scores){
   # Create overall table
   overall_tbl <- formatted_pkg_scores$formatted$overall %>%
     mutate(
-      Risk = factor(.data$Risk, levels = c("High Risk", "Medium Risk", "Low Risk")),
+      Risk = factor(.data$Risk, levels = RISK_LEVELS),
       Category = stringr::str_to_title(.data$Category)
     ) %>% as.data.frame()
 
   overall_flextable <-
     flextable_formatted(
       overall_tbl,
-      show_coltype = FALSE
+      show_coltype = FALSE,
+      digits = 2
     ) %>%
     flextable::bg(bg = "#ffffff", part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body") %>%
-    flextable::color(color = "darkgreen", j = 2, i = ~ `Risk` == 'Low Risk') %>%
-    flextable::color(color = "orange", j = 2, i = ~ `Risk` == 'Medium Risk') %>%
-    flextable::color(color = "red", j = 2, i = ~ `Risk` == 'High Risk') %>%
+    # Risk Styling
+    flextable::color(color = "darkgreen", j = 3, i = ~ `Risk` == 'Low Risk') %>%
+    flextable::color(color = "orange", j = 3, i = ~ `Risk` == 'Medium Risk') %>%
+    flextable::color(color = "darkred", j = 3, i = ~ `Risk` == 'High Risk') %>%
+    # Error Styling
+    flextable::bold( j = 2, i = ~ `Risk` == 'Blocking') %>%
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
+    flextable::bold( j = 2, i = ~ `Risk` == 'NA - unexpected') %>%
+    # Header/Caption
     flextable::set_header_labels(Category = "Category", Risk = "Risk Level") %>%
     flextable::set_caption("Package Risk Metrics Summary")
+
+  # Add minibars
+  formatter_fn <- function(x){format(round(x, 2), nsmall = 2)}
+  overall_flextable <- overall_flextable %>%
+    flextable::compose(
+      j = 2, i = ~ `Risk` == 'Low Risk',
+      value = flextable::as_paragraph(
+        flextable::as_chunk(
+          `Weighted Score`, props = flextable::fp_text_default(color = "black"),
+          formatter = formatter_fn
+        ),
+        " ",
+        flextable::minibar(value = `Weighted Score`, max = 1, barcol = "darkgreen", bg = "transparent", height = .15)
+      )
+    ) %>%
+    flextable::compose(
+      j = 2, i = ~ `Risk` == 'Medium Risk',
+      value = flextable::as_paragraph(
+        flextable::as_chunk(
+          `Weighted Score`, props = flextable::fp_text_default(color = "black"),
+          formatter = formatter_fn
+        ),
+        " ",
+        flextable::minibar(value = `Weighted Score`, max = 1, barcol = "orange", bg = "transparent", height = .15)
+      )
+    ) %>%
+    flextable::compose(
+      j = 2, i = ~ `Risk` == 'High Risk',
+      value = flextable::as_paragraph(
+        flextable::as_chunk(
+          `Weighted Score`, props = flextable::fp_text_default(color = "black"),
+          formatter = formatter_fn
+        ),
+        " ",
+        flextable::minibar(value = `Weighted Score`, max = 1, barcol = "darkred", bg = "transparent", height = .15)
+      )
+    )
+
+
+  # Add hline before overall section and bold it (should use dplyr::lag() I would think, but I guess flextable is weird)
+  overall_flextable <- overall_flextable %>%
+    flextable::hline(i = ~ dplyr::lead(`Category` == 'Overall'),  border = officer::fp_border(width = 1))  %>%
+    flextable::bold(j = 1:3, i = ~ `Category` == 'Overall')
 
   return(overall_flextable)
 }
@@ -110,19 +167,25 @@ format_overall_scores <- function(formatted_pkg_scores){
 #'
 #' @param formatted_pkg_scores list containing all scores
 #' @param category one of `c('testing', 'documentation', 'maintenance', 'transparency', 'overall')`
+#' @param risk_only Logical (T/F). If `TRUE`, return just the overall risk
 #'
 #' @returns a character string in the format of <category>: <risk>
 #'
 #' @importFrom dplyr mutate
 #'
 #' @keywords internal
-get_overall_labels <- function(formatted_pkg_scores, category){
+get_overall_labels <- function(formatted_pkg_scores, category, risk_only = FALSE){
   overall_df <- formatted_pkg_scores$formatted$overall
   checkmate::assert_true(category %in% unique(overall_df$Category))
   overall_df <- overall_df %>% mutate(
     category_label = paste0(stringr::str_to_title(.data$Category), ": ", .data$Risk)
   )
-  cat_label <- overall_df$category_label[grep(category, overall_df$Category)]
+  if(isTRUE(risk_only)){
+    cat_label <- overall_df$Risk[grep(category, overall_df$Category)]
+  }else{
+    cat_label <- overall_df$category_label[grep(category, overall_df$Category)]
+  }
+
   return(cat_label)
 }
 
@@ -132,43 +195,59 @@ get_overall_labels <- function(formatted_pkg_scores, category){
 #' Formats Documentation, Maintenance and Transparency scores
 #'
 #' @param formatted_pkg_scores list containing all scores
+#' @param color_headers Logical (T/F). If `TRUE`, color the headers based on risk level
 #'
 #' @returns a formatted flextable object
 #'
 #' @keywords internal
-format_package_details <- function(formatted_pkg_scores){
+format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
 
   package_details_list <- formatted_pkg_scores$formatted$scores
   # Get the scores for each category
   # TODO: assign risk to each category label (i.e. Maintenance: Low Risk) Need to figure out weighting first
-  maintenance_df <- package_details_list$maintenance %>% mutate(Category = "maintenance")
-  transparency_df <- package_details_list$transparency %>% mutate(Category = "transparency")
-  documentation_df <- package_details_list$documentation %>% mutate(Category = "documentation")
 
-  # Combine the data frames into one. Risk column is for styling only (not displayed),
-  # and is necessary because of the environment flextable uses (cant reference outside objects)
-  scores_df <- rbind(maintenance_df, transparency_df, documentation_df) %>%
-    dplyr::mutate(
-      Result = map_answer(.data$Result),
-      Category = purrr::map_chr(.data$Category, ~ get_overall_labels(formatted_pkg_scores, .x))
+
+  scores_df <- purrr::imap(package_details_list, ~ {
+    .x %>% mutate(
+      Category = .y,
+      risk_header = get_overall_labels(formatted_pkg_scores, .y)
     )
+  }) %>% purrr::list_rbind() %>%
+    mutate(Risk = factor(.data$Risk, levels = RISK_LEVELS))
+
+  # Testing is a separate table (for now)
+  scores_df <- scores_df %>% filter(Category != "testing")
+
+  # Format Table
+  scores_df <- scores_df %>% mutate(Category = risk_header) %>%
+    dplyr::select(-c(risk_header, "Raw Score"))
 
   # Group by category
-  scores_df <- flextable::as_grouped_data(scores_df, groups = "Category")
+  scores_df_flex <- flextable::as_grouped_data(scores_df, groups = "Category")
 
   category_scores_flextable <-
     flextable_formatted(
-      scores_df,
+      scores_df_flex,
       hide_grouplabel = TRUE
     ) %>%
     flextable::bg(bg = "#ffffff", part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body") %>%
-    flextable::color(color = "darkgreen", j = 2, i = ~ Result == "Yes") %>%
-    flextable::color(color = "darkred", j = 2, i = ~ Result == "No") %>%
+    # Individual Risk Colors
+    flextable::color(color = "darkgreen", j = 3, i = ~ Result == "Yes") %>%
+    flextable::color(color = "darkred", j = 3, i = ~ Result == "No") %>%
+    # Alignment and caption
     flextable::align(i = ~ !is.na(Category), align = "center") %>%
     flextable::bold(i = ~ !is.na(Category)) %>%
     flextable::set_caption("Package Details")
+
+  if(isTRUE(color_headers)){
+    # Header Risk Colors
+    category_scores_flextable <- category_scores_flextable %>%
+      flextable::color(color = "darkgreen", j = 1, i = ~ grepl("Low Risk", Category)) %>%
+      flextable::color(color = "orange", j = 1, i = ~ grepl("Medium Risk", Category)) %>%
+      flextable::color(color = "darkred", j = 1, i = ~ grepl("High Risk", Category))
+  }
 
   return(category_scores_flextable)
 }
@@ -176,36 +255,45 @@ format_package_details <- function(formatted_pkg_scores){
 
 #' Format testing scores
 #'
-#' @param testing_df dataframe returned by `formatted_pkg_scores$formatted$scores$testing`
-#' @inheritParams render_scorecard
+#' @param formatted_pkg_scores list containing all scores
 #'
 #' @returns a formatted flextable object
 #'
 #' @keywords internal
-format_testing_scores <- function(testing_df, risk_breaks){
-  testing_df <- testing_df %>%
-    dplyr::mutate(
-      Risk = map_risk(.data$Result, risk_breaks, desc = TRUE),
-      Result = dplyr::case_when(
-        Criteria == "covr" ~ paste0(Result*100, "%"),
-        Result %in% c(0, 0.5, 1) ~ map_answer(.data$Result)
-      ),
-      Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
-    )
+format_testing_scores <- function(formatted_pkg_scores){
+
+  testing_df <- formatted_pkg_scores$formatted$scores$testing %>%
+    mutate(Risk = factor(.data$Risk, levels = RISK_LEVELS))
+
+  # Get overall risk for caption
+  flex_caption <- get_flex_caption(formatted_pkg_scores, "testing")
 
   testing_scores_flextable <-
     flextable_formatted(
       testing_df,
       as_flextable = FALSE,
-      col_keys = c("Criteria", "Result")
+      col_keys = c("Criteria", "Result", "Risk")
     ) %>%
     flextable::bg(bg = "#ffffff", part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body") %>%
-    flextable::color(color = "darkgreen", j = 2, i = ~ Risk == "Low Risk") %>%
-    flextable::color(color = "orange", j = 2, i = ~ Risk == "Medium Risk") %>%
-    flextable::color(color = "darkred", j = 2, i = ~ Risk == "High Risk") %>%
-    flextable::set_caption(paste("Testing:", unique(testing_df$Risk)))
+    # Individual Risk Colors
+    flextable::color(color = "darkgreen", j = 3, i = ~ Risk == "Low Risk") %>%
+    flextable::color(color = "orange", j = 3, i = ~ Risk == "Medium Risk") %>%
+    flextable::color(color = "darkred", j = 3, i = ~ Risk == "High Risk") %>%
+    # Error Styling
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
+    flextable::bold( j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::set_caption(flex_caption)
+
+  # testing_scores_flextable <- testing_scores_flextable %>%
+  #   flextable::compose(
+  #     j = 2, i = ~ Result == "Failed",
+  #     value = flextable::as_paragraph(
+  #       `Result`, " ", flextable::as_chunk("\u274c", props = flextable::fp_text_default(color = "red", font.size = 9))
+  #     )
+  #   )
+
 
   return(testing_scores_flextable)
 }
@@ -277,4 +365,32 @@ format_mitigation <- function(mitigation_block){
       }
     }
   }
+}
+
+
+#' Create a flextable caption colored by risk
+#'
+#' @inheritParams get_overall_labels
+#'
+#' @returns a flextable caption
+#'
+#' @keywords internal
+get_flex_caption <- function(formatted_pkg_scores, category){
+  overall_df <- formatted_pkg_scores$formatted$overall
+  checkmate::assert_true(category %in% unique(overall_df$Category))
+
+  tot_risk <- get_overall_labels(formatted_pkg_scores, "testing", risk_only = TRUE)
+  cap_color <- dplyr::case_when(
+    tot_risk == "Low Risk" ~ "darkgreen",
+    tot_risk == "Medium Risk" ~ "orange",
+    tot_risk == "High Risk" ~ "darkred",
+    TRUE ~ "black"
+  )
+  flex_caption <- flextable::as_paragraph(
+    flextable::as_chunk(
+      get_overall_labels(formatted_pkg_scores, "testing"),
+      props = flextable::fp_text_default(color = cap_color)
+    )
+  )
+  return(flex_caption)
 }

@@ -38,7 +38,7 @@ render_scorecard <- function(
     mitigation_block <- NULL
   }
 
-  rmarkdown::render(
+  rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = pkg_scores$out_dir,
     output_file = basename(out_file),
@@ -52,13 +52,17 @@ render_scorecard <- function(
   )
 
   # Render to PDF, invisibly return the path to the PDF
+  return(invisible(rendered_file))
 
 }
 
 
-#' Prepare the raw scores to be rendered into PDF
+#' Prepare the raw risk scores to be rendered into PDF
 #'
-#' @param pkg_scores named list of all scores
+#' Formats the risks, not the original scores
+#'
+#'
+#' @param pkg_scores named list of all scores and risks
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
@@ -67,25 +71,54 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
   # build list of formatted tibbles
   pkg_scores$formatted <- list()
 
-  pkg_scores$formatted$overall <- purrr::imap(pkg_scores$overall, ~{
+  overall_scores <- purrr::imap(pkg_scores$overall$scores, ~{
     data.frame(
-      Category = .y,
-      risk_score = .x
+      Category = ifelse(.y=="weighted_score", "overall", .y),
+      weighted_score = ifelse(.x == "NA", NA_integer_, .x)
+    )
+  }) %>% purrr::list_rbind()
+
+
+  overall_risk <- purrr::imap(pkg_scores$overall$risk, ~{
+    data.frame(
+      Category = ifelse(.y=="weighted_risk", "overall", .y),
+      risk_score = ifelse(.x == "NA", NA_integer_, .x)
     )
   }) %>% purrr::list_rbind() %>%
     dplyr::mutate(Risk = map_risk(.data$risk_score, risk_breaks)) %>%
     dplyr::select(-"risk_score")
 
+   pkg_scores$formatted$overall_risk <- dplyr::left_join(overall_scores, overall_risk) %>%
+     dplyr::rename(`Weighted Score` = weighted_score)
+
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
-  pkg_scores$formatted$scores <- purrr::map(pkg_scores$scores, function(category_list) {
-    purrr::imap(category_list, ~{
+  pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
+    formatted_df <- purrr::imap(category_list, ~{
       data.frame(
         Criteria = .y,
-        Result = .x
-      )
+        raw_score = ifelse(.x == "NA", NA_integer_, .x)
+      ) %>%
+        mutate(
+          Result = map_answer(.data$raw_score),
+          Risk = map_risk(.data$raw_score, risk_breaks, desc = TRUE)
+        )
     }) %>%
       purrr::set_names(names(category_list)) %>%
       purrr::list_rbind()
+
+    # Additional formatting for testing data
+    if(category_name == "testing"){
+      formatted_df <- formatted_df %>% mutate(
+          Result = ifelse(
+            (Criteria == "covr" & !is.na(raw_score)), paste0(raw_score*100, "%"), Result
+          ),
+          Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
+        )
+    }
+
+    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = raw_score)
+
+    formatted_df
   })
 
   return(pkg_scores)
@@ -106,23 +139,31 @@ map_risk <- function(scores, risk_breaks, desc = FALSE) {
   if(isTRUE(desc)){
     risk_breaks <- sort(risk_breaks, decreasing = TRUE)
     purrr::map_chr(scores, ~ {
-      if (.x > risk_breaks[1]) {
+      if(is.na(.x)) {
+        "Blocking"
+      } else if (.x > risk_breaks[1]) {
         "Low Risk"
-      } else if (.x > risk_breaks[2]) {
+      } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
         "Medium Risk"
-      } else {
+      } else if(.x < risk_breaks[2]) {
         "High Risk"
+      } else {
+        "NA - unexpected"
       }
     })
   }else{
     risk_breaks <- sort(risk_breaks)
     purrr::map_chr(scores, ~ {
-      if (.x < risk_breaks[1]) {
+      if(is.na(.x)) {
+        "Blocking"
+      } else if (.x < risk_breaks[1]) {
         "Low Risk"
-      } else if (.x < risk_breaks[2]) {
+      } else if (.x >= risk_breaks[1] && .x <= risk_breaks[2]) {
         "Medium Risk"
-      } else {
+      } else if(.x > risk_breaks[2]) {
         "High Risk"
+      } else {
+        "NA - unexpected"
       }
     })
   }
@@ -143,13 +184,15 @@ map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
   checkmate::assert_numeric(results, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
   purrr::map_chr(results, ~ {
-    if (.x == answer_breaks[1]) {
+    if(is.na(.x)) {
+      "Failed"
+    } else if (.x == answer_breaks[1]) {
       "No"
-    }else if(.x == answer_breaks[2]){
+    } else if(.x == answer_breaks[2]) {
       "Yes (warnings occurred)"
-    }else if(.x == answer_breaks[3]){
+    } else if(.x == answer_breaks[3]) {
       "Yes"
-    }else{
+    } else{
       .x
     }
   })

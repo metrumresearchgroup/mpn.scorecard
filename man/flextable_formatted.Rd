@@ -11,6 +11,7 @@ flextable_formatted(
   column_width = NULL,
   doc_type = "PDF",
   as_flextable = TRUE,
+  digits = NULL,
   ...
 )
 }
@@ -27,6 +28,8 @@ If specified, set these column widths before fitting to word document}
 \item{doc_type}{Word, PDF, or HTML. Controls font size}
 
 \item{as_flextable}{logical (T/F). if \code{TRUE}, use \code{as_flextable} instead of \code{flextable}, which has different args and is necessary for grouped data}
+
+\item{digits}{numeric. Number of digits to round to. If \code{NULL}, and \code{as_flextable = TRUE}, flextable will round to one digit.}
 
 \item{...}{additional args to be passed to \code{as_flextable} or \code{flextable}}
 }

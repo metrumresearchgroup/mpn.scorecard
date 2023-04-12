@@ -3,6 +3,11 @@ output:
   pdf_document:
     toc: true
     toc_depth: 3
+    latex_engine: xelatex
+    keep_tex: true
+header-includes:
+    - \usepackage{caption}
+    - \usepackage{lmodern}
 params:
   pkg_scores: "`r list()`"
   mitigation_block: "r NULL"
@@ -17,14 +22,18 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
                       fig.height = 8, fig.width = 10, ft.keepnext = FALSE)
 library(dplyr)
 library(flextable)
-set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4)
+# set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
+set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
 ```
 
 ```{r setup_data}
 formatted_pkg_scores <- params$pkg_scores
-risk_breaks <- params$risk_breaks
+risk_breaks <- params$risk_breaks # TODO: I think we should include the breaks/weightings used somewhere at some point?
 metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
 ```
+
+<!-- Remove 'Table x:' prefixes -->
+\captionsetup[table]{labelformat=empty}
 
 <br/>
 
@@ -47,7 +56,7 @@ format_package_details(formatted_pkg_scores)
 
 ### Testing
 ```{r}
-format_testing_scores(formatted_pkg_scores$formatted$scores$testing, risk_breaks)
+format_testing_scores(formatted_pkg_scores)
 ```
 
 \newpage
