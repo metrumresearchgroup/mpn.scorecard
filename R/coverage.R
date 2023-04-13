@@ -37,7 +37,7 @@ add_coverage <- function(pkg_source_path, out_dir) {
 
   if(is.na(total_cov)){
     check_path <- get_result_path(out_dir, "check.rds")
-    warning(glue::glue("R coverage failed. Read in the rcmdcheck output to see what went wrong: {check_path}"))
+    message(glue::glue("R coverage for {pkg_name} failed. Read in the rcmdcheck output to see what went wrong: {check_path}"))
   }
 
   return(total_cov)

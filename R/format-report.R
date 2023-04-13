@@ -125,7 +125,7 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
     flextable::align(align = "center", part = "all")
 
   # Add minibars
-  overall_flextable <- add_score_minibar(overall_flextable, column_index = 2, risk_col = "Risk", digits = digits)
+  overall_flextable <- add_score_minibar(overall_flextable, risk_col = "Risk", score_col = "Weighted Score", digits = digits)
 
   # Add hline before overall section and bold it (should use dplyr::lag() I would think, but I guess flextable is weird)
   overall_flextable <- overall_flextable %>%
@@ -369,7 +369,7 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
     flextable::color(color = "darkred", j = 4, i = ~ `Overall Risk` == "High Risk")
 
   # Add minibars
-  risk_summary_flex <- add_score_minibar(risk_summary_flex, column_index = 3, risk_col = "Overall Risk", digits = digits)
+  risk_summary_flex <- add_score_minibar(risk_summary_flex, risk_col = "Overall Risk", score_col = "Weighted Score", digits = digits)
 
   return(risk_summary_flex)
 }
@@ -409,8 +409,11 @@ get_flex_caption <- function(formatted_pkg_scores, category){
 #' Add flextable minibar to column
 #'
 #' @param flextable_df a flextable object
-#' @param column_index Index of column to apply the minibar to
+#' @param score_col The name of the column specifying the scores. Used to calculate
 #' @param risk_col The name of the column specifying the risks
+#' @param column_index Index of column to apply the minibar to. Traditionally, this should map to the index of `score_col`, but doesn't need to.
+#'        If `NULL`, will map to the index of `score_col`.
+#' @param color_text Logical (T/F). If `FALSE` color the text in `column_index` black. Otherwise use risk colors (green, orange, red)
 #' @param digits number of digits to round scores to.
 #'
 #' @details
@@ -420,13 +423,19 @@ get_flex_caption <- function(formatted_pkg_scores, category){
 #' `digits` must be specified, because the default behavior is rounding the column to one decimal
 #'
 #' @keywords internal
-add_score_minibar <- function(flextable_df, column_index = 2, risk_col = "Risk", digits = 2){
-
-  # Formatter function for rounding (this is required, otherwise it will round to one decimal)
-  formatter_fn <- function(x){format(round(x, digits), nsmall = digits)}
+add_score_minibar <- function(flextable_df,
+                              score_col = "Weighted Score",
+                              risk_col = "Risk",
+                              column_index = NULL,
+                              color_text = FALSE,
+                              digits = 2){
 
   base_table <- flextable_df$body$dataset
 
+  checkmate::assert_true(risk_col %in% names(base_table))
+  checkmate::assert_true(score_col %in% names(base_table))
+
+  # Get risk locations
   risk_types <- c("Low Risk", "Medium Risk", "High Risk")
   risk_locs <- purrr::map(risk_types, ~{
     locs <- which(base_table[[risk_col]]==.x)
@@ -434,18 +443,32 @@ add_score_minibar <- function(flextable_df, column_index = 2, risk_col = "Risk",
     locs
   }) %>% stats::setNames(risk_types)
 
+  # Handle column index
+  if(is.null(column_index)){
+    column_index <- grep(score_col, names(base_table))
+  }
 
+  # Handling of text to display next to minibar
+  text_display <- names(base_table)[column_index]
+
+  if(isTRUE(color_text)){
+    text_colors <- c("darkgreen", "orange", "darkred") %>% stats::setNames(risk_types)
+  }else{
+    text_colors <- rep("black", 3) %>% stats::setNames(risk_types)
+  }
+
+  # Add minibars
   if(!is.null(risk_locs$`Low Risk`)){
     flextable_df <- flextable_df %>%
       flextable::compose(
         j = column_index, i = risk_locs$`Low Risk`,
         value = flextable::as_paragraph(
           flextable::as_chunk(
-            `Weighted Score`, props = flextable::fp_text_default(color = "black"),
-            formatter = formatter_fn
+            !!sym(text_display), props = flextable::fp_text_default(color = text_colors[["Low Risk"]]),
+            digits = digits
           ),
           " ",
-          flextable::minibar(value = `Weighted Score`, max = 1, barcol = "darkgreen", bg = "transparent", height = .15)
+          flextable::minibar(value = !!sym(score_col), max = 1, barcol = "darkgreen", bg = "transparent", height = .15)
         )
       )
   }
@@ -456,11 +479,11 @@ add_score_minibar <- function(flextable_df, column_index = 2, risk_col = "Risk",
         j = column_index, i = risk_locs$`Medium Risk`,
         value = flextable::as_paragraph(
           flextable::as_chunk(
-            `Weighted Score`, props = flextable::fp_text_default(color = "black"),
-            formatter = formatter_fn
+            !!sym(text_display), props = flextable::fp_text_default(color = text_colors[["Medium Risk"]]),
+            digits = digits
           ),
           " ",
-          flextable::minibar(value = `Weighted Score`, max = 1, barcol = "orange", bg = "transparent", height = .15)
+          flextable::minibar(value = !!sym(score_col), max = 1, barcol = "orange", bg = "transparent", height = .15)
         )
       )
   }
@@ -471,11 +494,11 @@ add_score_minibar <- function(flextable_df, column_index = 2, risk_col = "Risk",
         j = column_index, i = risk_locs$`High Risk`,
         value = flextable::as_paragraph(
           flextable::as_chunk(
-            `Weighted Score`, props = flextable::fp_text_default(color = "black"),
-            formatter = formatter_fn
+            !!sym(text_display), props = flextable::fp_text_default(color = text_colors[["High Risk"]]),
+            digits = digits
           ),
           " ",
-          flextable::minibar(value = `Weighted Score`, max = 1, barcol = "darkred", bg = "transparent", height = .15)
+          flextable::minibar(value = !!sym(score_col), max = 1, barcol = "darkred", bg = "transparent", height = .15)
         )
       )
   }
