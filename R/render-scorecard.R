@@ -18,6 +18,7 @@ render_scorecard <- function(
 ) {
   # input checking
   checkmate::assert_string(json_path)
+  checkmate::assert_file_exists(json_path)
   checkmate::assert_string(mitigation, null.ok = TRUE)
   checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
@@ -25,6 +26,8 @@ render_scorecard <- function(
   pkg_scores <- jsonlite::fromJSON(json_path)
 
   checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
+
+
   out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
@@ -193,7 +196,7 @@ map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
     } else if(.x == answer_breaks[3]) {
       "Yes"
     } else{
-      .x
+      as.character(.x)
     }
   })
 }

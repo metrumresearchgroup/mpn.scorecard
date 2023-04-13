@@ -4,10 +4,12 @@
 \alias{format_overall_scores}
 \title{Format Overall Scores}
 \usage{
-format_overall_scores(formatted_pkg_scores)
+format_overall_scores(formatted_pkg_scores, digits = 2)
 }
 \arguments{
 \item{formatted_pkg_scores}{list containing all scores}
+
+\item{digits}{number of digits to round scores to.}
 }
 \value{
 a formatted flextable object
