@@ -15,19 +15,22 @@
 render_scorecard_summary <- function(json_paths,
                                      risk_breaks = c(0.3, 0.7),
                                      out_dir = NULL,
-                                     snapshot = NULL){
+                                     snapshot = NULL,
+                                     overwrite = TRUE){
 
   checkmate::assert_string(snapshot, null.ok = TRUE)
 
-  if(!is.null(snapshot)){
-    snapshot <- paste("Snapshot", snapshot)
-  }
-
+  # Format overall scores and risk
   overall_risk_summary <- build_risk_summary(json_paths, risk_breaks, out_dir)
 
-  rmarkdown::render(
+  # Output file
+  out_file <- get_result_path(overall_risk_summary$out_dir, "snapshot_summary.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
+
+  # Render rmarkdown
+  rendered_file <- rmarkdown::render(
     system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"),
-    output_dir = out_dir,
+    output_dir = overall_risk_summary$out_dir,
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(
@@ -35,6 +38,9 @@ render_scorecard_summary <- function(json_paths,
       set_subtitle = snapshot
     )
   )
+
+  # Render to PDF, invisibly return the path to the PDF
+  return(invisible(rendered_file))
 }
 
 
@@ -74,7 +80,7 @@ build_risk_summary <- function(json_paths, risk_breaks, out_dir){
 
   # Directories can be assumed to exist still since the json is stored there
   # Check that they all point to the same path if specified `out_dir` is `NULL`
-  out_dirs_stored <- overall_pkg_scores %>% pull(out_dir) %>% dirname() %>% unique()
+  out_dirs_stored <- overall_pkg_scores %>% dplyr::pull(out_dir) %>% dirname() %>% unique()
   if(length(out_dirs_stored) == 1 && is.null(out_dir)){
     out_dir <- out_dirs_stored
   }else if(!is.null(out_dir)){

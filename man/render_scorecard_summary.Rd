@@ -8,7 +8,8 @@ render_scorecard_summary(
   json_paths,
   risk_breaks = c(0.3, 0.7),
   out_dir = NULL,
-  snapshot = NULL
+  snapshot = NULL,
+  overwrite = TRUE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 \item{out_dir}{Output directory for saving scorecard summary. If \code{NULL}, assumes all \code{json_paths} point to the same output directory}
 
 \item{snapshot}{A report subtitle indicating the grouping of these packages, such as an MPN snapshot. See details.}
+
+\item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
 }
 \description{
 Render PDF summary of scorecards

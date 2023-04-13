@@ -37,7 +37,7 @@ metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METW
 
 <br/>
 
-## Overview
+# Overview
 
 This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
 
@@ -47,14 +47,14 @@ format_overall_scores(formatted_pkg_scores)
 
 \newpage
 
-## Details
+# Details
 
-### Documentation, Maintenance & Transparency
+## Documentation, Maintenance & Transparency
 ```{r, raw scores}
 format_package_details(formatted_pkg_scores)
 ```
 
-### Testing
+## Testing
 ```{r}
 format_testing_scores(formatted_pkg_scores)
 ```
@@ -66,7 +66,7 @@ format_mitigation(params$mitigation_block)
 ```
 
 
-## System Info
+# System Info
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)
 ```

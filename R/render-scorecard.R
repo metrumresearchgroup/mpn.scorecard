@@ -25,12 +25,6 @@ render_scorecard <- function(
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
 
-  checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
-
-
-  out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
-  check_exists_and_overwrite(out_file, overwrite)
-
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
@@ -41,6 +35,12 @@ render_scorecard <- function(
     mitigation_block <- NULL
   }
 
+  # Output file
+  checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
+  out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
+
+  # Render rmarkdown
   rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = pkg_scores$out_dir,
@@ -91,8 +91,8 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     dplyr::mutate(Risk = map_risk(.data$risk_score, risk_breaks)) %>%
     dplyr::select(-"risk_score")
 
-   pkg_scores$formatted$overall_risk <- dplyr::left_join(overall_scores, overall_risk) %>%
-     dplyr::rename(`Weighted Score` = weighted_score)
+  pkg_scores$formatted$overall_risk <- dplyr::left_join(overall_scores, overall_risk) %>%
+    dplyr::rename(`Weighted Score` = weighted_score)
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
   pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
@@ -112,11 +112,11 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     # Additional formatting for testing data
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
-          Result = ifelse(
-            (Criteria == "covr" & !is.na(raw_score)), paste0(raw_score*100, "%"), Result
-          ),
-          Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
-        )
+        Result = ifelse(
+          (Criteria == "covr" & !is.na(raw_score)), paste0(raw_score*100, "%"), Result
+        ),
+        Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
+      )
     }
 
     formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = raw_score)

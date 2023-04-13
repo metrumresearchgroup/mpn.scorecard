@@ -3,6 +3,15 @@ output:
   pdf_document:
     toc: true
     toc_depth: 3
+  bookdown::pdf_book:
+    citation_package: biblatex
+bibliography: ["sum_links.bib"]
+biblio-style: "apalike"
+link-citations: true
+# needed to make footnotes point to full bibliography
+csl: https://www.zotero.org/styles/chicago-fullnote-bibliography
+# needed to prevent additional bibliography section
+suppress-bibliography: true
 params:
   overall_risk_summary: "`r list()`"
   set_subtitle: "xxxx-xx-xx"
@@ -31,9 +40,11 @@ metworx_ver <- paste("Metworx", metadata$info$env_vars$METWORX_VERSION)
 This document contains evidence that all packages on MPN Snapshot `r params$set_subtitle` are validated for use on `r metworx_ver` and contains a summary of proof points in support of the Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community. 
 
 # Principles
-The validation process documented here relies heavily on principles articulated by the R Validation Hub, a cross-industry initiative whose mission is to enable the use of R by the bio-pharmaceutical industry in a regulatory setting. 
+The validation process documented here relies heavily on principles articulated by the R Validation Hub^[@R-Validation-Hub], a cross-industry initiative whose mission is to enable the use of R by the bio-pharmaceutical industry in a regulatory setting. 
 
-In their Fall 2022 Biopharmaceutical Report, the R Validation Hub points to ICH E9, Statistical Principles for Clinical Trials (ICH, 1998), which states that “software used should be reliable, and documentation of appropriate software testing procedures should be available.” Furthermore, both the original 2020 Val Hub white paper and 2020 RStudio paper highlight the need to validate R and its constituent packages for use “in a validated environment.” For this reason, this document specifically validates the named R packages for use on `r metworx_ver`.
+In their Fall 2022 Biopharmaceutical Report^[@Risk-Assessment-of-R-Packages], the R Validation Hub points to ICH E9^[@ICH-E9], which states that “software used should be reliable, and documentation of appropriate software testing procedures should be available.” Furthermore, both the original 2020 Val Hub white paper and 2020 RStudio paper highlight the need to validate R and its constituent packages for use “in a validated environment.” For this reason, this document specifically validates the named R packages for use on `r metworx_ver`.
+
+\newpage
 
 ## Principles of Good Practice
 As recommended by the R Validation Hub, we take a risk-based approach to assessing individual R packages. We break this down into four broad categories: Documentation, Testing, Maintenance & Stability, and Transparency & Community. Some high-level aspects of these categories are enumerated below.
@@ -67,9 +78,10 @@ The table below summarizes the proof points for risk assessment of all packages 
 format_score_summaries(risk_summary_df)
 ```
 
+\newpage
 
-## System Info
+# System Info
 ```{r}
-format_metadata(formatted_pkg_scores$metadata)
+format_metadata(metadata)
 ```
 
