@@ -29,6 +29,7 @@ render_scorecard <- function(
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
   # mitigation (if any)
+  # infer mitigation path from `pkg_scores$out_dir` and use `get_result_path`
   if(!is.null(mitigation)){
     mitigation_block <- readLines(mitigation)
   }else{
@@ -79,19 +80,10 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
       Category = ifelse(.y=="weighted_score", "overall", .y),
       weighted_score = ifelse(.x == "NA", NA_integer_, .x)
     )
-  }) %>% purrr::list_rbind()
-
-
-  overall_risk <- purrr::imap(pkg_scores$overall$risk, ~{
-    data.frame(
-      Category = ifelse(.y=="weighted_risk", "overall", .y),
-      risk_score = ifelse(.x == "NA", NA_integer_, .x)
-    )
   }) %>% purrr::list_rbind() %>%
-    dplyr::mutate(Risk = map_risk(.data$risk_score, risk_breaks)) %>%
-    dplyr::select(-"risk_score")
+    dplyr::mutate(Risk = map_risk(.data$weighted_score, risk_breaks))
 
-  pkg_scores$formatted$overall_risk <- dplyr::left_join(overall_scores, overall_risk) %>%
+  pkg_scores$formatted$overall_risk <- overall_scores %>%
     dplyr::rename(`Weighted Score` = weighted_score)
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
@@ -103,7 +95,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
       ) %>%
         mutate(
           Result = map_answer(.data$raw_score),
-          Risk = map_risk(.data$raw_score, risk_breaks, desc = TRUE)
+          Risk = map_risk(.data$raw_score, risk_breaks)
         )
     }) %>%
       purrr::set_names(names(category_list)) %>%
@@ -131,45 +123,24 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
 #'
 #' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
 #' @param risk_breaks breaks determining low, medium, and high risk
-#' @param desc Logical (T/F). If `TRUE`, sort `risk_breaks` in descending order.
-#'
-#' @details
-#' Use `desc = TRUE` for color coding coverage and other parameters that follow and inverse relationship with risk.
 #'
 #' @keywords internal
-map_risk <- function(scores, risk_breaks, desc = FALSE) {
+map_risk <- function(scores, risk_breaks) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
-  if(isTRUE(desc)){
-    risk_breaks <- sort(risk_breaks, decreasing = TRUE)
-    purrr::map_chr(scores, ~ {
-      if(is.na(.x)) {
-        "Blocking"
-      } else if (.x > risk_breaks[1]) {
-        "Low Risk"
-      } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
-        "Medium Risk"
-      } else if(.x < risk_breaks[2]) {
-        "High Risk"
-      } else {
-        "NA - unexpected"
-      }
-    })
-  }else{
-    risk_breaks <- sort(risk_breaks)
-    purrr::map_chr(scores, ~ {
-      if(is.na(.x)) {
-        "Blocking"
-      } else if (.x < risk_breaks[1]) {
-        "Low Risk"
-      } else if (.x >= risk_breaks[1] && .x <= risk_breaks[2]) {
-        "Medium Risk"
-      } else if(.x > risk_breaks[2]) {
-        "High Risk"
-      } else {
-        "NA - unexpected"
-      }
-    })
-  }
+  risk_breaks <- sort(risk_breaks, decreasing = TRUE)
+  purrr::map_chr(scores, ~ {
+    if(is.na(.x)) {
+      "Blocking"
+    } else if (.x > risk_breaks[1]) {
+      "Low Risk"
+    } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
+      "Medium Risk"
+    } else if(.x < risk_breaks[2]) {
+      "High Risk"
+    } else {
+      "NA - unexpected"
+    }
+  })
 }
 
 #' Use answer_breaks to map binary results into character strings
