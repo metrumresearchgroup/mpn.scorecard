@@ -44,7 +44,7 @@ render_scorecard <- function(
 
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
-    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
+    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = results_dir,
     output_file = basename(out_file),
     quiet = TRUE,

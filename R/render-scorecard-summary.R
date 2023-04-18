@@ -30,7 +30,7 @@ render_scorecard_summary <- function(result_dirs,
 
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
-    system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"),
+    system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE),
     output_dir = overall_risk_summary$out_dir,
     output_file = basename(out_file),
     quiet = TRUE,
