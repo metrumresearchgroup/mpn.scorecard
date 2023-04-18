@@ -85,7 +85,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     dplyr::mutate(Risk = map_risk(.data$weighted_score, risk_breaks))
 
   pkg_scores$formatted$overall_risk <- overall_scores %>%
-    dplyr::rename(`Weighted Score` = weighted_score)
+    dplyr::rename(`Weighted Score` = .data$weighted_score)
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
   pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
@@ -106,13 +106,13 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
         Result = ifelse(
-          (Criteria == "covr" & !is.na(raw_score)), paste0(raw_score*100, "%"), Result
+          (.data$Criteria == "covr" & !is.na(.data$raw_score)), paste0(.data$raw_score*100, "%"), .data$Result
         ),
         Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
       )
     }
 
-    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = raw_score)
+    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = .data$raw_score)
 
     formatted_df
   })

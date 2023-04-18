@@ -54,7 +54,7 @@ flextable_formatted <- function(tab,
 
   if(!is.null(digits)){
     checkmate::assert_numeric(digits)
-    tab_out <- tab_out %>% colformat_double(digits = digits)
+    tab_out <- tab_out %>% flextable::colformat_double(digits = digits)
   }
 
 
@@ -189,11 +189,11 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
     mutate(Risk = factor(.data$Risk, levels = RISK_LEVELS))
 
   # Testing is a separate table (for now)
-  scores_df <- scores_df %>% filter(Category != "testing")
+  scores_df <- scores_df %>% dplyr::filter(.data$Category != "testing")
 
   # Format Table
-  scores_df <- scores_df %>% mutate(Category = risk_header) %>%
-    dplyr::select(-c(risk_header, "Raw Score"))
+  scores_df <- scores_df %>% mutate(Category = .data$risk_header) %>%
+    dplyr::select(-c("risk_header", "Raw Score"))
 
   # Group by category
   scores_df_flex <- flextable::as_grouped_data(scores_df, groups = "Category")
@@ -422,6 +422,8 @@ get_flex_caption <- function(formatted_pkg_scores, category){
 #' append the minibar to a column. Specifying an index that **doesn't** correspond to the weighted scores, would overwrite that column.
 #'
 #' `digits` must be specified, because the default behavior is rounding the column to one decimal
+#'
+#' @importFrom rlang sym !!
 #'
 #' @keywords internal
 add_score_minibar <- function(flextable_df,
