@@ -174,7 +174,7 @@ map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
 }
 
 
-#' Look for mitigation file and return contents if any are found
+#' Look for mitigation file and return contents if is found
 #'
 #' @inheritParams render_scorecard
 #'
