@@ -4,10 +4,12 @@
 \alias{format_package_details}
 \title{Format Package Details}
 \usage{
-format_package_details(formatted_pkg_scores)
+format_package_details(formatted_pkg_scores, color_headers = TRUE)
 }
 \arguments{
 \item{formatted_pkg_scores}{list containing all scores}
+
+\item{color_headers}{Logical (T/F). If \code{TRUE}, color the headers based on risk level}
 }
 \value{
 a formatted flextable object

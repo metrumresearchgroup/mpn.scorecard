@@ -1,56 +1,73 @@
 #' Take a JSON from score_pkg() and render a pdf
 #'
-#' @param json_path Path to a JSON file created by [score_pkg()]
+#' @param results_dir directory containing json file and individual results. Output file path from [score_pkg()]
 #' @param risk_breaks A numeric vector of length 2, with both numbers being
 #'   between 0 and 1. These are used for the "breaks" when classifying scores
 #'   into Risk categories. For example, for the default value of `c(0.3, 0.7)`,
 #'   for a given score: `0 <= score < 0.3` is "Low Risk", `0.3 <= score < 0.7`
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
-#' @param mitigation (Optional) path to a plain text file with any explanation
-#'   necessary for justifying use of a potentially "high risk" package.
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
+#'
+#' @details
+#'
+#' If a plain text mitigation file is found in `results_dir`, it will automatically be included.
+#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.mitigation.txt`
+#'
+#' A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
+#'
 #' @export
 render_scorecard <- function(
-    json_path, # should this just be a package name? we name the JSON ourselves, so we can infer the path
+    results_dir,
     risk_breaks = c(0.3, 0.7),
-    mitigation = NULL,
     overwrite = FALSE
 ) {
+
+  json_path <- get_result_path(results_dir, "scorecard.json")
+
   # input checking
   checkmate::assert_string(json_path)
-  checkmate::assert_string(mitigation, null.ok = TRUE)
+  checkmate::assert_file_exists(json_path)
   checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
 
-  checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
-  out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
-  check_exists_and_overwrite(out_file, overwrite)
-
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
-  rmarkdown::render(
-    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = pkg_scores$out_dir,
+  mitigation_block <- check_for_mitigation(results_dir)
+
+  # Output file
+  checkmate::assert_string(results_dir, null.ok = TRUE)
+  out_file <- get_result_path(results_dir, "scorecard.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
+
+  # Render rmarkdown
+  rendered_file <- rmarkdown::render(
+    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
+    output_dir = results_dir,
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(
       pkg_scores = formatted_pkg_scores,
+      mitigation_block = mitigation_block,
       risk_breaks = risk_breaks,
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
     )
   )
 
   # Render to PDF, invisibly return the path to the PDF
+  return(invisible(rendered_file))
 
 }
 
 
-#' Prepare the raw scores to be rendered into PDF
+#' Prepare the raw risk scores to be rendered into PDF
 #'
-#' @param pkg_scores named list of all scores
+#' Formats the risks, not the original scores
+#'
+#'
+#' @param pkg_scores named list of all scores and risks
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
@@ -59,25 +76,45 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
   # build list of formatted tibbles
   pkg_scores$formatted <- list()
 
-  pkg_scores$formatted$overall <- purrr::imap(pkg_scores$overall, ~{
+  overall_scores <- purrr::imap(pkg_scores$overall$scores, ~{
     data.frame(
-      Category = .y,
-      risk_score = .x
+      Category = ifelse(.y=="weighted_score", "overall", .y),
+      weighted_score = ifelse(.x == "NA", NA_integer_, .x)
     )
   }) %>% purrr::list_rbind() %>%
-    dplyr::mutate(Risk = map_risk(.data$risk_score, risk_breaks)) %>%
-    dplyr::select(-"risk_score")
+    dplyr::mutate(Risk = map_risk(.data$weighted_score, risk_breaks))
+
+  pkg_scores$formatted$overall_risk <- overall_scores %>%
+    dplyr::rename(`Weighted Score` = .data$weighted_score)
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
-  pkg_scores$formatted$scores <- purrr::map(pkg_scores$scores, function(category_list) {
-    purrr::imap(category_list, ~{
+  pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
+    formatted_df <- purrr::imap(category_list, ~{
       data.frame(
         Criteria = .y,
-        Result = .x
-      )
+        raw_score = ifelse(.x == "NA", NA_integer_, .x)
+      ) %>%
+        mutate(
+          Result = map_answer(.data$raw_score),
+          Risk = map_risk(.data$raw_score, risk_breaks)
+        )
     }) %>%
       purrr::set_names(names(category_list)) %>%
       purrr::list_rbind()
+
+    # Additional formatting for testing data
+    if(category_name == "testing"){
+      formatted_df <- formatted_df %>% mutate(
+        Result = ifelse(
+          (.data$Criteria == "covr" & !is.na(.data$raw_score)), paste0(.data$raw_score*100, "%"), .data$Result
+        ),
+        Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
+      )
+    }
+
+    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = .data$raw_score)
+
+    formatted_df
   })
 
   return(pkg_scores)
@@ -87,37 +124,24 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
 #'
 #' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
 #' @param risk_breaks breaks determining low, medium, and high risk
-#' @param desc Logical (T/F). If `TRUE`, sort `risk_breaks` in descending order.
-#'
-#' @details
-#' Use `desc = TRUE` for color coding coverage and other parameters that follow and inverse relationship with risk.
 #'
 #' @keywords internal
-map_risk <- function(scores, risk_breaks, desc = FALSE) {
+map_risk <- function(scores, risk_breaks) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
-  if(isTRUE(desc)){
-    risk_breaks <- sort(risk_breaks, decreasing = TRUE)
-    purrr::map_chr(scores, ~ {
-      if (.x > risk_breaks[1]) {
-        "Low Risk"
-      } else if (.x > risk_breaks[2]) {
-        "Medium Risk"
-      } else {
-        "High Risk"
-      }
-    })
-  }else{
-    risk_breaks <- sort(risk_breaks)
-    purrr::map_chr(scores, ~ {
-      if (.x < risk_breaks[1]) {
-        "Low Risk"
-      } else if (.x < risk_breaks[2]) {
-        "Medium Risk"
-      } else {
-        "High Risk"
-      }
-    })
-  }
+  risk_breaks <- sort(risk_breaks, decreasing = TRUE)
+  purrr::map_chr(scores, ~ {
+    if(is.na(.x)) {
+      "Blocking"
+    } else if (.x > risk_breaks[1]) {
+      "Low Risk"
+    } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
+      "Medium Risk"
+    } else if(.x < risk_breaks[2]) {
+      "High Risk"
+    } else {
+      "NA - unexpected"
+    }
+  })
 }
 
 #' Use answer_breaks to map binary results into character strings
@@ -135,15 +159,34 @@ map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
   checkmate::assert_numeric(results, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
   purrr::map_chr(results, ~ {
-    if (.x == answer_breaks[1]) {
+    if(is.na(.x)) {
+      "Failed"
+    } else if (.x == answer_breaks[1]) {
       "No"
-    }else if(.x == answer_breaks[2]){
+    } else if(.x == answer_breaks[2]) {
       "Yes (warnings occurred)"
-    }else if(.x == answer_breaks[3]){
+    } else if(.x == answer_breaks[3]) {
       "Yes"
-    }else{
-      .x
+    } else{
+      as.character(.x)
     }
   })
 }
 
+
+#' Look for mitigation file and return contents if is found
+#'
+#' @inheritParams render_scorecard
+#'
+#' @keywords internal
+check_for_mitigation <- function(results_dir){
+  # mitigation (if any)
+  # infer mitigation path from `results_dir`
+  mitigation_path <- get_result_path(results_dir, "mitigation.txt")
+  if(fs::file_exists(mitigation_path)){
+    mitigation_block <- readLines(mitigation_path)
+  }else{
+    mitigation_block <- NULL
+  }
+  return(mitigation_block)
+}

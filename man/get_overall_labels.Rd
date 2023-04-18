@@ -4,12 +4,14 @@
 \alias{get_overall_labels}
 \title{Retrieve and format category labels}
 \usage{
-get_overall_labels(formatted_pkg_scores, category)
+get_overall_labels(formatted_pkg_scores, category, risk_only = FALSE)
 }
 \arguments{
 \item{formatted_pkg_scores}{list containing all scores}
 
 \item{category}{one of \code{c('testing', 'documentation', 'maintenance', 'transparency', 'overall')}}
+
+\item{risk_only}{Logical (T/F). If \code{TRUE}, return just the overall risk}
 }
 \value{
 a character string in the format of \if{html}{\out{<category>}}: \if{html}{\out{<risk>}}

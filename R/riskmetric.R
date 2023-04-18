@@ -2,32 +2,12 @@
 
 #' Format riskmetric results into scorecard list
 #'
-#' @param pkg a package tarball
+#' @param res a named list containing the initial build up of score elements
 #' @param pkg_source_path path to package source code (untarred)
-#' @param pkg_name character string defining the package name
-#' @param pkg_ver character string defining the package version
-#' @param out_dir output directory for saving results
 #'
 #' @keywords internal
-create_score_list_from_riskmetric <- function(pkg, pkg_source_path, pkg_name, pkg_ver, out_dir) {
+create_score_list_from_riskmetric <- function(res, pkg_source_path) {
   risk_res <- pkg_riskmetric(pkg_source_path)
-
-  # TODO: get name and version _not_ from riskmetric
-  # so that we can a) be independent and b) put this at the top
-  res <- list(
-    pkg_name = pkg_name,
-    pkg_version = pkg_ver,
-    out_dir = out_dir,
-    pkg_source_path = pkg_source_path,
-    md5sum_check = tools::md5sum(pkg),
-    # for results
-    scores = list(
-      testing = list(),
-      documentation = list(),
-      maintenance = list(),
-      transparency = list()
-    )
-  )
 
   # add riskmetric outputs
   res$scores$documentation <- extract_score_list(

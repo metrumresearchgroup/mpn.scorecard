@@ -37,5 +37,11 @@ add_rcmdcheck <- function(out_dir, rcmdcheck_args) {
     TRUE ~ NA_integer_
   )
 
+  if(status == 1){
+    message(glue::glue("rcmdcheck for {pkg_name} passed"))
+  }else if(status == 0.5){
+    message(glue::glue("rcmdcheck for {pkg_name} passed with warnings"))
+  }
+
   return(status)
 }

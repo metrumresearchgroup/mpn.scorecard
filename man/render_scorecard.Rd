@@ -4,15 +4,10 @@
 \alias{render_scorecard}
 \title{Take a JSON from score_pkg() and render a pdf}
 \usage{
-render_scorecard(
-  json_path,
-  risk_breaks = c(0.3, 0.7),
-  mitigation = NULL,
-  overwrite = FALSE
-)
+render_scorecard(results_dir, risk_breaks = c(0.3, 0.7), overwrite = FALSE)
 }
 \arguments{
-\item{json_path}{Path to a JSON file created by \code{\link[=score_pkg]{score_pkg()}}}
+\item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores
@@ -20,11 +15,14 @@ into Risk categories. For example, for the default value of \code{c(0.3, 0.7)},
 for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0.7}
 is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
-\item{mitigation}{(Optional) path to a plain text file with any explanation
-necessary for justifying use of a potentially "high risk" package.}
-
 \item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
 }
 \description{
 Take a JSON from score_pkg() and render a pdf
+}
+\details{
+If a plain text mitigation file is found in \code{results_dir}, it will automatically be included.
+\strong{Note} that it must follow the naming convention of \verb{<pkg_name>_<pkg_version>.mitigation.txt}
+
+A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
 }

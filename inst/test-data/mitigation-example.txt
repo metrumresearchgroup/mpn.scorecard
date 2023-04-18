@@ -1,0 +1,12 @@
+We have decided package x is suitable to include in MPN despite its higher risk:
+ - It is used by many of our scientists, and there doesn't seem to be a good alternative
+ - We are currently collaborating with the main developers to add more rigorous tests
+
+Other notes:
+ * different bullet type
+    + different sub-bullet
+
+Already has a new line:
+
+ * different bullet type
+    - different sub-bullet

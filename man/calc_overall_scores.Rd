@@ -7,7 +7,7 @@
 calc_overall_scores(scorelist)
 }
 \arguments{
-\item{scorelist}{named list of socres}
+\item{scorelist}{a complete named list of scores. Should contain all the elementary blocks and just need to be summarized}
 }
 \description{
 This is where we'll need to build the algorithm for weighting

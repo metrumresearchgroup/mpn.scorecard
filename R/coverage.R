@@ -17,11 +17,11 @@ add_coverage <- function(pkg_source_path, out_dir) {
     list(name = pkg_name, coverage = coverage_list)
   },
   error = function(cond){
-    coverage_list <- list(filecoverage = cond, totalcoverage = NA_real_)
+    coverage_list <- list(filecoverage = cond, totalcoverage = NA_integer_)
     list(name = pkg_name, coverage = coverage_list)
   },
   warning = function(cond){
-    coverage_list <- list(filecoverage = cond, totalcoverage = NA_real_)
+    coverage_list <- list(filecoverage = cond, totalcoverage = NA_integer_)
     list(name = pkg_name, coverage = coverage_list)
   })
 
@@ -33,5 +33,12 @@ add_coverage <- function(pkg_source_path, out_dir) {
   )
 
   # return total coverage as fraction
-  return(res_cov$coverage$totalcoverage/100)
+  total_cov <- as.numeric(res_cov$coverage$totalcoverage/100)
+
+  if(is.na(total_cov)){
+    check_path <- get_result_path(out_dir, "check.rds")
+    message(glue::glue("R coverage for {pkg_name} failed. Read in the rcmdcheck output to see what went wrong: {check_path}"))
+  }
+
+  return(total_cov)
 }

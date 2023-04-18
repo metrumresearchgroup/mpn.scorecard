@@ -1,11 +1,14 @@
 ---
 output:
   pdf_document:
-    latex_engine: xelatex
     toc: true
     toc_depth: 3
+    latex_engine: xelatex
+header-includes:
+    - \usepackage{caption}
 params:
   pkg_scores: "`r list()`"
+  mitigation_block: "r NULL"
   risk_breaks: "`r c(0.3, 0.7)`"
   set_title: "Scorecard"
 title: "`r params$set_title`"
@@ -17,20 +20,26 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
                       fig.height = 8, fig.width = 10, ft.keepnext = FALSE)
 library(dplyr)
 library(flextable)
-set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4)
+# init_flextable_defaults()
+set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
+# set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE, font.family = "DejaVu Sans")
+
 ```
 
 ```{r setup_data}
 formatted_pkg_scores <- params$pkg_scores
-risk_breaks <- params$risk_breaks
+risk_breaks <- params$risk_breaks # TODO: I think we should include the breaks/weightings used somewhere at some point?
 metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
 ```
 
-<br>
+<!-- Remove 'Table x:' prefixes -->
+\captionsetup[table]{labelformat=empty}
+
+<br/>
+
+# Overview
 
 This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
-
-## Overview
 
 ```{r}
 format_overall_scores(formatted_pkg_scores)
@@ -38,21 +47,26 @@ format_overall_scores(formatted_pkg_scores)
 
 \newpage
 
-## Details
+# Details
 
-### Documentation, Maintenance & Transparency
+## Documentation, Maintenance & Transparency
 ```{r, raw scores}
 format_package_details(formatted_pkg_scores)
 ```
 
-### Testing
+## Testing
 ```{r}
-format_testing_scores(formatted_pkg_scores$formatted$scores$testing, risk_breaks)
+format_testing_scores(formatted_pkg_scores)
 ```
 
 \newpage
 
-## System Info
+```{r, results = "asis"}
+format_mitigation(params$mitigation_block)
+```
+
+
+# System Info
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)
 ```

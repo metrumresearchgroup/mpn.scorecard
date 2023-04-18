@@ -10,7 +10,7 @@
 #' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`. **Note** that the tarball `path` and `error_on = "never"`
 #'        are automatically appended to this list.
 #'
-#' @returns a file path to a json file containing all scores
+#' @returns a directory containing json file (contains all scores), and individual results
 #'
 #' @export
 score_pkg <- function(
@@ -45,7 +45,22 @@ score_pkg <- function(
   if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
   # start building up scorecard list
-  res <- create_score_list_from_riskmetric(pkg, pkg_source_path, pkg_name, pkg_ver, out_dir)
+  res <- list(
+    pkg_name = pkg_name,
+    pkg_version = pkg_ver,
+    out_dir = out_dir,
+    pkg_tar_path = pkg,
+    md5sum_check = tools::md5sum(pkg),
+    # for results
+    scores = list(
+      testing = list(),
+      documentation = list(),
+      maintenance = list(),
+      transparency = list()
+    )
+  )
+  # add riskmetric scores
+  res <- create_score_list_from_riskmetric(res, pkg_source_path)
 
   # TODO: get name and version _not_ from riskmetric
   # so that we can a) be independent and b) put this at the top.
@@ -76,5 +91,5 @@ score_pkg <- function(
   )
 
 
-  return(invisible(out_path))
+  return(invisible(out_dir))
 }
