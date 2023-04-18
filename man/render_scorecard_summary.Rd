@@ -5,7 +5,7 @@
 \title{Render PDF summary of scorecards}
 \usage{
 render_scorecard_summary(
-  json_paths,
+  result_dirs,
   risk_breaks = c(0.3, 0.7),
   out_dir = NULL,
   snapshot = NULL,
@@ -13,7 +13,7 @@ render_scorecard_summary(
 )
 }
 \arguments{
-\item{json_paths}{A vector of json paths}
+\item{result_dirs}{A vector of output directories}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores
@@ -21,7 +21,7 @@ into Risk categories. For example, for the default value of \code{c(0.3, 0.7)},
 for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0.7}
 is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
-\item{out_dir}{Output directory for saving scorecard summary. If \code{NULL}, assumes all \code{json_paths} point to the same output directory}
+\item{out_dir}{Output directory for saving scorecard summary. If \code{NULL}, assumes all \code{result_dirs} point to the same output directory}
 
 \item{snapshot}{A report subtitle indicating the grouping of these packages, such as an MPN snapshot. See details.}
 

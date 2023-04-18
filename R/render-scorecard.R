@@ -1,25 +1,32 @@
 #' Take a JSON from score_pkg() and render a pdf
 #'
-#' @param json_path Path to a JSON file created by [score_pkg()]
+#' @param results_dir directory containing json file and individual results. Output file path from [score_pkg()]
 #' @param risk_breaks A numeric vector of length 2, with both numbers being
 #'   between 0 and 1. These are used for the "breaks" when classifying scores
 #'   into Risk categories. For example, for the default value of `c(0.3, 0.7)`,
 #'   for a given score: `0 <= score < 0.3` is "Low Risk", `0.3 <= score < 0.7`
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
-#' @param mitigation (Optional) path to a plain text file with any explanation
-#'   necessary for justifying use of a potentially "high risk" package.
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
+#'
+#' @details
+#'
+#' If a plain text mitigation file is found in `results_dir`, it will automatically be included.
+#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.mitigation.txt`
+#'
+#' A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
+#'
 #' @export
 render_scorecard <- function(
-    json_path, # should this just be a package name? we name the JSON ourselves, so we can infer the path
+    results_dir,
     risk_breaks = c(0.3, 0.7),
-    mitigation = NULL,
     overwrite = FALSE
 ) {
+
+  json_path <- get_result_path(results_dir, "scorecard.json")
+
   # input checking
   checkmate::assert_string(json_path)
   checkmate::assert_file_exists(json_path)
-  checkmate::assert_string(mitigation, null.ok = TRUE)
   checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
   # load scores from JSON
@@ -28,23 +35,17 @@ render_scorecard <- function(
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
-  # mitigation (if any)
-  # infer mitigation path from `pkg_scores$out_dir` and use `get_result_path`
-  if(!is.null(mitigation)){
-    mitigation_block <- readLines(mitigation)
-  }else{
-    mitigation_block <- NULL
-  }
+  mitigation_block <- check_for_mitigation(results_dir)
 
   # Output file
-  checkmate::assert_string(pkg_scores$out_dir, null.ok = TRUE)
-  out_file <- get_result_path(pkg_scores$out_dir, "scorecard.pdf")
+  checkmate::assert_string(results_dir, null.ok = TRUE)
+  out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"), # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = pkg_scores$out_dir,
+    output_dir = results_dir,
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(
@@ -172,3 +173,20 @@ map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
   })
 }
 
+
+#' Look for mitigation file and return contents if any are found
+#'
+#' @inheritParams render_scorecard
+#'
+#' @keywords internal
+check_for_mitigation <- function(results_dir){
+  # mitigation (if any)
+  # infer mitigation path from `results_dir`
+  mitigation_path <- get_result_path(results_dir, "mitigation.txt")
+  if(fs::file_exists(mitigation_path)){
+    mitigation_block <- readLines(mitigation)
+  }else{
+    mitigation_block <- NULL
+  }
+  return(mitigation_block)
+}

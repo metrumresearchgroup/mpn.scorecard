@@ -25,7 +25,7 @@ score_pkg(
 are automatically appended to this list.}
 }
 \value{
-a file path to a json file containing all scores
+a directory containing json file (contains all scores), and individual results
 }
 \description{
 Returns collected metrics as a named list, and also writes

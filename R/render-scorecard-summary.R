@@ -1,9 +1,9 @@
 
 #' Render PDF summary of scorecards
 #'
-#' @param json_paths A vector of json paths
+#' @param result_dirs A vector of output directories
 #' @param snapshot A report subtitle indicating the grouping of these packages, such as an MPN snapshot. See details.
-#' @param out_dir Output directory for saving scorecard summary. If `NULL`, assumes all `json_paths` point to the same output directory
+#' @param out_dir Output directory for saving scorecard summary. If `NULL`, assumes all `result_dirs` point to the same output directory
 #' @inheritParams render_scorecard
 #'
 #' @details
@@ -12,16 +12,17 @@
 #' In other words, `snapshot` should be a date, or some other grouping that makes sense grammatically according to the this example.
 #'
 #' @export
-render_scorecard_summary <- function(json_paths,
+render_scorecard_summary <- function(result_dirs,
                                      risk_breaks = c(0.3, 0.7),
                                      out_dir = NULL,
                                      snapshot = NULL,
                                      overwrite = TRUE){
 
   checkmate::assert_string(snapshot, null.ok = TRUE)
+  if(is.null(snapshot)) snapshot <- as.character(Sys.Date())
 
   # Format overall scores and risk
-  overall_risk_summary <- build_risk_summary(json_paths, risk_breaks, out_dir)
+  overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks, out_dir)
 
   # Output file
   out_file <- get_result_path(overall_risk_summary$out_dir, "snapshot_summary.pdf")
@@ -49,32 +50,37 @@ render_scorecard_summary <- function(json_paths,
 #' @inheritParams render_scorecard_summary
 #'
 #' @keywords internal
-build_risk_summary <- function(json_paths, risk_breaks, out_dir){
+build_risk_summary <- function(result_dirs, risk_breaks, out_dir){
 
   res_sum <- list()
   res_sum$metadata <- get_metadata()
 
 
-
-
-  overall_pkg_scores <- purrr::map(json_paths, ~{
-    checkmate::assert_file_exists(.x)
-    pkg_scores <- jsonlite::fromJSON(.x)
+  overall_pkg_scores <- purrr::map(result_dirs, ~{
+    json_path <- get_result_path(.x, "scorecard.json")
+    checkmate::assert_file_exists(json_path)
+    pkg_scores <- jsonlite::fromJSON(json_path)
 
     out_dir_stored <- pkg_scores$out_dir
     checkmate::assert_string(out_dir_stored, null.ok = TRUE)
 
+    # Overall scores and risk
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
     overall_risk <- formatted_pkg_scores$formatted$overall_risk %>%
       dplyr::filter(Category == "overall") %>% dplyr::select(-c(Category)) %>%
       dplyr::rename(`Overall Risk` = Risk)
+
+    # mitigation - we want empty mitigation cells by default
+    mitigation_txt <- if(is.null(check_for_mitigation(.x))) NA_character_ else "Yes"
+
     pkg_info <- data.frame(
       Package = formatted_pkg_scores$pkg_name,
       Version = formatted_pkg_scores$pkg_version,
-      out_dir = out_dir_stored
+      out_dir = out_dir_stored,
+      Mitigation = mitigation_txt
     )
 
-    cbind(pkg_info, overall_risk)
+    cbind(pkg_info, overall_risk) %>% relocate(Mitigation, .after = everything())
   }) %>% purrr::list_rbind()
 
 

@@ -355,7 +355,8 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
   # Base table
   risk_summary_flex <- flextable_formatted(
     risk_summary_df, as_flextable = FALSE, digits = digits,
-    col_keys = c("Package", "Version", "Weighted Score", "Overall Risk")
+    col_keys = c("Package", "Version", "Weighted Score", "Overall Risk", "Mitigation"),
+    pg_width = 6.5
   )
 
   # Add colors and styling

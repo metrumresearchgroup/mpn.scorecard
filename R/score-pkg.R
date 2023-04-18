@@ -10,7 +10,7 @@
 #' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`. **Note** that the tarball `path` and `error_on = "never"`
 #'        are automatically appended to this list.
 #'
-#' @returns a file path to a json file containing all scores
+#' @returns a directory containing json file (contains all scores), and individual results
 #'
 #' @export
 score_pkg <- function(
@@ -91,5 +91,5 @@ score_pkg <- function(
   )
 
 
-  return(invisible(out_path))
+  return(invisible(out_dir))
 }
