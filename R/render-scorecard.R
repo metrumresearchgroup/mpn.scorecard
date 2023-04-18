@@ -67,7 +67,7 @@ render_scorecard <- function(
 #' Formats the risks, not the original scores
 #'
 #'
-#' @param pkg_scores named list of all scores and risks
+#' @param pkg_scores named list of all scores
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
@@ -85,7 +85,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     dplyr::mutate(Risk = map_risk(.data$weighted_score, risk_breaks))
 
   pkg_scores$formatted$overall_risk <- overall_scores %>%
-    dplyr::rename(`Weighted Score` = .data$weighted_score)
+    dplyr::rename(`Weighted Score` = "weighted_score")
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
   pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
@@ -98,9 +98,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
           Result = map_answer(.data$raw_score),
           Risk = map_risk(.data$raw_score, risk_breaks)
         )
-    }) %>%
-      purrr::set_names(names(category_list)) %>%
-      purrr::list_rbind()
+    }) %>% purrr::list_rbind()
 
     # Additional formatting for testing data
     if(category_name == "testing"){
@@ -112,7 +110,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
       )
     }
 
-    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = .data$raw_score)
+    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = "raw_score")
 
     formatted_df
   })

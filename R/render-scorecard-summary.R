@@ -73,7 +73,7 @@ build_risk_summary <- function(result_dirs,
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
     overall_risk <- formatted_pkg_scores$formatted$overall_risk %>%
       dplyr::filter(Category == "overall") %>% dplyr::select(-c("Category")) %>%
-      dplyr::rename(`Overall Risk` = Risk)
+      dplyr::rename(`Overall Risk` = "Risk")
 
     # mitigation - we want empty mitigation cells by default
     mitigation_txt <- if(is.null(check_for_mitigation(.x))) NA_character_ else "Yes"

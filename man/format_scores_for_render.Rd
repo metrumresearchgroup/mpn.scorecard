@@ -7,7 +7,7 @@
 format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
 }
 \arguments{
-\item{pkg_scores}{named list of all scores and risks}
+\item{pkg_scores}{named list of all scores}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores
