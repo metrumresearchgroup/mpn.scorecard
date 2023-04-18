@@ -184,7 +184,7 @@ check_for_mitigation <- function(results_dir){
   # infer mitigation path from `results_dir`
   mitigation_path <- get_result_path(results_dir, "mitigation.txt")
   if(fs::file_exists(mitigation_path)){
-    mitigation_block <- readLines(mitigation)
+    mitigation_block <- readLines(mitigation_path)
   }else{
     mitigation_block <- NULL
   }
