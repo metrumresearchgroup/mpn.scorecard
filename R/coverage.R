@@ -14,15 +14,15 @@ add_coverage <- function(pkg_source_path, out_dir) {
   res_cov <- tryCatch({
     coverage <- covr::package_coverage(pkg_source_path, type = "tests")
     coverage_list <- covr::coverage_to_list(coverage)
-    list(name = pkg_name, coverage = coverage_list)
+    list(name = pkg_name, coverage = coverage_list, errors = NA)
   },
   error = function(cond){
-    coverage_list <- list(filecoverage = cond, totalcoverage = NA_integer_)
-    list(name = pkg_name, coverage = coverage_list)
+    coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
+    list(name = pkg_name, coverage = coverage_list, errors = cond)
   },
   warning = function(cond){
-    coverage_list <- list(filecoverage = cond, totalcoverage = NA_integer_)
-    list(name = pkg_name, coverage = coverage_list)
+    coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
+    list(name = pkg_name, coverage = coverage_list, errors = cond)
   })
 
 

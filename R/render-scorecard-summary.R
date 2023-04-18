@@ -48,9 +48,14 @@ render_scorecard_summary <- function(result_dirs,
 #' Summarise overall risks for each package
 #'
 #' @inheritParams render_scorecard_summary
+#' @param append_out_dir Logical (T/F). If `TRUE`, keep the package-specific output directory as part of the returned table.
 #'
 #' @keywords internal
-build_risk_summary <- function(result_dirs, risk_breaks, out_dir){
+build_risk_summary <- function(result_dirs,
+                               risk_breaks,
+                               out_dir,
+                               append_out_dir = FALSE
+){
 
   res_sum <- list()
   res_sum$metadata <- get_metadata()
@@ -103,8 +108,93 @@ build_risk_summary <- function(result_dirs, risk_breaks, out_dir){
   }
 
   res_sum$out_dir <- out_dir
-  res_sum$overall_pkg_scores <- overall_pkg_scores %>% dplyr::select(-c(out_dir))
+
+  # Remove out_dir for report
+  if(!isTRUE(append_out_dir)){
+    overall_pkg_scores <- overall_pkg_scores %>% dplyr::select(-c(out_dir))
+  }
+
+  res_sum$overall_pkg_scores <- overall_pkg_scores
 
   return(res_sum)
 }
 
+
+#' Review important package metrics prior to running [render_scorecard_summary()]
+#'
+#' @inheritParams render_scorecard_summary
+#' @param keep_result_dirs Logical (T/F). If `TRUE`, return result directories as columns
+#'
+#' @returns a datadrame
+#' @export
+package_summary <- function(result_dirs,
+                            keep_result_dirs = FALSE
+){
+
+  # We dont care about risk here:
+  # assign arbitrary value to `risk_breaks` so we can still rely on `build_risk_summary`
+  overall_risk_summary <- build_risk_summary(result_dirs,
+                                             risk_breaks = c(0.3, 0.7),
+                                             out_dir = NULL,
+                                             append_out_dir = TRUE
+  )
+
+  risk_summary_df <- overall_risk_summary$overall_pkg_scores %>%
+    tibble::as_tibble() %>%
+    mutate(
+      pkg_name_ver = basename(out_dir), # Used for joining covr data
+      has_mitigation = ifelse(is.na(Mitigation), "no", "yes"),
+      check_dir = get_result_path(out_dir, "check.rds"),
+      covr_dir = get_result_path(out_dir, "covr.rds")
+    ) %>%
+    dplyr::select(-c(Mitigation, `Overall Risk`))
+
+
+  frmt_check_attr <- function(attr){
+    attr <- if(rlang::is_empty(attr)) "" else attr
+    as.list(attr)
+  }
+
+
+  check_results <- purrr::map(risk_summary_df$check_dir, ~{
+    output <- readRDS(.x)
+
+    tibble::tibble(
+      Package = output$package,
+      Version = output$version,
+      check_status = output$status,
+      check_test_fail = frmt_check_attr(output$test_fail),
+      check_test_output = frmt_check_attr(output$test_output),
+      check_errors = frmt_check_attr(output$errors),
+      check_warnings = frmt_check_attr(output$warnings)
+    )
+  }) %>% purrr::list_rbind()
+
+
+  covr_results <- purrr::map(risk_summary_df$covr_dir, ~{
+    output <- readRDS(.x)
+    covr_success <-  ifelse(is.na(output$coverage$totalcoverage), FALSE, TRUE)
+    covr_test_fail <- if(isFALSE(covr_success)) output$errors$message else ""
+
+    tibble::tibble(
+      pkg_name_ver = output$name,
+      covr_success = covr_success,
+      covr_test_fail = frmt_check_attr(covr_test_fail)
+    )
+  }) %>% purrr::list_rbind()
+
+
+  suppressMessages({
+    risk_summary_df <- risk_summary_df %>% left_join(check_results) %>% left_join(covr_results) %>%
+      dplyr::select(-pkg_name_ver)
+  })
+
+
+  if(isFALSE(keep_result_dirs)){
+    risk_summary_df <- risk_summary_df %>% dplyr::select(-c(out_dir, check_dir, covr_dir))
+  }else{
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c(out_dir, check_dir, covr_dir), .after = everything())
+  }
+
+  return(risk_summary_df)
+}
