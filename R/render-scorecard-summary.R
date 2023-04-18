@@ -72,7 +72,7 @@ build_risk_summary <- function(result_dirs,
     # Overall scores and risk
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
     overall_risk <- formatted_pkg_scores$formatted$overall_risk %>%
-      dplyr::filter(Category == "overall") %>% dplyr::select(-c(Category)) %>%
+      dplyr::filter(Category == "overall") %>% dplyr::select(-c("Category")) %>%
       dplyr::rename(`Overall Risk` = Risk)
 
     # mitigation - we want empty mitigation cells by default
@@ -85,7 +85,7 @@ build_risk_summary <- function(result_dirs,
       Mitigation = mitigation_txt
     )
 
-    cbind(pkg_info, overall_risk) %>% relocate(Mitigation, .after = everything())
+    cbind(pkg_info, overall_risk) %>% dplyr::relocate(.data$Mitigation, .after = tidyselect::everything())
   }) %>% purrr::list_rbind()
 
 
@@ -195,7 +195,7 @@ package_summary <- function(result_dirs,
   if(isFALSE(keep_result_dirs)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("out_dir", "check_dir", "covr_dir"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_dir", "covr_dir"), .after = dplyr::everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_dir", "covr_dir"), .after = tidyselect::everything())
   }
 
   return(risk_summary_df)
