@@ -142,12 +142,12 @@ package_summary <- function(result_dirs,
   risk_summary_df <- overall_risk_summary$overall_pkg_scores %>%
     tibble::as_tibble() %>%
     mutate(
-      pkg_name_ver = basename(out_dir), # Used for joining covr data
-      has_mitigation = ifelse(is.na(Mitigation), "no", "yes"),
-      check_dir = get_result_path(out_dir, "check.rds"),
-      covr_dir = get_result_path(out_dir, "covr.rds")
+      pkg_name_ver = basename(.data$out_dir), # Used for joining covr data
+      has_mitigation = ifelse(is.na(.data$Mitigation), "no", "yes"),
+      check_dir = get_result_path(.data$out_dir, "check.rds"),
+      covr_dir = get_result_path(.data$out_dir, "covr.rds")
     ) %>%
-    dplyr::select(-c(Mitigation, `Overall Risk`))
+    dplyr::select(-c("Mitigation", "Overall Risk"))
 
 
   frmt_check_attr <- function(attr){
@@ -185,15 +185,17 @@ package_summary <- function(result_dirs,
 
 
   suppressMessages({
-    risk_summary_df <- risk_summary_df %>% left_join(check_results) %>% left_join(covr_results) %>%
-      dplyr::select(-pkg_name_ver)
+    risk_summary_df <- risk_summary_df %>%
+      dplyr::left_join(check_results) %>%
+      dplyr::left_join(covr_results) %>%
+      dplyr::select(-"pkg_name_ver")
   })
 
 
   if(isFALSE(keep_result_dirs)){
-    risk_summary_df <- risk_summary_df %>% dplyr::select(-c(out_dir, check_dir, covr_dir))
+    risk_summary_df <- risk_summary_df %>% dplyr::select(-c("out_dir", "check_dir", "covr_dir"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c(out_dir, check_dir, covr_dir), .after = everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_dir", "covr_dir"), .after = dplyr::everything())
   }
 
   return(risk_summary_df)
