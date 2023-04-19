@@ -3,6 +3,7 @@
 export(render_scorecard)
 export(render_scorecard_summary)
 export(score_pkg)
+export(summarize_package_results)
 import(checkmate)
 import(fs)
 importFrom(checkmate,assert_character)

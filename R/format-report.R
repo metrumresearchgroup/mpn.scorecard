@@ -98,11 +98,12 @@ flextable_formatted <- function(tab,
 format_overall_scores <- function(formatted_pkg_scores, digits = 2){
 
   # Create overall table
-  overall_tbl <- formatted_pkg_scores$formatted$overall %>%
+  overall_tbl <- formatted_pkg_scores$formatted$overall_scores %>%
     mutate(
-      Risk = factor(.data$Risk, levels = RISK_LEVELS),
-      Category = stringr::str_to_title(.data$Category)
-    ) %>% as.data.frame()
+      risk = factor(.data$risk, levels = RISK_LEVELS),
+      category = stringr::str_to_title(.data$category)
+    ) %>% as.data.frame() %>% format_colnames_to_title()
+
 
   # Base table
   overall_flextable <- flextable_formatted(overall_tbl, show_coltype = FALSE, digits = digits)
@@ -125,7 +126,7 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
     flextable::align(align = "center", part = "all")
 
   # Add minibars
-  overall_flextable <- add_score_minibar(overall_flextable, risk_col = "Risk", score_col = "Weighted Score", digits = digits)
+  overall_flextable <- add_score_minibar(overall_flextable, risk_col = "Risk", score_col = "Category Score", digits = digits)
 
   # Add hline before overall section and bold it (should use dplyr::lag() I would think, but I guess flextable is weird)
   overall_flextable <- overall_flextable %>%
@@ -148,15 +149,15 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
 #'
 #' @keywords internal
 get_overall_labels <- function(formatted_pkg_scores, category, risk_only = FALSE){
-  overall_df <- formatted_pkg_scores$formatted$overall
-  checkmate::assert_true(category %in% unique(overall_df$Category))
+  overall_df <- formatted_pkg_scores$formatted$overall_scores
+  checkmate::assert_true(category %in% unique(overall_df$category))
   overall_df <- overall_df %>% mutate(
-    category_label = paste0(stringr::str_to_title(.data$Category), ": ", .data$Risk)
+    category_label = paste0(stringr::str_to_title(.data$category), ": ", .data$risk)
   )
   if(isTRUE(risk_only)){
-    cat_label <- overall_df$Risk[grep(category, overall_df$Category)]
+    cat_label <- overall_df$risk[grep(category, overall_df$category)]
   }else{
-    cat_label <- overall_df$category_label[grep(category, overall_df$Category)]
+    cat_label <- overall_df$category_label[grep(category, overall_df$category)]
   }
 
   return(cat_label)
@@ -175,25 +176,26 @@ get_overall_labels <- function(formatted_pkg_scores, category, risk_only = FALSE
 #' @keywords internal
 format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
 
-  package_details_list <- formatted_pkg_scores$formatted$scores
+  package_details_list <- formatted_pkg_scores$formatted$category_scores
   # Get the scores for each category
   # TODO: assign risk to each category label (i.e. Maintenance: Low Risk) Need to figure out weighting first
 
 
   scores_df <- purrr::imap(package_details_list, ~ {
     .x %>% mutate(
-      Category = .y,
+      category = .y,
       risk_header = get_overall_labels(formatted_pkg_scores, .y)
     )
   }) %>% purrr::list_rbind() %>%
-    mutate(Risk = factor(.data$Risk, levels = RISK_LEVELS))
+    mutate(Risk = factor(.data$risk, levels = RISK_LEVELS))
 
   # Testing is a separate table (for now)
-  scores_df <- scores_df %>% dplyr::filter(.data$Category != "testing")
+  scores_df <- scores_df %>% dplyr::filter(.data$category != "testing")
 
   # Format Table
-  scores_df <- scores_df %>% mutate(Category = .data$risk_header) %>%
-    dplyr::select(-c("risk_header", "Raw Score"))
+  scores_df <- scores_df %>% mutate(category = .data$risk_header) %>%
+    dplyr::select(-c("risk_header", "score")) %>%
+    format_colnames_to_title()
 
   # Group by category
   scores_df_flex <- flextable::as_grouped_data(scores_df, groups = "Category")
@@ -235,11 +237,12 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
 #' @keywords internal
 format_testing_scores <- function(formatted_pkg_scores){
 
-  testing_df <- formatted_pkg_scores$formatted$scores$testing %>%
-    mutate(Risk = factor(.data$Risk, levels = RISK_LEVELS))
-
   # Get overall risk for caption
   flex_caption <- get_flex_caption(formatted_pkg_scores, "testing")
+
+  testing_df <- formatted_pkg_scores$formatted$category_scores$testing %>%
+    mutate(risk = factor(.data$risk, levels = RISK_LEVELS)) %>%
+    format_colnames_to_title()
 
   testing_scores_flextable <-
     flextable_formatted(
@@ -352,10 +355,12 @@ format_mitigation <- function(mitigation_block){
 #' @keywords internal
 format_score_summaries <- function(risk_summary_df, digits = 2){
 
+  # Format Table
+  risk_summary_df <- risk_summary_df %>% format_colnames_to_title()
   # Base table
   risk_summary_flex <- flextable_formatted(
     risk_summary_df, as_flextable = FALSE, digits = digits,
-    col_keys = c("Package", "Version", "Weighted Score", "Overall Risk", "Mitigation"),
+    col_keys = c("Package", "Version", "Overall Score", "Overall Risk", "Mitigation"),
     pg_width = 6.5
   )
 
@@ -370,7 +375,7 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
     flextable::color(color = "darkred", j = 4, i = ~ `Overall Risk` == "High Risk")
 
   # Add minibars
-  risk_summary_flex <- add_score_minibar(risk_summary_flex, risk_col = "Overall Risk", score_col = "Weighted Score", digits = digits)
+  risk_summary_flex <- add_score_minibar(risk_summary_flex, risk_col = "Overall Risk", score_col = "Overall Score", digits = digits)
 
   return(risk_summary_flex)
 }
@@ -387,8 +392,8 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
 #'
 #' @keywords internal
 get_flex_caption <- function(formatted_pkg_scores, category){
-  overall_df <- formatted_pkg_scores$formatted$overall
-  checkmate::assert_true(category %in% unique(overall_df$Category))
+  overall_df <- formatted_pkg_scores$formatted$overall_scores
+  checkmate::assert_true(category %in% unique(overall_df$category))
 
   tot_risk <- get_overall_labels(formatted_pkg_scores, category, risk_only = TRUE)
   cap_color <- dplyr::case_when(
@@ -507,5 +512,18 @@ add_score_minibar <- function(flextable_df,
   }
 
   return(flextable_df)
+}
+
+#' Format column names to be user friendly
+#'
+#' Replaces underscores (`_`) with spaces and makes the first letter capitalized
+#'
+#' @param df a dataframe
+#'
+#' @keywords internal
+format_colnames_to_title <- function(df){
+  new_names <- gsub("_", " ", names(df)) %>% stringr::str_to_title()
+  names(df) <- new_names
+  return(df)
 }
 

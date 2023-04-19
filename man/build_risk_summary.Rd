@@ -4,7 +4,7 @@
 \alias{build_risk_summary}
 \title{Summarise overall risks for each package}
 \usage{
-build_risk_summary(result_dirs, risk_breaks, out_dir)
+build_risk_summary(result_dirs, risk_breaks, out_dir, append_out_dir = FALSE)
 }
 \arguments{
 \item{result_dirs}{A vector of output directories}
@@ -16,6 +16,8 @@ for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0
 is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
 \item{out_dir}{Output directory for saving scorecard summary. If \code{NULL}, assumes all \code{result_dirs} point to the same output directory}
+
+\item{append_out_dir}{Logical (T/F). If \code{TRUE}, keep the package-specific output directory as part of the returned table.}
 }
 \description{
 Summarise overall risks for each package
