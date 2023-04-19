@@ -25,12 +25,12 @@ render_scorecard_summary <- function(result_dirs,
   overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks, out_dir)
 
   # Output file
-  out_file <- get_result_path(overall_risk_summary$out_dir, "snapshot_summary.pdf")
+  out_file <- get_result_path(overall_risk_summary$out_dir, "summary.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
-    system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard"),
+    system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE),
     output_dir = overall_risk_summary$out_dir,
     output_file = basename(out_file),
     quiet = TRUE,

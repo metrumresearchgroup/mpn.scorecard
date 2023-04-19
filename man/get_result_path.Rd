@@ -7,7 +7,7 @@
 get_result_path(
   out_dir,
   ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "mitigation.txt",
-    "snapshot_summary.pdf")
+    "summary.pdf")
 )
 }
 \arguments{
