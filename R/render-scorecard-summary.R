@@ -128,9 +128,9 @@ build_risk_summary <- function(result_dirs,
 #'
 #' @returns a dataframe
 #' @export
-summarize_package_checks <- function(result_dirs,
-                                     append_results = FALSE,
-                                     append_result_paths = FALSE
+summarize_package_results <- function(result_dirs,
+                                      append_results = FALSE,
+                                      append_result_paths = FALSE
 ){
 
   # We dont care about risk here:
