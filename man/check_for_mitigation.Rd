@@ -2,7 +2,7 @@
 % Please edit documentation in R/render-scorecard.R
 \name{check_for_mitigation}
 \alias{check_for_mitigation}
-\title{Look for mitigation file and return contents if any are found}
+\title{Look for mitigation file and return contents if is found}
 \usage{
 check_for_mitigation(results_dir)
 }
@@ -10,6 +10,6 @@ check_for_mitigation(results_dir)
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
 }
 \description{
-Look for mitigation file and return contents if any are found
+Look for mitigation file and return contents if is found
 }
 \keyword{internal}
