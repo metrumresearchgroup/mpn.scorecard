@@ -85,7 +85,7 @@ build_risk_summary <- function(result_dirs,
       mitigation = mitigation_txt
     )
 
-    cbind(pkg_info, overall_risk) %>% relocate(mitigation, .after = everything())
+    cbind(pkg_info, overall_risk) %>% dplyr::relocate(mitigation, .after = everything())
   }) %>% purrr::list_rbind()
 
 
