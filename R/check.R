@@ -41,6 +41,9 @@ add_rcmdcheck <- function(out_dir, rcmdcheck_args) {
     message(glue::glue("rcmdcheck for {pkg_name} passed"))
   }else if(status == 0.5){
     message(glue::glue("rcmdcheck for {pkg_name} passed with warnings"))
+  }else if(status == 0){
+    check_path <- get_result_path(out_dir, "check.rds")
+    message(glue::glue("rcmdcheck for {pkg_name} failed. Read in the rcmdcheck output to see what went wrong: {check_path}"))
   }
 
   return(status)

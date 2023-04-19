@@ -76,27 +76,26 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
   # build list of formatted tibbles
   pkg_scores$formatted <- list()
 
-  overall_scores <- purrr::imap(pkg_scores$overall$scores, ~{
+  overall_scores <- purrr::imap(pkg_scores$category_scores, ~{
     data.frame(
-      Category = ifelse(.y=="weighted_score", "overall", .y),
-      weighted_score = ifelse(.x == "NA", NA_integer_, .x)
+      category = .y,
+      category_score = ifelse(.x == "NA", NA_integer_, .x)
     )
   }) %>% purrr::list_rbind() %>%
-    dplyr::mutate(Risk = map_risk(.data$weighted_score, risk_breaks))
+    dplyr::mutate(risk = map_risk(.data$category_score, risk_breaks))
 
-  pkg_scores$formatted$overall_risk <- overall_scores %>%
-    dplyr::rename(`Weighted Score` = .data$weighted_score)
+  pkg_scores$formatted$overall_scores <- overall_scores
 
   # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
-  pkg_scores$formatted$scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
+  pkg_scores$formatted$category_scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
     formatted_df <- purrr::imap(category_list, ~{
       data.frame(
-        Criteria = .y,
-        raw_score = ifelse(.x == "NA", NA_integer_, .x)
+        criteria = .y,
+        score = ifelse(.x == "NA", NA_integer_, .x)
       ) %>%
         mutate(
-          Result = map_answer(.data$raw_score),
-          Risk = map_risk(.data$raw_score, risk_breaks)
+          result = map_answer(.data$score),
+          risk = map_risk(.data$score, risk_breaks)
         )
     }) %>%
       purrr::set_names(names(category_list)) %>%
@@ -105,14 +104,14 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     # Additional formatting for testing data
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
-        Result = ifelse(
-          (.data$Criteria == "covr" & !is.na(.data$raw_score)), paste0(.data$raw_score*100, "%"), .data$Result
+        result = ifelse(
+          (.data$criteria == "covr" & !is.na(.data$score)), paste0(.data$score*100, "%"), .data$result
         ),
-        Criteria = ifelse(.data$Criteria == "check", "R CMD CHECK passing", "Coverage")
+        criteria = ifelse(.data$criteria == "check", "R CMD CHECK passing", "coverage")
       )
     }
 
-    formatted_df <- formatted_df %>% dplyr::rename(`Raw Score` = .data$raw_score)
+    formatted_df <- formatted_df
 
     formatted_df
   })

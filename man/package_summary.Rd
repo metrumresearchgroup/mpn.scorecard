@@ -4,12 +4,12 @@
 \alias{package_summary}
 \title{Review important package metrics prior to running \code{\link[=render_scorecard_summary]{render_scorecard_summary()}}}
 \usage{
-package_summary(result_dirs, keep_result_dirs = FALSE)
+package_summary(result_dirs, keep_result_paths = FALSE)
 }
 \arguments{
 \item{result_dirs}{A vector of output directories}
 
-\item{keep_result_dirs}{Logical (T/F). If \code{TRUE}, return result directories as columns}
+\item{keep_result_paths}{Logical (T/F). If \code{TRUE}, return result paths and \code{out_dir} directory as columns}
 }
 \value{
 a datadrame

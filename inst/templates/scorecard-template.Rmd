@@ -22,7 +22,7 @@ library(dplyr)
 library(flextable)
 # init_flextable_defaults()
 set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
-# set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE, font.family = "DejaVu Sans")
+# set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = FALSE, font.family = "DejaVu Sans")
 
 ```
 
