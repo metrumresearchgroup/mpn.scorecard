@@ -9,10 +9,6 @@ rcmdcheck_args = list(
 )
 
 
-pkg_dirs <- setup_multiple_pkg_scores()
-
-
-
 #' Creates package scaffold
 #'
 #' @param pkg_name a name for the package. Useful to specify for informative messages or creating multiple packages at once
@@ -201,7 +197,7 @@ make_pkg_file <- function(
   writeLines(template_text_new, new_file)
 }
 
-
+# used for individual tests
 cleanup_temp_dir <- function(dir){
   unlink(dir, recursive = TRUE)
   exists <- fs::dir_exists(dir)
@@ -209,6 +205,9 @@ cleanup_temp_dir <- function(dir){
 }
 
 
+pkg_dirs <- setup_multiple_pkg_scores()
 
+# run at the end of all tests
+withr::defer(unlink(pkg_dirs$testing_dir, recursive = TRUE), teardown_env())
 
 
