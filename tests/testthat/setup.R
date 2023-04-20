@@ -9,7 +9,7 @@ rcmdcheck_args = list(
 )
 
 
-
+pkg_dirs <- setup_multiple_pkg_scores()
 
 
 
@@ -142,16 +142,16 @@ create_testing_package <- function(
 
   return(
     list(
-      testing_dir = pkg_setup_dirs$testing_dir,
       pkg_dir = pkg_setup_dirs$pkg_dir,
       tar_file = tar_file,
-      results_dir = results_dir
+      results_dir = results_dir,
+      testing_dir = pkg_setup_dirs$testing_dir
     )
   )
 }
 
 
-#' Create five fake packages of all types and score them
+#' Create five fake packages of all types
 #'
 #' @returns a named list containing the `result_dirs` and overall `testing_dir` (for easy unlinking)
 #'
@@ -161,25 +161,30 @@ setup_multiple_pkg_scores <- function(){
   pkg_names <- paste0("package", seq(1:5))
   pkg_types <- c(rep("pass_success", 2), "pass_warning", "fail_func", "fail_test")
 
-  result_dirs <- purrr::map2_chr(pkg_names, pkg_types, ~{
+  pkg_setups <- purrr::map2_dfr(pkg_names, pkg_types, ~{
     pkg_setup <- create_testing_package(
       pkg_name = .x, type = .y,
       nest_resuts_dir = FALSE
     )
 
-    score_pkg(
-      pkg = pkg_setup$tar_file,
-      out_dir = pkg_setup$results_dir,
-      overwrite = TRUE
-    )
-  }) %>% suppressMessages()
+    result_dir <- purrr::map_chr(pkg_setup$tar_file, ~{
+      score_pkg(.x, pkg_setup$results_dir, overwrite = TRUE)
+    })
 
-  return(
-    list(
-      testing_dir = testing_dir,
-      result_dirs = result_dirs
+    cbind(
+      pkg_name = .x,
+      pkg_type = .y,
+      tibble::as_tibble(pkg_setup),
+      result_dir = result_dir
     )
-  )
+  })
+
+  overall_dirs <- pkg_setups %>% dplyr::select(c(results_dir, testing_dir)) %>% dplyr::distinct() %>% as.list()
+  pkg_setups_df <- pkg_setups %>% dplyr::select(-c(results_dir, testing_dir))
+
+  pkg_setup <- c(list(pkg_setups_df = pkg_setups_df), overall_dirs)
+
+  return(pkg_setup)
 }
 
 
@@ -207,30 +212,3 @@ cleanup_temp_dir <- function(dir){
 
 
 
-
-
-### This will have to be changes, but structuring tests around this for now ###
-# package_dir <- file.path("/data", "Projects", "package_dev")
-# pkg_tar <- file.path(package_dir,"review_3.1.0.tar.gz") # tarball
-# out_dir <- file.path(tempdir(), "results")
-
-# A function like this could be used if we wanted to test real packages, but unlikely (keeping during development)
-# setup_files <- function(pkg_tar){
-#   # Unpack tarball
-#   pkg_source_path <- unpack_tarball(pkg_tar)
-#
-#   # Get package name and version
-#   pkg_desc <- get_pkg_desc(pkg_source_path, fields = c("Package", "Version"))
-#   pkg_name <- pkg_desc$Package
-#   pkg_ver <- pkg_desc$Version
-#   pkg_name_ver <- paste0(pkg_name, "_", pkg_ver)
-#
-#   return(
-#     list(
-#       pkg_source_path = pkg_source_path,
-#       pkg_name = pkg_name,
-#       pkg_ver = pkg_ver,
-#       pkg_name_ver = pkg_name_ver
-#     )
-#   )
-# }

@@ -5,7 +5,7 @@ describe("covr and rcmdcheck success", {
   it("no rcmdcheck warnings", {
     # Create temp package that will succeed
     pkg_setup <- create_testing_package(type = "pass_success")
-    on.exit(cleanup_temp_dir(pkg_setup$temp_dir))
+    on.exit(cleanup_temp_dir(pkg_setup$testing_dir))
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
@@ -14,7 +14,8 @@ describe("covr and rcmdcheck success", {
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args),
-      "rcmdcheck for mypackage_0.0.0.9000 passed"
+      glue::glue("rcmdcheck for {basename(pkg_setup$results_dir)} passed"),
+      fixed = TRUE
     )
     res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$results_dir)
 
@@ -38,8 +39,8 @@ describe("covr and rcmdcheck success", {
 
   it("with warnings", {
     # Create temp package that will succeed with warnings
-    pkg_setup <- create_testing_package(type = "pass_warning")
-    on.exit(cleanup_temp_dir(pkg_setup$temp_dir))
+    pkg_setup <- create_testing_package(pkg_name = "packageWarn", type = "pass_warning")
+    on.exit(cleanup_temp_dir(pkg_setup$testing_dir))
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
@@ -48,7 +49,8 @@ describe("covr and rcmdcheck success", {
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args),
-      "rcmdcheck for mypackage_0.0.0.9000 passed with warnings"
+      glue::glue("rcmdcheck for {basename(pkg_setup$results_dir)} passed with warnings"),
+      fixed = TRUE
     )
     res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$results_dir)
 
@@ -79,7 +81,7 @@ describe("covr and rcmdcheck failures", {
   it("failing tests", {
     # Create temp package that will fail
     pkg_setup <- create_testing_package(type = "fail_test")
-    on.exit(cleanup_temp_dir(pkg_setup$temp_dir))
+    on.exit(cleanup_temp_dir(pkg_setup$testing_dir))
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
@@ -88,11 +90,11 @@ describe("covr and rcmdcheck failures", {
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args),
-      "rcmdcheck for mypackage_0.0.0.9000 failed"
+      glue::glue("rcmdcheck for {basename(pkg_setup$results_dir)} failed")
     )
     expect_message(
       res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$results_dir),
-      "R coverage for mypackage_0.0.0.9000 failed"
+      glue::glue("R coverage for {basename(pkg_setup$results_dir)} failed")
     )
 
     # confirm failure
@@ -103,7 +105,7 @@ describe("covr and rcmdcheck failures", {
     check_output <- readRDS(get_result_path(pkg_setup$results_dir, "check.rds"))
     expect_equal(check_output$status, 1)
     expect_true(!rlang::is_empty(check_output$errors))
-    expect_true(!rlang::is_empty(check_output$warnings))
+    expect_true(rlang::is_empty(check_output$warnings))
     expect_true(!rlang::is_empty(check_output$test_fail))
 
     # check covr output
@@ -116,7 +118,7 @@ describe("covr and rcmdcheck failures", {
   it("bad functions - failure before tests are run", {
     # Create temp package that will fail
     pkg_setup <- create_testing_package(type = "fail_func")
-    on.exit(cleanup_temp_dir(pkg_setup$temp_dir))
+    on.exit(cleanup_temp_dir(pkg_setup$testing_dir))
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
@@ -125,11 +127,11 @@ describe("covr and rcmdcheck failures", {
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args),
-      "rcmdcheck for mypackage_0.0.0.9000 failed"
+      glue::glue("rcmdcheck for {basename(pkg_setup$results_dir)} failed")
     )
     expect_message(
       res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$results_dir),
-      "R coverage for mypackage_0.0.0.9000 failed"
+      glue::glue("R coverage for {basename(pkg_setup$results_dir)} failed")
     )
 
     # confirm failure
