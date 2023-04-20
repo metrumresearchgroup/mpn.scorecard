@@ -12,26 +12,35 @@ rcmdcheck_args = list(
 #' Creates and builds a fake package
 #'
 #' @param pkg_name a name for the package. Useful to specify for informative messages or creating multiple packages at once
+#' @param testing_dir directory to contain package tarball, installed package, and results (RDS and json)
 #' @param type type of package to make. See details.
+#' @param nest_resuts_dir Logical (T/F). If `TRUE`, create a subdirectory in `results` named `<pkg_name>_<pkg_version>`
 #'
 #' @details
 #' pass_success should pass with flying colors
 #' pass_warning is meant to trigger rcmdcheck warnings
 #' fail_func vs fail_test can be used to trigger various failures - might be expanded on if needed
 #'
+#' `testing_dir` can be set outside the function in the event you want all packages to nest in the same tempfile
+#' This should be done in most cases (when running multiple packages) to reflect the default package behavior
+#'
+#' `nest_resuts_dir` should be set to `TRUE` when **NOT** calling `score_pkg`, and `FALSE` when it is.
+#' `score_pkg` creates the subdirectory itself. The purpose for changing this parameter is to retain the informative messages regarding rcmdcheck and covr failures
+#'
 #' @returns a list of file paths
 #'
 #' @keywords internal
 create_testing_package <- function(
     pkg_name = "mypackage",
-    type = c("pass_success", "pass_warning", "fail_func", "fail_test")
+    testing_dir = tempfile("pkg_temp_"),
+    type = c("pass_success", "pass_warning", "fail_func", "fail_test"),
+    nest_resuts_dir = TRUE
 ){
 
   type <- match.arg(type)
 
   # Create temp package
-  temp_dir <- tempfile("pkg_temp_")
-  pkg_dir <- file.path(temp_dir, pkg_name)
+  pkg_dir <- file.path(testing_dir, pkg_name)
   fs::dir_create(pkg_dir)
   create_package(pkg_dir, rstudio = FALSE, open = FALSE,
                  fields = list(
@@ -88,9 +97,14 @@ create_testing_package <- function(
 
   # Create temp directory for saving results, that follows the convention of this package:
   # namely, a directory with the basename of the package and version
-  desc_file <- get_pkg_desc(pkg_dir, fields = c("Package", "Version"))
-  pkg_name_ver <- paste0(desc_file, collapse = "_")
-  results_dir <- file.path(temp_dir, "results", pkg_name_ver)
+  if(isTRUE(nest_resuts_dir)){
+    desc_file <- get_pkg_desc(pkg_dir, fields = c("Package", "Version"))
+    pkg_name_ver <- paste0(desc_file, collapse = "_")
+    results_dir <- file.path(testing_dir, "results", pkg_name_ver)
+  }else{
+    results_dir <- file.path(testing_dir, "results")
+  }
+
   fs::dir_create(results_dir)
 
 
@@ -99,7 +113,7 @@ create_testing_package <- function(
 
   return(
     list(
-      temp_dir = temp_dir,
+      temp_dir = testing_dir,
       pkg_dir = pkg_dir,
       tar_file = tar_file,
       results_dir = results_dir
@@ -108,11 +122,53 @@ create_testing_package <- function(
 }
 
 
+#' Create five fake packages of all types and score them
+#'
+#' @param testing_dir directory to contain packages and results
+#'
+#' @returns a named list containing the `result_dirs` and overall `testing_dir` (for easy unlinking)
+#'
+#' @keywords internal
+setup_multiple_pkg_scores <- function(
+    testing_dir = tempfile("pkg_temp_")
+){
+
+  pkg_names <- paste0("package", seq(1:5))
+  pkg_types <- c(rep("pass_success", 2), "pass_warning", "fail_func", "fail_test")
+
+  result_dirs <- purrr::map2_chr(pkg_names, pkg_types, ~{
+    pkg_setup <- create_testing_package(
+      pkg_name = .x, type = .y,
+      testing_dir = testing_dir,
+      nest_resuts_dir = FALSE
+    )
+
+    score_pkg(
+      pkg = pkg_setup$tar_file,
+      out_dir = pkg_setup$results_dir,
+      overwrite = TRUE
+    )
+  }) %>% suppressMessages()
+
+  return(
+    list(
+      testing_dir = testing_dir,
+      result_dirs = result_dirs
+    )
+  )
+}
+
+
+
+
 cleanup_temp_dir <- function(dir){
   unlink(dir, recursive = TRUE)
   exists <- fs::dir_exists(dir)
   tibble::tibble(file_path = names(exists), exists = unname(exists))
 }
+
+
+
 
 
 
