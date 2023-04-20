@@ -29,13 +29,15 @@ create_package_template <- function(
   fs::dir_create(pkg_dir, recurse = TRUE)
 
   # tempalte files
+  license_md_file <- file.path(template_dir, "license_md.txt")
   license_file <- file.path(template_dir, "license.txt")
   description_file <- file.path(template_dir, "description_file.txt")
   namespace_file <- file.path(template_dir, "namespace.txt")
 
   # modify and copy over core package files
   if(isFALSE(pass_warning)){
-    make_pkg_file(pkg_name, license_file, file.path(pkg_dir, "LICENSE.md"))
+    make_pkg_file(pkg_name, license_md_file, file.path(pkg_dir, "LICENSE.md"))
+    make_pkg_file(pkg_name, license_file, file.path(pkg_dir, "LICENSE"))
   }
   make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"))
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
