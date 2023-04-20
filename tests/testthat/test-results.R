@@ -12,7 +12,6 @@ describe("covr and rcmdcheck success", {
 
     # Run check and coverage - expect message
     rcmdcheck_args$path <- pkg_setup$tar_file
-    res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args)
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$results_dir, rcmdcheck_args),
       "rcmdcheck for mypackage_0.0.0.9000 passed"
