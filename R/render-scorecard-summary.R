@@ -183,8 +183,8 @@ summarize_package_results <- function(result_dirs,
 
 
   risk_summary_df <- risk_summary_df %>%
-    dplyr::left_join(check_results, by = dplyr::join_by("package", "version")) %>%
-    dplyr::left_join(covr_results, by = dplyr::join_by("pkg_name_ver")) %>%
+    dplyr::left_join(check_results, by = c("package", "version")) %>%
+    dplyr::left_join(covr_results, by = "pkg_name_ver") %>%
     dplyr::select(-"pkg_name_ver")
 
 
