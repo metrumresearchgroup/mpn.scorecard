@@ -30,7 +30,7 @@ describe("mitigation file is properly included", {
   })
 
   it("confirm presence in rendered report", {
-
+    skip_if_render_pdf()
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
     result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[3]

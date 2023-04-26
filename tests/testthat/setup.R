@@ -223,6 +223,15 @@ cleanup_temp_dir <- function(dir){
   tibble::tibble(file_path = names(exists), exists = unname(exists))
 }
 
+#' Skip test if PDF rendering is required
+#'
+#' @keywords internal
+skip_if_render_pdf <- function() {
+  if (Sys.getenv("SKIP_RENDER_TESTS") == "true") {
+    testthat::skip("skipping pdf rendering test")
+  }
+}
+
 
 pkg_dirs <- setup_multiple_pkg_scores()
 

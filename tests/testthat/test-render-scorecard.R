@@ -1,4 +1,6 @@
 
+skip_if_render_pdf()
+
 describe("render_scorecard", {
 
   it("confirm default behavior", {
