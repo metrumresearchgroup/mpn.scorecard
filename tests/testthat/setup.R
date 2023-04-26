@@ -1,6 +1,5 @@
 
 library(dplyr)
-library(usethis)
 
 # Base rcmdcheck args. Set the `path` element to the file path of the tarball before using
 rcmdcheck_args = list(
@@ -20,7 +19,7 @@ create_package_template <- function(
     add_tests = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
-  testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir")
+  testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm()
 
   pkg_dir <- file.path(testing_dir, pkg_name)
   if(fs::dir_exists(pkg_dir)) fs::dir_delete(pkg_dir)
@@ -145,9 +144,9 @@ create_testing_package <- function(
   if(isTRUE(nest_resuts_dir)){
     pkg_name_ver <- get_pkg_desc(pkg_setup_dirs$pkg_dir, fields = c("Package", "Version")) %>%
       paste0(collapse = "_")
-    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results", pkg_name_ver)
+    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results", pkg_name_ver) %>% fs::path_norm()
   }else{
-    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results")
+    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results") %>% fs::path_norm()
   }
   fs::dir_create(results_dir)
 

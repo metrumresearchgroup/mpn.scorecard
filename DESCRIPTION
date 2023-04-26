@@ -8,6 +8,8 @@ Description: Collects various measures of quality and risk-of-use for an R packa
     the metrics developed by R Validation Hub's riskmetric package.
 License: MIT + file LICENSE
 Encoding: UTF-8
+Depends:
+    R (>= 3.5)
 Imports:
     checkmate,
     covr,
@@ -28,5 +30,9 @@ Imports:
     rmarkdown,
     stringr,
     tibble
+Suggests:
+    devtools,
+    testthat (>= 2.1.0),
+    withr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
