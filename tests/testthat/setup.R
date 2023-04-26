@@ -2,6 +2,8 @@
 library(pdftools)
 library(dplyr)
 
+
+
 # Base rcmdcheck args. Set the `path` element to the file path of the tarball before using
 rcmdcheck_args = list(
   timeout = Inf,
@@ -227,7 +229,7 @@ cleanup_temp_dir <- function(dir){
 #'
 #' @keywords internal
 skip_if_render_pdf <- function() {
-  if (Sys.getenv("RUN_RENDER_TESTS") != "true") {
+  if (Sys.getenv("METWORX_VERSION") == "" || Sys.getenv("SKIP_RENDER_TESTS") == "true") {
     testthat::skip("skipping pdf rendering test")
   }
 }
