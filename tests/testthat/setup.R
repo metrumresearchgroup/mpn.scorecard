@@ -1,4 +1,5 @@
 
+library(dplyr)
 library(usethis)
 
 # Base rcmdcheck args. Set the `path` element to the file path of the tarball before using
@@ -15,7 +16,8 @@ rcmdcheck_args = list(
 #' @param pass_warning Logical (T/F). If `TRUE`, don't copy over the license file to trigger a warning on rcmdcheck
 create_package_template <- function(
     pkg_name = "mypackage",
-    pass_warning = FALSE
+    pass_warning = FALSE,
+    add_tests = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
   testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir")
@@ -44,22 +46,25 @@ create_package_template <- function(
   script_file <- file.path(r_dir, "myscript.R")
   fs::file_create(script_file)
 
-  # Add a test setup for running test suite (testthat.R)
-  test_dir <- file.path(pkg_dir, "tests", "testthat")
-  fs::dir_create(test_dir, recurse = TRUE)
-  testthat_script <- file.path(dirname(test_dir), "testthat.R")
-  fs::file_create(testthat_script)
-  test_setup <- glue::glue("
+  if(isTRUE(add_tests)){
+    # Add a test setup for running test suite (testthat.R)
+    test_dir <- file.path(pkg_dir, "tests", "testthat")
+    fs::dir_create(test_dir, recurse = TRUE)
+    testthat_script <- file.path(dirname(test_dir), "testthat.R")
+    fs::file_create(testthat_script)
+    test_setup <- glue::glue("
     library(testthat)
     library({pkg_name})
 
     test_check('{pkg_name}')
     ")
-  writeLines(test_setup, testthat_script)
+    writeLines(test_setup, testthat_script)
 
-  # Test file
-  test_file <- file.path(test_dir, "test-myscript.R")
-  fs::file_create(test_file)
+    # Test file
+    test_file <- file.path(test_dir, "test-myscript.R")
+    fs::file_create(test_file)
+  }
+
 
   return(
     list(
@@ -87,12 +92,15 @@ create_package_template <- function(
 #' `nest_resuts_dir` should be set to `TRUE` when **NOT** calling `score_pkg`, and `FALSE` when it is.
 #' `score_pkg` creates the subdirectory itself. The purpose for changing this parameter is to retain the informative messages regarding rcmdcheck and covr failures
 #'
+#' `type` = 'no_test' indicates an empty test file, `type` = 'no_test_suite' indicates there is no `test` directory at all
+#'
 #' @returns a list of file paths
 #'
 #' @keywords internal
 create_testing_package <- function(
     pkg_name = "mypackage",
-    type = c("pass_success", "pass_warning", "fail_func", "fail_test"),
+    type = c("pass_success", "pass_warning", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
+             "fail_func_syntax", "fail_test"),
     nest_resuts_dir = TRUE
 ){
 
@@ -101,25 +109,35 @@ create_testing_package <- function(
   # Create temp package
   pkg_setup_dirs <- create_package_template(
     pkg_name = pkg_name,
-    pass_warning = (type == "pass_warning")
+    pass_warning = (type == "pass_warning"),
+    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions"))
   )
 
-  # Add function to R/
-  if(type == "fail_func"){
+  # Add function to R/  (unless type = 'pass_no_functions')
+  if(type == "fail_func_syntax"){
     # Add a file with a syntax error to the package
-    writeLines("myfunction <- function(x { x + 1", pkg_setup_dirs$r_file)
-  }else{
-    writeLines("myfunction <- function(x) { x + 1}", pkg_setup_dirs$r_file)
+    func_lines <- "myfunction <- function(x { x + 1"
+  }else if(type != "pass_no_functions"){
+    func_lines <- "myfunction <- function(x) { x + 1}"
   }
 
-  # Add a test file to tests/testthat/
+  if(type != "pass_no_functions"){
+    writeLines(func_lines, pkg_setup_dirs$r_file)
+  }
+
+  # Add a test file to tests/testthat/ (unless type = 'pass_no_test_suite' or 'pass_no_functions')
   if(type == "fail_test"){
     # Add a test file that will fail
     test_lines <- "testthat::test_that('this fails', { myfunction('blah') })"
-  }else{
+  }else if(type == "pass_no_test"){
+    test_lines <- ""
+  }else if(!(type %in% c("pass_no_test_suite", "pass_no_functions"))){
     test_lines <- "testthat::test_that('this works', { expect_equal(myfunction(1), 2)})"
   }
-  writeLines(test_lines, pkg_setup_dirs$test_file)
+
+  if(!(type %in% c("pass_no_test_suite", "pass_no_functions"))){
+    writeLines(test_lines, pkg_setup_dirs$test_file)
+  }
 
 
   # Create temp directory for saving results, that follows the convention of this package:
@@ -140,7 +158,7 @@ create_testing_package <- function(
     list(
       pkg_dir = pkg_setup_dirs$pkg_dir,
       tar_file = tar_file,
-      results_dir = results_dir,
+      all_results_dir = results_dir,
       testing_dir = pkg_setup_dirs$testing_dir
     )
   )
@@ -149,13 +167,14 @@ create_testing_package <- function(
 
 #' Create five fake packages of all types
 #'
-#' @returns a named list containing the `result_dirs` and overall `testing_dir` (for easy unlinking)
+#' @returns a named list containing the `results_dir` and overall `testing_dir` (for easy unlinking)
 #'
 #' @keywords internal
 setup_multiple_pkg_scores <- function(){
 
-  pkg_names <- paste0("package", seq(1:5))
-  pkg_types <- c(rep("pass_success", 2), "pass_warning", "fail_func", "fail_test")
+  pkg_names <- paste0("package", seq(1:7))
+  pkg_types <- c("pass_success", "pass_warning","pass_no_test", "pass_no_test_suite", "pass_no_functions",
+                 "fail_func_syntax", "fail_test")
 
   pkg_setups <- purrr::map2_dfr(pkg_names, pkg_types, ~{
     pkg_setup <- create_testing_package(
@@ -164,19 +183,19 @@ setup_multiple_pkg_scores <- function(){
     )
 
     result_dir <- purrr::map_chr(pkg_setup$tar_file, ~{
-      score_pkg(.x, pkg_setup$results_dir, overwrite = TRUE)
+      score_pkg(.x, pkg_setup$all_results_dir, overwrite = TRUE) %>% suppressMessages()
     })
 
     cbind(
       pkg_name = .x,
       pkg_type = .y,
       tibble::as_tibble(pkg_setup),
-      result_dir = result_dir
+      pkg_result_dir = result_dir
     )
   })
 
-  overall_dirs <- pkg_setups %>% dplyr::select(c(results_dir, testing_dir)) %>% dplyr::distinct() %>% as.list()
-  pkg_setups_df <- pkg_setups %>% dplyr::select(-c(results_dir, testing_dir))
+  overall_dirs <- pkg_setups %>% dplyr::select(c(all_results_dir, testing_dir)) %>% dplyr::distinct() %>% as.list()
+  pkg_setups_df <- pkg_setups %>% dplyr::select(-c(all_results_dir, testing_dir))
 
   pkg_setup <- c(list(pkg_setups_df = pkg_setups_df), overall_dirs)
 

@@ -3,7 +3,7 @@ describe("summarize_pacakge_results", {
 
   it("default behavior", {
 
-    result_dirs <- pkg_dirs$pkg_setups_df$result_dir
+    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
 
     pkg_results <- summarize_package_results(result_dirs)
 
