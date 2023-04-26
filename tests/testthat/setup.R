@@ -227,7 +227,7 @@ cleanup_temp_dir <- function(dir){
 #'
 #' @keywords internal
 skip_if_render_pdf <- function() {
-  if (Sys.getenv("SKIP_RENDER_TESTS") == "true") {
+  if (Sys.getenv("RUN_RENDER_TESTS") != "true") {
     testthat::skip("skipping pdf rendering test")
   }
 }
