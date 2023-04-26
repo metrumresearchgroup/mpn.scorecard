@@ -1,4 +1,5 @@
 
+library(pdftools)
 library(dplyr)
 
 # Base rcmdcheck args. Set the `path` element to the file path of the tarball before using

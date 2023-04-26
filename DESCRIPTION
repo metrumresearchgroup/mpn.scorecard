@@ -32,6 +32,7 @@ Imports:
     tibble
 Suggests:
     devtools,
+    pdftools,
     testthat (>= 2.1.0),
     withr
 Roxygen: list(markdown = TRUE)
