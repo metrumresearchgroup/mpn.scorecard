@@ -167,7 +167,7 @@ create_testing_package <- function(
 }
 
 
-#' Create five fake packages of all types
+#' Create fake packages of all types
 #'
 #' @returns a named list containing the `results_dir` and overall `testing_dir` (for easy unlinking)
 #'
