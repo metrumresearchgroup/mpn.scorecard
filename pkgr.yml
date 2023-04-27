@@ -6,8 +6,6 @@ Packages:
   - devtools
   - pkgdown
   - styler
-  # - XML
-  # - readr
 
 Repos:
   - CRAN: https://cran.rstudio.com

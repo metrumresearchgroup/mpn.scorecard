@@ -67,7 +67,7 @@ render_scorecard <- function(
 #' Formats the risks, not the original scores
 #'
 #'
-#' @param pkg_scores named list of all scores and risks
+#' @param pkg_scores named list of all scores
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
@@ -97,9 +97,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
           result = map_answer(.data$score),
           risk = map_risk(.data$score, risk_breaks)
         )
-    }) %>%
-      purrr::set_names(names(category_list)) %>%
-      purrr::list_rbind()
+    }) %>% purrr::list_rbind()
 
     # Additional formatting for testing data
     if(category_name == "testing"){
@@ -110,8 +108,6 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
         criteria = ifelse(.data$criteria == "check", "R CMD CHECK passing", "coverage")
       )
     }
-
-    formatted_df <- formatted_df
 
     formatted_df
   })

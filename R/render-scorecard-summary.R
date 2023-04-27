@@ -71,9 +71,11 @@ build_risk_summary <- function(result_dirs,
 
     # Overall scores and risk
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
+
     overall_risk <- formatted_pkg_scores$formatted$overall_scores %>%
       dplyr::filter(category == "overall") %>% dplyr::select(-c(category)) %>%
       dplyr::rename("overall_risk" = "risk", "overall_score" = "category_score")
+
 
     # mitigation - we want empty mitigation cells by default
     mitigation_txt <- if(is.null(check_for_mitigation(.x))) NA_character_ else "Yes"
@@ -191,13 +193,13 @@ summarize_package_results <- function(result_dirs,
   if(isFALSE(append_results)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("check_output", "covr_output"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("check_output", "covr_output"), .after = dplyr::everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("check_output", "covr_output"), .after = everything())
   }
 
   if(isFALSE(append_result_paths)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("out_dir", "check_output_path", "covr_output_path"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_output_path", "covr_output_path"), .after = dplyr::everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_output_path", "covr_output_path"), .after = everything())
   }
 
   return(risk_summary_df)

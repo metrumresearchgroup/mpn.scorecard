@@ -187,7 +187,10 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
       risk_header = get_overall_labels(formatted_pkg_scores, .y)
     )
   }) %>% purrr::list_rbind() %>%
-    mutate(Risk = factor(.data$risk, levels = RISK_LEVELS))
+    mutate(
+      risk = factor(.data$risk, levels = RISK_LEVELS),
+      criteria = gsub("_", " ", .data$criteria) %>% stringr::str_to_title() %>% gsub("Url", "URL", .)
+      )
 
   # Testing is a separate table (for now)
   scores_df <- scores_df %>% dplyr::filter(.data$category != "testing")
