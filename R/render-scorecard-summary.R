@@ -79,6 +79,10 @@ build_risk_summary <- function(result_dirs,
 
     # mitigation - we want empty mitigation cells by default
     mitigation_txt <- if(is.null(check_for_mitigation(.x))) NA_character_ else "Yes"
+    # Overwrite to 'No' for High Risk packages
+    if(is.na(mitigation_txt) && overall_risk$overall_risk == "High Risk"){
+      mitigation_txt <- "No"
+    }
 
     pkg_info <- data.frame(
       package = formatted_pkg_scores$pkg_name,
