@@ -84,14 +84,14 @@ create_package_template <- function(
 #'
 #' @param pkg_name a name for the package. Useful to specify for informative messages or creating multiple packages at once
 #' @param type type of package to make. See details.
-#' @param nest_resuts_dir Logical (T/F). If `TRUE`, create a subdirectory in `results` named `<pkg_name>_<pkg_version>`
+#' @param nest_results_dir Logical (T/F). If `TRUE`, create a subdirectory in `results` named `<pkg_name>_<pkg_version>`
 #'
 #' @details
 #' pass_success should pass with flying colors
 #' pass_warning is meant to trigger rcmdcheck warnings
 #' fail_func vs fail_test can be used to trigger various failures - might be expanded on if needed
 #'
-#' `nest_resuts_dir` should be set to `TRUE` when **NOT** calling `score_pkg`, and `FALSE` when it is.
+#' `nest_results_dir` should be set to `TRUE` when **NOT** calling `score_pkg`, and `FALSE` when it is.
 #' `score_pkg` creates the subdirectory itself. The purpose for changing this parameter is to retain the informative messages regarding rcmdcheck and covr failures
 #'
 #' `type` = 'no_test' indicates an empty test file, `type` = 'no_test_suite' indicates there is no `test` directory at all
@@ -103,7 +103,7 @@ create_testing_package <- function(
     pkg_name = "mypackage",
     type = c("pass_success", "pass_warning", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
              "fail_func_syntax", "fail_test"),
-    nest_resuts_dir = TRUE
+    nest_results_dir = TRUE
 ){
 
   type <- match.arg(type)
@@ -144,7 +144,7 @@ create_testing_package <- function(
 
   # Create temp directory for saving results, that follows the convention of this package:
   # namely, a directory with the basename of the package and version
-  if(isTRUE(nest_resuts_dir)){
+  if(isTRUE(nest_results_dir)){
     pkg_name_ver <- get_pkg_desc(pkg_setup_dirs$pkg_dir, fields = c("Package", "Version")) %>%
       paste0(collapse = "_")
     results_dir <- file.path(pkg_setup_dirs$testing_dir, "results", pkg_name_ver) %>% fs::path_norm()
@@ -181,7 +181,7 @@ setup_multiple_pkg_scores <- function(){
   pkg_setups <- purrr::map2_dfr(pkg_names, pkg_types, ~{
     pkg_setup <- create_testing_package(
       pkg_name = .x, type = .y,
-      nest_resuts_dir = FALSE
+      nest_results_dir = FALSE
     )
 
     result_dir <- purrr::map_chr(pkg_setup$tar_file, ~{
