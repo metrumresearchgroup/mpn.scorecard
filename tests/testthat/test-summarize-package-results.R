@@ -29,6 +29,8 @@ describe("summarize_pacakge_results", {
 
     result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
 
+    mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
+
     # Add mitigation to non-high-risk package
     mitigation_file <- fs::file_copy(mitigation_template, result_dirs[1])
     new_mitigation_name <- get_result_path(result_dirs[1], "mitigation.txt")
