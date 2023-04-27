@@ -87,7 +87,7 @@ build_risk_summary <- function(result_dirs,
       mitigation = mitigation_txt
     )
 
-    cbind(pkg_info, overall_risk) %>% dplyr::relocate(mitigation, .after = dplyr::everything())
+    cbind(pkg_info, overall_risk) %>% dplyr::relocate(mitigation, .after = everything())
   }) %>% purrr::list_rbind()
 
 
@@ -193,13 +193,13 @@ summarize_package_results <- function(result_dirs,
   if(isFALSE(append_results)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("check_output", "covr_output"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("check_output", "covr_output"), .after = dplyr::everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("check_output", "covr_output"), .after = everything())
   }
 
   if(isFALSE(append_result_paths)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("out_dir", "check_output_path", "covr_output_path"))
   }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_output_path", "covr_output_path"), .after = dplyr::everything())
+    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_output_path", "covr_output_path"), .after = everything())
   }
 
   return(risk_summary_df)
