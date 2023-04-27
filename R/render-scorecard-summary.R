@@ -151,7 +151,7 @@ summarize_package_results <- function(result_dirs,
     tibble::as_tibble() %>%
     mutate(
       pkg_name_ver = basename(.data$out_dir), # Used for joining covr data
-      has_mitigation = ifelse(is.na(.data$mitigation), "no", "yes"),
+      has_mitigation = ifelse(is.na(.data$mitigation) | .data$mitigation == "No", "no", "yes"),
       check_output_path = get_result_path(.data$out_dir, "check.rds"),
       covr_output_path = get_result_path(.data$out_dir, "covr.rds")
     ) %>%
