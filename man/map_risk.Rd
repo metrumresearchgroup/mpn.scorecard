@@ -7,7 +7,7 @@
 map_risk(scores, risk_breaks)
 }
 \arguments{
-\item{scores}{vector of risk scores (or other parameter if \code{desc = TRUE})}
+\item{scores}{vector of risk scores}
 
 \item{risk_breaks}{breaks determining low, medium, and high risk}
 }

@@ -21,13 +21,13 @@ describe("formatting functions", {
       expect_true(all(is.numeric(scores_df$score)))
 
       # ensure all results are 'Yes', 'No', 'Failed', or a percent
-      expect_true(all(grepl("Yes|No|Failed|\\%", scores_df$result)))
+      expect_true(all(grepl("Yes|No|Failed|Passing|\\%", scores_df$result)))
 
       # ensure all risks are valid values
       expect_true(all(grepl(paste0(RISK_LEVELS, collapse = "|"), scores_df$risk)))
 
       # ensure all category criteria are present
-      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK passing", "coverage")
+      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK", "coverage")
       expected_criteria <- expected_criteria[!grepl("check|covr", expected_criteria)]
       expect_true(all(scores_df$criteria %in% expected_criteria))
 
