@@ -171,6 +171,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("success with notes - rcmdcheck math and messages only", {
+    skip_if_render_pdf() # The behavior changes when run via R CMD CHECK
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_notes")
 
