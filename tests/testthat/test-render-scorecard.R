@@ -5,9 +5,9 @@ describe("render_scorecard", {
 
   it("confirm default behavior", {
 
-    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
+    # `result_dirs_select` and `pkg_select` defined in tests/testthat/setup.R
 
-    pdf_paths <- purrr::map_chr(result_dirs, ~{
+    pdf_paths <- purrr::map_chr(result_dirs_select, ~{
       render_scorecard(results_dir = .x, overwrite = TRUE)
     })
 

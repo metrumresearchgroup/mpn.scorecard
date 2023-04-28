@@ -3,9 +3,7 @@ describe("formatting functions", {
 
   it("format_scores_for_render", {
 
-    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
-
-    for(result_dir.i in result_dirs){
+    for(result_dir.i in result_dirs_select){
       json_path <- get_result_path(result_dir.i, "scorecard.json")
       pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -44,7 +42,7 @@ describe("formatting functions", {
 
   it("format_overall_scores", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -57,7 +55,7 @@ describe("formatting functions", {
 
   it("format_package_details", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -71,7 +69,7 @@ describe("formatting functions", {
 
   it("format_testing_scores", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 

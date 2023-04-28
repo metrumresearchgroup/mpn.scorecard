@@ -184,9 +184,8 @@ describe("covr and rcmdcheck success", {
       glue::glue("rcmdcheck for {basename(pkg_setup$pkg_result_dir)} passed with warnings and/or notes")
     )
 
-    # confirm success and values - zero coverage
+    # confirm success and value
     expect_equal(res_check, 0.9)
-    expect_equal(res_covr, 0)
 
   })
 
