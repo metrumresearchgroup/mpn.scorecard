@@ -29,6 +29,48 @@ describe("mitigation file is properly included", {
 
   })
 
+  it("build_risk_summary correctly formats mitigation column",{
+    mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
+    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
+
+    # Add mitigation to non-high-risk package
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs[1])
+    new_mitigation_name <- get_result_path(result_dirs[1], "mitigation.txt")
+    fs::file_move(mitigation_file, new_mitigation_name)
+    on.exit(fs::file_delete(new_mitigation_name), add = TRUE)
+
+    # Add mitigation to high-risk package
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs[7])
+    new_mitigation_name_high <- get_result_path(result_dirs[7], "mitigation.txt")
+    fs::file_move(mitigation_file, new_mitigation_name_high)
+    on.exit(fs::file_delete(new_mitigation_name_high), add = TRUE)
+
+
+    overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks = c(0.3, 0.7), out_dir = NULL)
+    overall_pkg_scores <- overall_risk_summary$overall_pkg_scores
+
+    # Check specific packages for mitigation
+    expect_true(overall_pkg_scores$mitigation[1] == "Yes")
+    expect_true(overall_pkg_scores$mitigation[7] == "Yes")
+
+    # Make sure we have at least one case of High risk and "no" ()
+    overall_pkg_scores <- overall_pkg_scores %>% mutate(
+      mit_high_no = ifelse(
+        overall_risk == "High Risk" & mitigation == "No", TRUE, FALSE
+      )
+    )
+    expect_true(sum(overall_pkg_scores$mit_high_no) >= 1)
+
+    # Overall Logic Test (agnostic to which packages have mitigation)
+    purrr::map2_lgl(overall_pkg_scores$overall_risk, overall_pkg_scores$mitigation, ~{
+      if(grepl("Medium|Low", .x)){
+        expect_true(is.na(.y) || .y == "Yes")
+      }else if(grepl("High", .x)){
+        expect_true(.y == "Yes" || .y == "No")
+      }
+    })
+  })
+
   it("confirm presence in rendered report", {
     skip_if_render_pdf()
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
