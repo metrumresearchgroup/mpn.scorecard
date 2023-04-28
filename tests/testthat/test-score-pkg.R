@@ -92,11 +92,11 @@ describe("score_pkg", {
     # This is an integration test of create_score_list_from_riskmetric and other nested functions,
     # confirming that the values are still in the expected format
     res <- create_score_list_from_riskmetric(res, pkg_setup$pkg_dir)
-    purrr::imap(res$scores, ~{
+    purrr::iwalk(res$scores, ~{
       if(.y == "testing"){
         return(NULL)
       }else{
-        purrr::imap(.x, function(attr.x, attr.y){
+        purrr::iwalk(.x, function(attr.x, attr.y){
           if(attr.y == "has_maintainer"){
             expect_true(attr.x == 1)
           }else{

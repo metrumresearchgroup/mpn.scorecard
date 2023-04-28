@@ -21,6 +21,8 @@ add_coverage <- function(pkg_source_path, out_dir) {
       if(rlang::is_empty(coverage_list$filecoverage) && is.logical(coverage_list$filecoverage)){
         coverage_list$totalcoverage <- 0
         notes <- "No testable functions found"
+      }else{
+        abort("Total coverage returned NaN. This likely means the package had non-standard characteristics. Contact the developer to add support")
       }
     }else{
       notes <- NA

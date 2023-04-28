@@ -29,7 +29,8 @@ Imports:
     rlang,
     rmarkdown,
     stringr,
-    tibble
+    tibble,
+    tidyselect
 Suggests:
     devtools,
     pdftools,
