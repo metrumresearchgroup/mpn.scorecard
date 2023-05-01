@@ -139,18 +139,18 @@ map_risk <- function(scores, risk_breaks) {
   })
 }
 
-#' Use answer_breaks to map binary results into character strings
+#' Use answer_breaks to map results into character strings
 #'
 #' @param scores vector of risk scores
 #' @param criteria vector of criteria names
-#' @param answer_breaks breaks determining 'Yes' or 'No'
+#' @param answer_breaks breaks determining 'Yes'/'Passing' or 'No'/'Failed'. `NA` has special handling. See details.
 #'
 #' @details
 #' If value is not found in `answer_breaks`, it is skipped over
 #'
-#' Note: rmdcheck and rcovr are special cases
-#' rmdcheck includes the raw score as part of the result, but a value of 0 vs NA are handled the same (both indicate failures)
-#' rcovr is skipped over unless it is `NA`, as this is formatted as a percent separately
+#' Note: rmdcheck and covr are special cases
+#' rmdcheck includes the raw score as part of the result, but a value of `answer_breaks[1]` (usually 0) vs `NA` are handled the same (both indicate failures)
+#' covr is skipped over unless it is `NA` (indicates test failures), as this is formatted as a percent separately
 #'
 #' @keywords internal
 map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/render-scorecard.R
 \name{map_answer}
 \alias{map_answer}
-\title{Use answer_breaks to map binary results into character strings}
+\title{Use answer_breaks to map results into character strings}
 \usage{
 map_answer(scores, criteria, answer_breaks = c(0, 1))
 }
@@ -11,16 +11,16 @@ map_answer(scores, criteria, answer_breaks = c(0, 1))
 
 \item{criteria}{vector of criteria names}
 
-\item{answer_breaks}{breaks determining 'Yes' or 'No'}
+\item{answer_breaks}{breaks determining 'Yes'/'Passing' or 'No'/'Failed'. \code{NA} has special handling. See details.}
 }
 \description{
-Use answer_breaks to map binary results into character strings
+Use answer_breaks to map results into character strings
 }
 \details{
 If value is not found in \code{answer_breaks}, it is skipped over
 
-Note: rmdcheck and rcovr are special cases
-rmdcheck includes the raw score as part of the result, but a value of 0 vs NA are handled the same (both indicate failures)
-rcovr is skipped over unless it is \code{NA}, as this is formatted as a percent separately
+Note: rmdcheck and covr are special cases
+rmdcheck includes the raw score as part of the result, but a value of \code{answer_breaks[1]} (usually 0) vs \code{NA} are handled the same (both indicate failures)
+covr is skipped over unless it is \code{NA} (indicates test failures), as this is formatted as a percent separately
 }
 \keyword{internal}
