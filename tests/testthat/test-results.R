@@ -171,17 +171,21 @@ describe("covr and rcmdcheck success", {
   })
 
   it("success with notes - rcmdcheck math and messages only", {
-    skip_if_render_pdf() # The behavior changes when run via R CMD CHECK
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_notes")
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
 
+    # Note: env var `R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS` needs to be set to FALSE to see the
+    # unused imports note in a devtools::check() environment
+
     # Run check and coverage - expect message
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
-      res_check <- add_rcmdcheck(pkg_setup$pkg_result_dir, rcmdcheck_args),
+      withr::with_envvar(c("_R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_" = "FALSE"), {
+        res_check <- add_rcmdcheck(pkg_setup$pkg_result_dir, rcmdcheck_args)
+      }),
       glue::glue("rcmdcheck for {basename(pkg_setup$pkg_result_dir)} passed with warnings and/or notes")
     )
 
