@@ -19,10 +19,12 @@ rcmdcheck_args = list(
 create_package_template <- function(
     pkg_name = "mypackage",
     pass_warning = FALSE,
+    pass_note = FALSE,
     add_tests = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
-  testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm()
+  testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm() %>%
+    as.character()
 
   pkg_dir <- file.path(testing_dir, pkg_name)
   if(fs::dir_exists(pkg_dir)) fs::dir_delete(pkg_dir)
@@ -35,11 +37,13 @@ create_package_template <- function(
   namespace_file <- file.path(template_dir, "namespace.txt")
 
   # modify and copy over core package files
-  if(isFALSE(pass_warning)){
+  if(isFALSE(pass_warning)){ # (1 of 2) intentional warnings come from license file issues
     make_pkg_file(pkg_name, license_md_file, file.path(pkg_dir, "LICENSE.md"))
     make_pkg_file(pkg_name, license_file, file.path(pkg_dir, "LICENSE"))
   }
-  make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"))
+  # optional notes come from unused imports; additional warnings come from not importing dependencies
+  make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"),
+                pass_note = pass_note, pass_warning = pass_warning)
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
 
   # init other directories and default files
@@ -101,7 +105,7 @@ create_package_template <- function(
 #' @keywords internal
 create_testing_package <- function(
     pkg_name = "mypackage",
-    type = c("pass_success", "pass_warning", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
+    type = c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
              "fail_func_syntax", "fail_test"),
     nest_results_dir = TRUE
 ){
@@ -112,6 +116,7 @@ create_testing_package <- function(
   pkg_setup_dirs <- create_package_template(
     pkg_name = pkg_name,
     pass_warning = (type == "pass_warning"),
+    pass_note = (type == "pass_notes"),
     add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions"))
   )
 
@@ -147,20 +152,22 @@ create_testing_package <- function(
   if(isTRUE(nest_results_dir)){
     pkg_name_ver <- get_pkg_desc(pkg_setup_dirs$pkg_dir, fields = c("Package", "Version")) %>%
       paste0(collapse = "_")
-    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results", pkg_name_ver) %>% fs::path_norm()
+    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results", pkg_name_ver) %>% fs::path_norm() %>%
+      as.character()
   }else{
-    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results") %>% fs::path_norm()
+    results_dir <- file.path(pkg_setup_dirs$testing_dir, "results") %>% fs::path_norm() %>%
+      as.character()
   }
   fs::dir_create(results_dir)
 
   # Build the package tarball
-  tar_file <- devtools::build(pkg_setup_dirs$pkg_dir)
+  tar_file <- devtools::build(pkg_setup_dirs$pkg_dir, quiet = TRUE)
 
   return(
     list(
       pkg_dir = pkg_setup_dirs$pkg_dir,
       tar_file = tar_file,
-      all_results_dir = results_dir,
+      pkg_result_dir = results_dir,
       testing_dir = pkg_setup_dirs$testing_dir
     )
   )
@@ -172,27 +179,23 @@ create_testing_package <- function(
 #' @returns a named list containing the `results_dir` and overall `testing_dir` (for easy unlinking)
 #'
 #' @keywords internal
-setup_multiple_pkg_scores <- function(){
+setup_multiple_pkgs <- function(){
 
-  pkg_names <- paste0("package", seq(1:7))
-  pkg_types <- c("pass_success", "pass_warning","pass_no_test", "pass_no_test_suite", "pass_no_functions",
+  pkg_names <- paste0("package", 1:8)
+  pkg_types <- c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
                  "fail_func_syntax", "fail_test")
 
   pkg_setups <- purrr::map2_dfr(pkg_names, pkg_types, ~{
     pkg_setup <- create_testing_package(
       pkg_name = .x, type = .y,
-      nest_results_dir = FALSE
+      nest_results_dir = TRUE
     )
-
-    result_dir <- purrr::map_chr(pkg_setup$tar_file, ~{
-      score_pkg(.x, pkg_setup$all_results_dir, overwrite = TRUE) %>% suppressMessages()
-    })
 
     cbind(
       pkg_name = .x,
       pkg_type = .y,
       tibble::as_tibble(pkg_setup),
-      pkg_result_dir = result_dir
+      all_results_dir = dirname(pkg_setup$pkg_result_dir)
     )
   })
 
@@ -211,33 +214,41 @@ setup_multiple_pkg_scores <- function(){
 make_pkg_file <- function(
     pkg_name,
     template_file,
-    new_file
+    new_file,
+    # below args are only used for description file
+    pass_note = FALSE,
+    pass_warning = FALSE
 ){
   template_text <- readLines(template_file) %>% paste(collapse = "\n")
+  imports <- if(isTRUE(pass_note)) "dplyr" else ""
+  suggests <- if(isFALSE(pass_warning)) "testthat" else ""
   template_text_new <- glue::glue(template_text) # references {pkg_name}
   writeLines(template_text_new, new_file)
 }
 
-# used for individual tests
-cleanup_temp_dir <- function(dir){
-  unlink(dir, recursive = TRUE)
-  exists <- fs::dir_exists(dir)
-  tibble::tibble(file_path = names(exists), exists = unname(exists))
-}
 
 #' Skip test if PDF rendering is required
 #'
 #' @keywords internal
 skip_if_render_pdf <- function() {
-  if (Sys.getenv("METWORX_VERSION") == "" || Sys.getenv("SKIP_RENDER_TESTS") == "true") {
+  if (Sys.getenv("METWORX_VERSION") == "" || nzchar(Sys.getenv("SKIP_RENDER_TESTS"))) {
     testthat::skip("skipping pdf rendering test")
   }
 }
 
+# Build all packages
+pkg_dirs <- setup_multiple_pkgs()
 
-pkg_dirs <- setup_multiple_pkg_scores()
+# select specific packages for scoring (other types may only be used in `test-results` or other tests)
+# only need a subset of these for majority of tests
+pkg_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type %in% c("pass_success", "pass_warning", "fail_func_syntax", "fail_test"))
+pkg_tars <- pkg_select %>% dplyr::pull(tar_file)
+
+# score select packages
+result_dirs_select <- purrr::map_chr(pkg_tars, ~{
+  score_pkg(.x, pkg_dirs$all_results_dir, overwrite = TRUE) %>% suppressMessages()
+})
 
 # run at the end of all tests
 withr::defer(unlink(pkg_dirs$testing_dir, recursive = TRUE), teardown_env())
-
 

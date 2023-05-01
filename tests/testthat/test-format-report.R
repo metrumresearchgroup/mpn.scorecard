@@ -3,9 +3,7 @@ describe("formatting functions", {
 
   it("format_scores_for_render", {
 
-    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
-
-    for(result_dir.i in result_dirs){
+    for(result_dir.i in result_dirs_select){
       json_path <- get_result_path(result_dir.i, "scorecard.json")
       pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -23,13 +21,13 @@ describe("formatting functions", {
       expect_true(all(is.numeric(scores_df$score)))
 
       # ensure all results are 'Yes', 'No', 'Failed', or a percent
-      expect_true(all(grepl("Yes|No|Failed|\\%", scores_df$result)))
+      expect_true(all(grepl("Yes|No|Failed|Passing|\\%", scores_df$result)))
 
       # ensure all risks are valid values
       expect_true(all(grepl(paste0(RISK_LEVELS, collapse = "|"), scores_df$risk)))
 
       # ensure all category criteria are present
-      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK passing", "coverage")
+      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK", "coverage")
       expected_criteria <- expected_criteria[!grepl("check|covr", expected_criteria)]
       expect_true(all(scores_df$criteria %in% expected_criteria))
 
@@ -44,7 +42,7 @@ describe("formatting functions", {
 
   it("format_overall_scores", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -57,7 +55,7 @@ describe("formatting functions", {
 
   it("format_package_details", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -71,16 +69,44 @@ describe("formatting functions", {
 
   it("format_testing_scores", {
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[1]
+    ## Fully passing rcmdcheck score ##
+    result_dir <- result_dirs_select[1]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
     # map scores to risk and format into tables to be written to PDF
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
-
     flex_df <- format_testing_scores(formatted_pkg_scores)
+
     expect_true(all(c("Criteria", "Score", "Result", "Risk") %in% names(flex_df$body$dataset)))
     expect_true(all(c("Criteria", "Result", "Risk") %in% flex_df$col_keys))
+    expect_equal(flex_df$body$dataset$Score, c(1, 1))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100%"))
+
+    ## Medium rcmdcheck score ##
+    result_dir <- result_dirs_select[2]
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    # map scores to risk and format into tables to be written to PDF
+    formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
+    flex_df <- format_testing_scores(formatted_pkg_scores)
+
+    expect_equal(flex_df$body$dataset$Score, c(0.5, 1))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.5)", "100%"))
+
+
+    ## Failing rcmdcheck score ##
+    result_dir <- result_dirs_select[3]
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    # map scores to risk and format into tables to be written to PDF
+    formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
+    flex_df <- format_testing_scores(formatted_pkg_scores)
+
+    expect_equal(flex_df$body$dataset$Score, c(0, NA))
+    expect_equal(unique(flex_df$body$dataset$Result), "Failed")
   })
 
 })

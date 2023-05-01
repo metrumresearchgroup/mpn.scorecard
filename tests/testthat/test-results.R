@@ -47,7 +47,7 @@ describe("covr and rcmdcheck success", {
     rcmdcheck_args$path <- pkg_setup$tar_file
     expect_message(
       res_check <- add_rcmdcheck(pkg_setup$pkg_result_dir, rcmdcheck_args),
-      glue::glue("rcmdcheck for {basename(pkg_setup$pkg_result_dir)} passed with warnings"),
+      glue::glue("rcmdcheck for {basename(pkg_setup$pkg_result_dir)} passed with warnings and/or notes"),
       fixed = TRUE
     )
     res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$pkg_result_dir)
@@ -168,6 +168,30 @@ describe("covr and rcmdcheck success", {
     expect_true(is.na(covr_output$errors))
     expect_equal(covr_output$notes, "No testable functions found")
     expect_equal(covr_output$coverage$totalcoverage, 0) # technically tested above as well
+  })
+
+  it("success with notes - rcmdcheck math and messages only", {
+    # Create temp package that will succeed
+    pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_notes")
+
+    # For inspecting
+    # rstudioapi::filesPaneNavigate(pkg_setup$pkg_dir)
+
+    # Note: env var `R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS` needs to be set to FALSE to see the
+    # unused imports note in a devtools::check() environment
+
+    # Run check and coverage - expect message
+    rcmdcheck_args$path <- pkg_setup$tar_file
+    expect_message(
+      withr::with_envvar(c("_R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_" = "FALSE"), {
+        res_check <- add_rcmdcheck(pkg_setup$pkg_result_dir, rcmdcheck_args)
+      }),
+      glue::glue("rcmdcheck for {basename(pkg_setup$pkg_result_dir)} passed with warnings and/or notes")
+    )
+
+    # confirm success and value
+    expect_equal(res_check, 0.9)
+
   })
 
 })

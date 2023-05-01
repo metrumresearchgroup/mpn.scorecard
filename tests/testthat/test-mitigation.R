@@ -5,10 +5,10 @@ describe("mitigation file is properly included", {
 
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[3]
+    result_dir <- result_dirs_select[3]
 
     # For inspecting
-    # rstudioapi::filesPaneNavigate(result_dir)
+    # rstudioapi::filesPaneNavigate(result_dirs_select)
 
     # Should be NULL if no file
     expect_true(is.null(check_for_mitigation(result_dir)))
@@ -31,27 +31,26 @@ describe("mitigation file is properly included", {
 
   it("build_risk_summary correctly formats mitigation column",{
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
-    result_dirs <- pkg_dirs$pkg_setups_df$pkg_result_dir
 
     # Add mitigation to non-high-risk package
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs[1])
-    new_mitigation_name <- get_result_path(result_dirs[1], "mitigation.txt")
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[1])
+    new_mitigation_name <- get_result_path(result_dirs_select[1], "mitigation.txt")
     fs::file_move(mitigation_file, new_mitigation_name)
     on.exit(fs::file_delete(new_mitigation_name), add = TRUE)
 
     # Add mitigation to high-risk package
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs[7])
-    new_mitigation_name_high <- get_result_path(result_dirs[7], "mitigation.txt")
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[4])
+    new_mitigation_name_high <- get_result_path(result_dirs_select[4], "mitigation.txt")
     fs::file_move(mitigation_file, new_mitigation_name_high)
     on.exit(fs::file_delete(new_mitigation_name_high), add = TRUE)
 
 
-    overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks = c(0.3, 0.7), out_dir = NULL)
+    overall_risk_summary <- build_risk_summary(result_dirs_select, risk_breaks = c(0.3, 0.7), out_dir = NULL)
     overall_pkg_scores <- overall_risk_summary$overall_pkg_scores
 
     # Check specific packages for mitigation
     expect_true(overall_pkg_scores$mitigation[1] == "Yes")
-    expect_true(overall_pkg_scores$mitigation[7] == "Yes")
+    expect_true(overall_pkg_scores$mitigation[4] == "Yes")
 
     # Make sure we have at least one case of High risk and "no" ()
     overall_pkg_scores <- overall_pkg_scores %>% mutate(
@@ -75,7 +74,7 @@ describe("mitigation file is properly included", {
     skip_if_render_pdf()
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
-    result_dir <- pkg_dirs$pkg_setups_df$pkg_result_dir[3]
+    result_dir <- result_dirs_select[3]
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(result_dir)

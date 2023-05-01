@@ -18,5 +18,8 @@ Run R CMD CHECK
 rcmdcheck takes either a tarball or an installation directory.
 
 The basename of \code{out_dir} should be the package name and version pasted together
+
+The returned score is calculated via a weighted sum of notes (0.10), warnings (0.25), and errors (1.0). It has a maximum score of 1 (indicating no errors, notes or warnings)
+and a minimum score of 0 (equal to 1 error, 4 warnings, or 10 notes). This scoring methodology is taken directly from \code{\link[riskmetric:metric_score.pkg_metric_r_cmd_check]{riskmetric::metric_score.pkg_metric_r_cmd_check()}}.
 }
 \keyword{internal}

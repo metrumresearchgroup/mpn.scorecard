@@ -94,7 +94,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
         score = ifelse(.x == "NA", NA_integer_, .x)
       ) %>%
         mutate(
-          result = map_answer(.data$score),
+          result = map_answer(.data$score, .data$criteria),
           risk = map_risk(.data$score, risk_breaks)
         )
     }) %>% purrr::list_rbind()
@@ -105,7 +105,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
         result = ifelse(
           (.data$criteria == "covr" & !is.na(.data$score)), paste0(.data$score*100, "%"), .data$result
         ),
-        criteria = ifelse(.data$criteria == "check", "R CMD CHECK passing", "coverage")
+        criteria = ifelse(.data$criteria == "check", "R CMD CHECK", "coverage")
       )
     }
 
@@ -117,7 +117,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
 
 #' Use risk_breaks to map scores into character strings
 #'
-#' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
+#' @param scores vector of risk scores
 #' @param risk_breaks breaks determining low, medium, and high risk
 #'
 #' @keywords internal
@@ -139,31 +139,45 @@ map_risk <- function(scores, risk_breaks) {
   })
 }
 
-#' Use answer_breaks to map binary results into character strings
+#' Use answer_breaks to map results into character strings
 #'
-#' @param scores vector of risk scores (or other parameter if `desc = TRUE`)
-#' @param answer_breaks breaks determining 'Yes' or 'No'
+#' @param scores vector of risk scores
+#' @param criteria vector of criteria names
+#' @param answer_breaks breaks determining 'Yes'/'Passing' or 'No'/'Failed'. `NA` has special handling. See details.
 #'
 #' @details
 #' If value is not found in `answer_breaks`, it is skipped over
 #'
-#' Note: A result of 0.5 indicates an answer of 'Yes' with warnings. This is a special case for rmdcheck
+#' Note: rmdcheck and covr are special cases
+#' rmdcheck includes the raw score as part of the result, but a value of `answer_breaks[1]` (usually 0) vs `NA` are handled the same (both indicate failures)
+#' covr is skipped over unless it is `NA` (indicates test failures), as this is formatted as a percent separately
 #'
 #' @keywords internal
-map_answer <- function(results, answer_breaks = c(0, 0.5, 1)) {
-  checkmate::assert_numeric(results, lower = 0, upper = 1)
+map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
+  checkmate::assert_numeric(scores, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
-  purrr::map_chr(results, ~ {
-    if(is.na(.x)) {
-      "Failed"
-    } else if (.x == answer_breaks[1]) {
-      "No"
-    } else if(.x == answer_breaks[2]) {
-      "Yes (warnings occurred)"
-    } else if(.x == answer_breaks[3]) {
-      "Yes"
-    } else{
-      as.character(.x)
+  purrr::map2_chr(scores, criteria, ~ {
+    # special handling for R CMD CHECK
+    if(.y == "check"){
+      if(is.na(.x) || .x == answer_breaks[1]) {
+        "Failed"
+      } else {
+        paste0("Passing (score: ", .x, ")")
+      }
+    }else if(.y != "covr"){
+      if (.x == answer_breaks[1]) {
+        "No"
+      } else if(.x == answer_breaks[2]) {
+        "Yes"
+      } else{
+        as.character(.x)
+      }
+    }else{
+      if(is.na(.x)) {
+        "Failed"
+      } else {
+        as.character(.x)
+      }
     }
   })
 }
