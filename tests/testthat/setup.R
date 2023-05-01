@@ -191,10 +191,6 @@ setup_multiple_pkgs <- function(){
       nest_results_dir = TRUE
     )
 
-    # result_dir <- purrr::map_chr(pkg_setup$tar_file, ~{
-    #   score_pkg(.x, pkg_setup$all_results_dir, overwrite = TRUE) %>% suppressMessages()
-    # })
-
     cbind(
       pkg_name = .x,
       pkg_type = .y,

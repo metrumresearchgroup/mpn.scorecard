@@ -12,8 +12,7 @@ describe("summarize_package_results", {
     expect_equal(dim(pkg_results), c(4, 12))
 
     # Make sure package names are parsed correctly - integration test
-    pkg_names_expect <- pkg_select$pkg_name
-    expect_equal(pkg_results$package, pkg_names_expect)
+    expect_equal(pkg_results$package, pkg_select$pkg_name)
 
     # confirm no mitigation file for any packages, and that the behavior is different from `build_risk_summary`
     expect_true(all(pkg_results$has_mitigation == "no"))
