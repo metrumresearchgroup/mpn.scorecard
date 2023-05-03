@@ -19,7 +19,8 @@
 render_scorecard <- function(
     results_dir,
     risk_breaks = c(0.3, 0.7),
-    overwrite = FALSE
+    overwrite = FALSE,
+    extra_notes = FALSE
 ) {
 
   json_path <- get_result_path(results_dir, "scorecard.json")
@@ -41,6 +42,11 @@ render_scorecard <- function(
   checkmate::assert_string(results_dir, null.ok = TRUE)
   out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
+
+  # Extra notes
+  if(isTRUE(extra_notes)){
+    extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+  }
 
   # Render rmarkdown
   rendered_file <- rmarkdown::render(

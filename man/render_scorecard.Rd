@@ -4,7 +4,12 @@
 \alias{render_scorecard}
 \title{Take a JSON from score_pkg() and render a pdf}
 \usage{
-render_scorecard(results_dir, risk_breaks = c(0.3, 0.7), overwrite = FALSE)
+render_scorecard(
+  results_dir,
+  risk_breaks = c(0.3, 0.7),
+  overwrite = FALSE,
+  extra_notes = FALSE
+)
 }
 \arguments{
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
