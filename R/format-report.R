@@ -530,3 +530,47 @@ format_colnames_to_title <- function(df){
   return(df)
 }
 
+
+#' Format extra notes
+#'
+#' @param extra_notes_data named list. Output of [create_extra_notes()]
+#'
+#' @keywords internal
+format_extra_notes <- function(extra_notes_data){
+  header_str <- "\n## Installation Documentation\n\n"
+  sub_header_strs <- c("\n### R CMD Check\n\n", "\n### Test coverage and Documentation\n\n")
+
+  if(is.null(extra_notes_data)){
+    cat(NULL)
+  }else{
+
+    # Format Table
+    covr_doc_df <- extra_notes_data$covr_doc_df %>%
+      dplyr::mutate(
+        test_coverage = paste0(test_coverage, "%"),
+        documentation = ifelse(is.na(documentation), NA_character_, paste0(documentation, "%"))
+      ) %>% as.data.frame() %>% format_colnames_to_title()
+
+    # Get all NA locations
+    na_indices <- which(is.na(covr_doc_df$Documentation))
+
+    # Create flextable
+    covr_doc_flex <- flextable_formatted(covr_doc_df, as_flextable = FALSE) %>%
+      flextable::set_caption("Test coverage and Documentation") %>%
+      flextable::align(align = "right", part = "all", j=2:3) %>%
+      flextable::footnote(i=na_indices, j=3, value = flextable::as_paragraph(c("No exported functions in these files")), ref_symbols = "NA")
+
+    cat("\\newpage")
+    cat("\n")
+    cat(header_str)
+    # R CMD Check
+    cat(sub_header_strs[1])
+    cat("\n")
+    cat(extra_notes_data$check_output)
+    cat("\n")
+    # Coverage and Documentation
+    cat(sub_header_strs[2])
+    cat("\n")
+    cat(knitr::knit_print(covr_doc_flex))
+  }
+}

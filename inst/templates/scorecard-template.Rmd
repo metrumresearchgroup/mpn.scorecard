@@ -7,10 +7,10 @@ output:
 header-includes:
     - \usepackage{caption}
 params:
+  set_title: "Scorecard"
   pkg_scores: "`r list()`"
   mitigation_block: "r NULL"
-  risk_breaks: "`r c(0.3, 0.7)`"
-  set_title: "Scorecard"
+  extra_notes_data: "r NULL"
 title: "`r params$set_title`"
 subtitle: 'MPN Scorecard'
 ---
@@ -28,7 +28,6 @@ set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding
 
 ```{r setup_data}
 formatted_pkg_scores <- params$pkg_scores
-risk_breaks <- params$risk_breaks # TODO: I think we should include the breaks/weightings used somewhere at some point?
 metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
 ```
 
@@ -70,3 +69,9 @@ format_mitigation(params$mitigation_block)
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)
 ```
+
+
+```{r, results = "asis"}
+format_extra_notes(params$extra_notes_data)
+```
+

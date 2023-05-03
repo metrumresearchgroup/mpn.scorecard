@@ -47,6 +47,8 @@ render_scorecard <- function(
   # Extra notes
   if(isTRUE(extra_notes)){
     extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+  }else{
+    extra_notes_data <- NULL
   }
 
   # Render rmarkdown
@@ -56,10 +58,10 @@ render_scorecard <- function(
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(
+      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
       pkg_scores = formatted_pkg_scores,
       mitigation_block = mitigation_block,
-      risk_breaks = risk_breaks,
-      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
+      extra_notes_data = extra_notes_data
     )
   )
 
