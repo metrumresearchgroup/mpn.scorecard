@@ -7,6 +7,7 @@
 #'   for a given score: `0 <= score < 0.3` is "Low Risk", `0.3 <= score < 0.7`
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
+#' @param extra_notes Logical (T/F). If `TRUE`, append extra notes summarizing covr & rcmdcheck outputs, as well as function documentation
 #'
 #' @details
 #'

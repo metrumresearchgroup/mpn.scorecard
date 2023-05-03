@@ -8,6 +8,9 @@ create_extra_notes <- function(results_dir, pkg_tar_path){
   covr_path <- get_result_path(results_dir, "covr.rds")
   check_path <- get_result_path(results_dir, "check.rds")
 
+  # Format rcmdcheck
+  check_results <- readRDS(check_path)
+
   # Format coverage
   covr_results <- readRDS(covr_path)
   covr_results_df <- covr_results$coverage$filecoverage %>% as.data.frame()
@@ -22,7 +25,12 @@ create_extra_notes <- function(results_dir, pkg_tar_path){
   # Join coverage and documentation
   covr_doc_df <- dplyr::full_join(covr_results_df, exports_df, by = dplyr::join_by(r_script))
 
-
+  return(
+    list(
+      covr_doc_df = covr_doc_df,
+      check_output = check_results$stdout
+    )
+  )
 }
 
 
