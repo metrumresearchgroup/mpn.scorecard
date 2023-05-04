@@ -537,8 +537,8 @@ format_colnames_to_title <- function(df){
 #'
 #' @keywords internal
 format_extra_notes <- function(extra_notes_data){
-  header_str <- "\n## Installation Documentation\n\n"
-  sub_header_strs <- c("\n### R CMD Check\n\n", "\n### Test coverage and Documentation\n\n")
+  header_str <- "\n# Installation Documentation\n\n"
+  sub_header_strs <- c("\n## Test coverage and Documentation\n\n", "\n## R CMD Check\n\n")
 
   if(is.null(extra_notes_data)){
     cat(NULL)
@@ -560,17 +560,21 @@ format_extra_notes <- function(extra_notes_data){
       flextable::align(align = "right", part = "all", j=2:3) %>%
       flextable::footnote(i=na_indices, j=3, value = flextable::as_paragraph(c("No exported functions in these files")), ref_symbols = "NA")
 
-    cat("\\newpage")
-    cat("\n")
+    # Format check output to have correct quote types and escape backslashes (otherwise RMD wont render)
+    check_output <- gsub("‘|’", "'", extra_notes_data$check_output) %>%
+      gsub("\\\\", "\\\\\\\\", .)
+
     cat(header_str)
-    # R CMD Check
+    # Coverage and Documentation
     cat(sub_header_strs[1])
     cat("\n")
-    cat(extra_notes_data$check_output)
+    cat(knitr::knit_print(covr_doc_flex))
     cat("\n")
-    # Coverage and Documentation
+    cat("\\newpage")
+    # R CMD Check
     cat(sub_header_strs[2])
     cat("\n")
-    cat(knitr::knit_print(covr_doc_flex))
+    cat(check_output)
+    cat("\n")
   }
 }

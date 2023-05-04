@@ -64,6 +64,10 @@ format_testing_scores(formatted_pkg_scores)
 format_mitigation(params$mitigation_block)
 ```
 
+<!-- Extra notes (formats new page) -->
+```{r, results = "asis"}
+format_extra_notes(params$extra_notes_data)
+```
 
 # System Info
 ```{r}
@@ -71,7 +75,5 @@ format_metadata(formatted_pkg_scores$metadata)
 ```
 
 
-```{r, results = "asis"}
-format_extra_notes(params$extra_notes_data)
-```
+
 
