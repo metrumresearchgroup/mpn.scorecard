@@ -190,7 +190,7 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
     mutate(
       risk = factor(.data$risk, levels = RISK_LEVELS),
       criteria = gsub("_", " ", .data$criteria) %>% stringr::str_to_title() %>% gsub("Url", "URL", .)
-      )
+    )
 
   # Testing is a separate table (for now)
   scores_df <- scores_df %>% dplyr::filter(.data$category != "testing")
@@ -534,31 +534,42 @@ format_colnames_to_title <- function(df){
 #' Format extra notes
 #'
 #' @param extra_notes_data named list. Output of [create_extra_notes()]
+#' @param add_doc_perc Logical (T/F). If `TRUE`, append the percentage of exported functions that are documented per `R` script
 #'
 #' @keywords internal
-format_extra_notes <- function(extra_notes_data){
+format_extra_notes <- function(extra_notes_data, add_doc_perc = TRUE){
   header_str <- "\n# Installation Documentation\n\n"
   sub_header_strs <- c("\n## Test coverage and Documentation\n\n", "\n## R CMD Check\n\n")
 
   if(is.null(extra_notes_data)){
     cat(NULL)
   }else{
+    covr_doc_df <- extra_notes_data$covr_doc_df
 
-    # Format Table
-    covr_doc_df <- extra_notes_data$covr_doc_df %>%
-      dplyr::mutate(
-        test_coverage = paste0(test_coverage, "%"),
+    # Set desired columns
+    if(isFALSE(add_doc_perc)){ # TODO: need handling in format function for this as well
+      covr_doc_df <- covr_doc_df %>% dplyr::select(-"documentation")
+    }else{
+      covr_doc_df <- covr_doc_df %>% dplyr::mutate(
         documentation = ifelse(is.na(documentation), NA_character_, paste0(documentation, "%"))
-      ) %>% as.data.frame() %>% format_colnames_to_title()
+      )
+    }
 
     # Get all NA locations
-    na_indices <- which(is.na(covr_doc_df$Documentation))
+    na_indices <- which(is.na(covr_doc_df$exported_function))
+    na_indices <- rep(na_indices, each = length(3:ncol(covr_doc_df)))
+
+    # Format Table
+    covr_doc_df <- covr_doc_df %>% dplyr::mutate(test_coverage = paste0(test_coverage, "%")) %>%
+      as.data.frame() %>% format_colnames_to_title()
+
+
 
     # Create flextable
     covr_doc_flex <- flextable_formatted(covr_doc_df, as_flextable = FALSE) %>%
       flextable::set_caption("Test coverage and Documentation") %>%
-      flextable::align(align = "right", part = "all", j=2:3) %>%
-      flextable::footnote(i=na_indices, j=3, value = flextable::as_paragraph(c("No exported functions in these files")), ref_symbols = "NA")
+      flextable::align(align = "right", part = "all", j=2:ncol(covr_doc_df)) %>%
+      flextable::footnote(i=na_indices, j=3:ncol(covr_doc_df), value = flextable::as_paragraph(c("No exported functions in these files")), ref_symbols = "NA")
 
     # Format check output to have correct quote types and escape backslashes (otherwise RMD wont render)
     check_output <- gsub("‘|’", "'", extra_notes_data$check_output) %>%
