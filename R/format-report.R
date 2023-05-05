@@ -534,56 +534,72 @@ format_colnames_to_title <- function(df){
 #' Format extra notes
 #'
 #' @param extra_notes_data named list. Output of [create_extra_notes()]
-#' @param add_doc_perc Logical (T/F). If `TRUE`, append the percentage of exported functions that are documented per `R` script
 #'
 #' @keywords internal
-format_extra_notes <- function(extra_notes_data, add_doc_perc = TRUE){
+format_extra_notes <- function(extra_notes_data){
   header_str <- "\n# Installation Documentation\n\n"
-  sub_header_strs <- c("\n## Test coverage and Documentation\n\n", "\n## R CMD Check\n\n")
+  sub_header_strs <- c("\n## Function Documentation\n\n", "\n## Test coverage\n\n", "\n## R CMD Check\n\n")
 
   if(is.null(extra_notes_data)){
     cat(NULL)
   }else{
-    covr_doc_df <- extra_notes_data$covr_doc_df
-
-    # Set desired columns
-    if(isFALSE(add_doc_perc)){ # TODO: need handling in format function for this as well
-      covr_doc_df <- covr_doc_df %>% dplyr::select(-"documentation")
-    }else{
-      covr_doc_df <- covr_doc_df %>% dplyr::mutate(
-        documentation = ifelse(is.na(documentation), NA_character_, paste0(documentation, "%"))
+    ### Exported Functions ###
+    # Unnest tests and testing directories
+    exported_func_df <- extra_notes_data$exports_df %>%
+      mutate(
+        test_files = purrr::map_chr(test_files, ~paste(.x, collapse = "\n")),
+        test_dirs = purrr::map_chr(test_dirs, ~paste(.x, collapse = "\n")),
       )
+
+    # If only one unique directory, remove the column
+    if(dplyr::n_distinct(exported_func_df$test_dirs) == 1){
+      exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+    }else{
+      exported_func_df <- exported_func_df %>% dplyr::rename("test_directories"="test_dirs")
     }
-
-    # Get all NA locations
-    na_indices <- which(is.na(covr_doc_df$exported_function))
-    na_indices <- rep(na_indices, each = length(3:ncol(covr_doc_df)))
-
     # Format Table
-    covr_doc_df <- covr_doc_df %>% dplyr::mutate(test_coverage = paste0(test_coverage, "%")) %>%
-      as.data.frame() %>% format_colnames_to_title()
-
-
+    exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
-    covr_doc_flex <- flextable_formatted(covr_doc_df, as_flextable = FALSE) %>%
-      flextable::set_caption("Test coverage and Documentation") %>%
-      flextable::align(align = "right", part = "all", j=2:ncol(covr_doc_df)) %>%
-      flextable::footnote(i=na_indices, j=3:ncol(covr_doc_df), value = flextable::as_paragraph(c("No exported functions in these files")), ref_symbols = "NA")
+    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 6.5) %>%
+      flextable::set_caption("Function Documentation")
 
+    ### Covr Results ###
+    # Format Table
+    covr_results_df <- extra_notes_data$covr_results_df %>% dplyr::mutate(test_coverage = paste0(test_coverage, "%")) %>%
+      as.data.frame() %>% format_colnames_to_title()
+
+    # Create flextable
+    covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
+      flextable::set_caption("Test Coverage") %>%
+      flextable::align(align = "right", part = "all", j=2) %>%
+      flextable::add_footer_row(
+        values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
+        colwidths = c(2)
+        )
+
+
+    ### R CMD Check Results ###
     # Format check output to have correct quote types and escape backslashes (otherwise RMD wont render)
     check_output <- gsub("‘|’", "'", extra_notes_data$check_output) %>%
       gsub("\\\\", "\\\\\\\\", .)
 
+    ### Print all Results ###
     cat(header_str)
-    # Coverage and Documentation
+    # Exported Function Documentation
     cat(sub_header_strs[1])
     cat("\n")
-    cat(knitr::knit_print(covr_doc_flex))
+    cat(knitr::knit_print(exported_func_flex))
+    cat("\n")
+    cat("\\newpage")
+    # Coverage
+    cat(sub_header_strs[2])
+    cat("\n")
+    cat(knitr::knit_print(covr_results_flex))
     cat("\n")
     cat("\\newpage")
     # R CMD Check
-    cat(sub_header_strs[2])
+    cat(sub_header_strs[3])
     cat("\n")
     cat(check_output)
     cat("\n")

@@ -91,7 +91,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
       category_score = ifelse(.x == "NA", NA_integer_, .x)
     )
   }) %>% purrr::list_rbind() %>%
-    dplyr::mutate(risk = map_risk(.data$category_score, risk_breaks))
+    mutate(risk = map_risk(.data$category_score, risk_breaks))
 
   pkg_scores$formatted$overall_scores <- overall_scores
 
