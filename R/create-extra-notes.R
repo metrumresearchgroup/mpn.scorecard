@@ -23,9 +23,8 @@ create_extra_notes <- function(
   row.names(covr_results_df) <- NULL
 
   # Format documentation
-  exports_df <- get_exports_documented(pkg_tar_path) %>%
-    dplyr::select("exported_function" = "export", everything())
-
+  exports_df <- get_exports_documented(pkg_tar_path, results_dir) %>%
+    dplyr::select("exported_function" = "export", everything(), -"is_documented")
 
 
   return(
@@ -47,7 +46,7 @@ create_extra_notes <- function(
 #' @returns a tibble
 #'
 #' @keywords internal
-get_exports_documented <- function(pkg_tar_path){
+get_exports_documented <- function(pkg_tar_path, results_dir){
 
   # Unpack tarball
   pkg_source_path <- unpack_tarball(pkg_tar_path)
@@ -56,7 +55,7 @@ get_exports_documented <- function(pkg_tar_path){
   # Locate script for each export - aliases will be joined per script
   exports_df <- find_export_script(pkg_source_path)
 
-  # some of this code was taken/inspired from riskmetric (finding aliases from Rd file)
+  # some of this code was taken/inspired from riskmetric (finding aliases and man_name from Rd file)
   # see `riskmetric:::pkg_ref_cache.help_aliases.pkg_source` for overlap
   rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
   rd_files <- rd_files[grep("\\.Rd$", rd_files)]
@@ -66,46 +65,63 @@ get_exports_documented <- function(pkg_tar_path){
     # Get Rd file and aliases for exported functions
     aliases <- gsub("\\}", "", gsub("\\\\alias\\{", "",
                                     rd_lines[grep("^\\\\alias", rd_lines)]))
-    man_name <- strsplit(strsplit(rd_file.i, "\\/man\\/")[[1]][2],
-                         "\\.Rd")[[1]]
+    man_name <- strsplit(rd_file.i, "\\/man\\/")[[1]][2]
 
     # Get R script function is in
     r_script <- gsub("\\% Please edit documentation in", "",
                      rd_lines[grep("^\\% Please edit documentation in", rd_lines)]) %>%
       stringr::str_trim()
 
-    tibble::tibble(
-      documentation = paste0("man/", man_name,".Rd"),
+    if(!rlang::is_empty(r_script)){
+      if(grepl(",", r_script)){ # if multiple linked scripts, separate by comma
+        r_script <- strsplit(r_script, ",")[[1]] %>% stringr::str_trim()
+      }
+    }else{
+      # Triggered if documentation exists, but no referenced R script
+      message(glue::glue("In package {basename(pkg_source_path)}, could not find an R script associated with man file: {man_name}"))
+    }
+
+
+    tidyr::crossing(
+      documentation = paste0("man/", man_name),
       code_file = r_script,
       alias = aliases
     )
   })
 
   # This will drop unexported aliases (such as an overall package help file)
-  exports_doc_df <- exports_df %>% dplyr::left_join(aliases_df, by = "code_file") %>%
+  aliases_df <- aliases_df %>% dplyr::filter(.data$alias %in% exports_df$export) %>% mutate(export = .data$alias)
+  exports_doc_df <- exports_df %>% dplyr::left_join(aliases_df, by = c("export", "code_file")) %>%
     dplyr::relocate(c("export", "documentation"))
 
   # Tabulate documentation percent per R script - checks that exported functions are documented
   is_documented_df <- exports_doc_df %>% dplyr::group_by(.data$export, .data$documentation, .data$code_file) %>%
-    dplyr::count(is_documented = .data$export %in% .data$alias) %>%
-    dplyr::group_by(.data$code_file) %>% dplyr::summarise(documentation_perc = 100*(sum(.data$is_documented)/sum(.data$n)))
+    dplyr::summarise(is_documented = .data$export %in% .data$alias, .groups = "keep")
 
-  exports_doc_df <- dplyr::full_join(exports_doc_df, is_documented_df, by = "code_file") %>% dplyr::select(-c("alias"))
+  exports_doc_df <- dplyr::full_join(exports_doc_df, is_documented_df, by = c("export", "documentation", "code_file")) %>%
+    dplyr::select(-c("alias"))
 
   # We dont need documentation in report - but will use for this message
   # TODO: if no packages on the next MPN build trigger this (when extra_notes = TRUE) - we can remove this and some of the above code
-  if(any(exports_doc_df$documentation_perc != 100)){
-    docs_missing <- exports_doc_df %>% dplyr::filter(.data$documentation_perc != 100) %>% dplyr::pull("export")
-    docs_missing <- paste(docs_missing, collapse = ", ")
-    message(glue::glue("The following exported functions do not have documentation: {docs_missing}"))
+  if(any(exports_doc_df$is_documented == FALSE)){
+    docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
+    exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
+    code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
+    message(glue::glue("In package {basename(pkg_source_path)}, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
   }
 
-  exports_doc_df <- exports_doc_df %>% dplyr::select(-"documentation_perc")
+  # exports_doc_df <- exports_doc_df %>% dplyr::select(-"is_documented")
 
   # This maps all functions to tests (not just exports) - this was intentional in case we eventually want all functions
   test_mapping_df <- map_tests_to_functions(pkg_source_path)
 
   func_tests_doc_df <- exports_doc_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function"))
+
+  # write results to RDS
+  saveRDS(
+    func_tests_doc_df,
+    get_result_path(results_dir, "export_doc.rds")
+  )
 
   return(func_tests_doc_df)
 }
@@ -131,7 +147,10 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
     result <- list()
     for(func in funcs){
       if(isTRUE(func_declaration)){
-        pattern <- paste0("^", func, "\\s*<-\\s*function\\s*\\(")
+        # pattern <- paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*\\(")
+        pattern <- paste0(paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
+                          paste0("^\\s*setGeneric\\s*\\(\\s*\"", func, "\".*")
+        )
       }else{
         pattern <- func
       }
@@ -144,10 +163,10 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
   }
 
   # Find script per function
- func_lst <- purrr::map(r_files, find_functions, funcs = funcs, func_declaration = func_declaration) %>%
+  func_lst <- purrr::map(r_files, find_functions, funcs = funcs, func_declaration = func_declaration) %>%
     suppressWarnings() # suppress `incomplete final line` warnings
- func_lst <- purrr::reduce(func_lst, c)
- return(func_lst)
+  func_lst <- purrr::reduce(func_lst, c)
+  return(func_lst)
 }
 
 #' Find the R script containing the export
@@ -159,8 +178,8 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 #' @keywords internal
 find_export_script <- function(pkg_source_path){
 
-  # All exports
-  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+  # Get exports
+  exports <- get_exports(pkg_source_path)
 
   # Search for scripts functions are defined in
   export_lst <- find_function_files(funcs = exports, search_dir = file.path(pkg_source_path, "R"))
@@ -269,22 +288,14 @@ get_tests <- function(
 
 #' map test files and directories to all functions
 #'
-#' @param pkg_source_path  a file path pointing to an unpacked/untarred package directory
+#' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
 #'
 #' @keywords internal
 map_tests_to_functions <- function(pkg_source_path){
 
   test_dirs <- get_testing_dir(pkg_source_path)
 
-  # Get all functions (not just exported)
-  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
-  pkg_functions <- purrr::map(r_files, function(r_file_i) {
-    file_text <- readLines(r_file_i) %>% suppressWarnings()
-    function_calls <- file_text[grepl("\\s*function\\s*\\(", file_text)]
-    function_names <- gsub("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function.*", "\\1", function_calls)
-    function_names
-  })
-  pkg_functions <- purrr::reduce(pkg_functions, c)
+  pkg_functions <- get_all_functions(pkg_source_path)
 
   pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
     func_lst <- find_function_files(
@@ -292,6 +303,7 @@ map_tests_to_functions <- function(pkg_source_path){
       search_dir = test_dir_x,
       func_declaration = FALSE
     )
+    if(rlang::is_empty(func_lst)) return(NULL)
     tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
       mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
   })
@@ -305,3 +317,54 @@ map_tests_to_functions <- function(pkg_source_path){
   return(func_test_df)
 
 }
+
+#' list all package exports
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @keywords internal
+get_exports <- function(pkg_source_path){
+  # Get exports
+  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+
+  # Remove specific symbols from exports
+  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
+  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
+  exports <- grep(pattern, exports, value = TRUE, invert = TRUE)
+
+  return(exports)
+}
+
+
+#' list all package functions
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @keywords internal
+get_all_functions <- function(pkg_source_path){
+
+  # Get exports
+  exports <- get_exports(pkg_source_path)
+
+  # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
+  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
+  pkg_functions <- purrr::map(r_files, function(r_file_i) {
+    file_text <- readLines(r_file_i) %>% suppressWarnings()
+    pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
+                      "^\\s*setGeneric\\s*\\(\\s*\"([[:alnum:]_\\.]+)\".*")
+    function_calls <- file_text[grepl(pattern, file_text)]
+    function_names <- gsub(pattern, "\\1\\3", function_calls)
+    function_names
+  })
+  pkg_functions <- purrr::reduce(pkg_functions, c)
+
+  all_functions <- c(pkg_functions, exports) %>% unique()
+
+  # Remove specific symbols from functions/exports - done again here in case they are reintroduced
+  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
+  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
+  all_functions <- grep(pattern, all_functions, value = TRUE, invert = TRUE)
+
+  return(all_functions)
+}
+

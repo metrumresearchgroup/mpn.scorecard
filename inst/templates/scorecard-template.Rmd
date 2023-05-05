@@ -69,6 +69,8 @@ format_mitigation(params$mitigation_block)
 format_extra_notes(params$extra_notes_data)
 ```
 
+\newpage
+
 # System Info
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)

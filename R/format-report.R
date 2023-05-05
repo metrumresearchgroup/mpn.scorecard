@@ -538,7 +538,7 @@ format_colnames_to_title <- function(df){
 #' @keywords internal
 format_extra_notes <- function(extra_notes_data){
   header_str <- "\n# Installation Documentation\n\n"
-  sub_header_strs <- c("\n## Function Documentation\n\n", "\n## Test coverage\n\n", "\n## R CMD Check\n\n")
+  sub_header_strs <- c("\n## Test coverage\n\n", "\n## R CMD Check\n\n", "\n## Function Documentation\n\n")
 
   if(is.null(extra_notes_data)){
     cat(NULL)
@@ -586,22 +586,23 @@ format_extra_notes <- function(extra_notes_data){
 
     ### Print all Results ###
     cat(header_str)
-    # Exported Function Documentation
-    cat(sub_header_strs[1])
-    cat("\n")
-    cat(knitr::knit_print(exported_func_flex))
-    cat("\n")
-    cat("\\newpage")
     # Coverage
-    cat(sub_header_strs[2])
+    cat(sub_header_strs[1])
     cat("\n")
     cat(knitr::knit_print(covr_results_flex))
     cat("\n")
     cat("\\newpage")
     # R CMD Check
-    cat(sub_header_strs[3])
+    cat(sub_header_strs[2])
     cat("\n")
     cat(check_output)
     cat("\n")
+    cat("\\newpage")
+    # Exported Function Documentation
+    cat(sub_header_strs[3])
+    cat("\n")
+    cat(knitr::knit_print(exported_func_flex))
+    cat("\n")
+
   }
 }
