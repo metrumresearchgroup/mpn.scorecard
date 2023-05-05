@@ -580,9 +580,9 @@ format_extra_notes <- function(extra_notes_data){
 
 
     ### R CMD Check Results ###
-    # Format check output to have correct quote types and escape backslashes (otherwise RMD wont render)
-    check_output <- gsub("‘|’", "'", extra_notes_data$check_output) %>%
-      gsub("\\\\", "\\\\\\\\", .)
+    # Format check output to escape backslashes (otherwise RMD wont render)
+    check_output <- gsub("\\\\", "\\\\\\\\", extra_notes_data$check_output)
+
 
     ### Print all Results ###
     cat(header_str)
