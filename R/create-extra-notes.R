@@ -19,7 +19,7 @@ create_extra_notes <- function(
   covr_results_df <- covr_results$coverage$filecoverage %>% as.data.frame()
   covr_results_df <- covr_results_df %>%
     mutate(r_script = row.names(covr_results_df)) %>%
-    dplyr::select(r_script, test_coverage = ".")
+    dplyr::select("r_script", "test_coverage" = ".")
   row.names(covr_results_df) <- NULL
 
   # Format documentation
@@ -95,7 +95,7 @@ get_exports_documented <- function(pkg_tar_path){
   # We dont need documentation in report - but will use for this message
   # TODO: if no packages on the next MPN build trigger this (when extra_notes = TRUE) - we can remove this and some of the above code
   if(any(exports_doc_df$documentation_perc != 100)){
-    docs_missing <- exports_doc_df %>% dplyr::filter(documentation != 100) %>% dplyr::pull("export")
+    docs_missing <- exports_doc_df %>% dplyr::filter(.data$documentation_perc != 100) %>% dplyr::pull("export")
     docs_missing <- paste(docs_missing, collapse = ", ")
     message(glue::glue("The following exported functions do not have documentation: {docs_missing}"))
   }
@@ -166,8 +166,8 @@ find_export_script <- function(pkg_source_path){
   export_lst <- find_function_files(funcs = exports, search_dir = file.path(pkg_source_path, "R"))
 
   # convert to dataframe and format code_file column
-  export_df <- export_lst %>% tibble::enframe(name = "export", value = "code_file") %>% tidyr::unnest(cols = c(code_file)) %>%
-    mutate(code_file = paste0("R/", basename(code_file)))
+  export_df <- export_lst %>% tibble::enframe(name = "export", value = "code_file") %>% tidyr::unnest(cols = "code_file") %>%
+    mutate(code_file = paste0("R/", basename(.data$code_file)))
 
   return(export_df)
 }
@@ -293,14 +293,14 @@ map_tests_to_functions <- function(pkg_source_path){
       func_declaration = FALSE
     )
     tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
-      mutate(test_dir = test_dir, test_file = basename(.data$test_file))
+      mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
   })
 
 
   # Nest test files
-  func_test_df <- pkg_func_df %>% group_by(.data$pkg_function) %>%
+  func_test_df <- pkg_func_df %>% dplyr::group_by(.data$pkg_function) %>%
     dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
-    ungroup()
+    dplyr::ungroup()
 
   return(func_test_df)
 

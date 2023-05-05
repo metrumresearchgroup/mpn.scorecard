@@ -547,8 +547,8 @@ format_extra_notes <- function(extra_notes_data){
     # Unnest tests and testing directories
     exported_func_df <- extra_notes_data$exports_df %>%
       mutate(
-        test_files = purrr::map_chr(test_files, ~paste(.x, collapse = "\n")),
-        test_dirs = purrr::map_chr(test_dirs, ~paste(.x, collapse = "\n")),
+        test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n")),
+        test_dirs = purrr::map_chr(.data$test_dirs, ~paste(.x, collapse = "\n")),
       )
 
     # If only one unique directory, remove the column
@@ -566,7 +566,7 @@ format_extra_notes <- function(extra_notes_data){
 
     ### Covr Results ###
     # Format Table
-    covr_results_df <- extra_notes_data$covr_results_df %>% dplyr::mutate(test_coverage = paste0(test_coverage, "%")) %>%
+    covr_results_df <- extra_notes_data$covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
       as.data.frame() %>% format_colnames_to_title()
 
     # Create flextable
