@@ -538,7 +538,7 @@ format_colnames_to_title <- function(df){
 #' @keywords internal
 format_extra_notes <- function(extra_notes_data){
   header_str <- "\n# Installation Documentation\n\n"
-  sub_header_strs <- c("\n## Test coverage\n\n", "\n## R CMD Check\n\n", "\n## Function Documentation\n\n")
+  sub_header_strs <- c("\n## Test coverage\n\n", "\n## R CMD Check\n\n", "\n## Traceability Matrix\n\n")
 
   if(is.null(extra_notes_data)){
     cat(NULL)
@@ -562,12 +562,18 @@ format_extra_notes <- function(extra_notes_data){
 
     # Create flextable
     exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 6.5) %>%
-      flextable::set_caption("Function Documentation")
+      flextable::set_caption("Traceability Matrix")
 
     ### Covr Results ###
     # Format Table
-    covr_results_df <- extra_notes_data$covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
-      as.data.frame() %>% format_colnames_to_title()
+    covr_results_df <- extra_notes_data$covr_results_df
+    if(!is.na(unique(covr_results_df$r_script))){
+      covr_results_df <- covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%"))
+    }else{
+      # overwrite script name if covr failed
+      covr_results_df <- covr_results_df %>% dplyr::mutate(r_script = "File coverage failed")
+    }
+    covr_results_df <- covr_results_df %>% as.data.frame() %>% format_colnames_to_title()
 
     # Create flextable
     covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%

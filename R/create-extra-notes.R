@@ -21,6 +21,14 @@ create_extra_notes <- function(
     mutate(r_script = row.names(covr_results_df)) %>%
     dplyr::select("r_script", "test_coverage" = ".")
   row.names(covr_results_df) <- NULL
+  # Conditional coverage formatting (if covr failed)
+  if(is.na(unique(covr_results_df$test_coverage))){
+    covr_results_df <- covr_results_df %>%
+      mutate(
+        r_script = NA_character_,
+        test_coverage = glue::glue("{covr_results$errors$message}")
+      )
+  }
 
   # Format documentation
   exports_df <- get_exports_documented(pkg_tar_path, results_dir) %>%
@@ -78,7 +86,7 @@ get_exports_documented <- function(pkg_tar_path, results_dir){
       }
     }else{
       # Triggered if documentation exists, but no referenced R script
-      message(glue::glue("In package {basename(pkg_source_path)}, could not find an R script associated with man file: {man_name}"))
+      message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
     }
 
 
@@ -90,9 +98,15 @@ get_exports_documented <- function(pkg_tar_path, results_dir){
   })
 
   # This will drop unexported aliases (such as an overall package help file)
-  aliases_df <- aliases_df %>% dplyr::filter(.data$alias %in% exports_df$export) %>% mutate(export = .data$alias)
-  exports_doc_df <- exports_df %>% dplyr::left_join(aliases_df, by = c("export", "code_file")) %>%
-    dplyr::relocate(c("export", "documentation"))
+  if(!rlang::is_empty(aliases_df)){
+    aliases_df <- aliases_df %>% dplyr::filter(.data$alias %in% exports_df$export) %>% mutate(export = .data$alias)
+    exports_doc_df <- exports_df %>% dplyr::left_join(aliases_df, by = c("export", "code_file")) %>%
+      dplyr::relocate(c("export", "documentation"))
+  }else{
+    exports_doc_df <- exports_df %>% mutate(documentation = NA_character_, alias = NA_character_)
+    message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+  }
+
 
   # Tabulate documentation percent per R script - checks that exported functions are documented
   is_documented_df <- exports_doc_df %>% dplyr::group_by(.data$export, .data$documentation, .data$code_file) %>%
@@ -107,10 +121,8 @@ get_exports_documented <- function(pkg_tar_path, results_dir){
     docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
     exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
     code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
-    message(glue::glue("In package {basename(pkg_source_path)}, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
+    message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
   }
-
-  # exports_doc_df <- exports_doc_df %>% dplyr::select(-"is_documented")
 
   # This maps all functions to tests (not just exports) - this was intentional in case we eventually want all functions
   test_mapping_df <- map_tests_to_functions(pkg_source_path)
@@ -147,9 +159,8 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
     result <- list()
     for(func in funcs){
       if(isTRUE(func_declaration)){
-        # pattern <- paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*\\(")
         pattern <- paste0(paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
-                          paste0("^\\s*setGeneric\\s*\\(\\s*\"", func, "\".*")
+                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func, "[\"|'].*")
         )
       }else{
         pattern <- func
@@ -250,11 +261,11 @@ get_tests <- function(
       test_script <- readLines(.x) %>% suppressWarnings()  # suppress `incomplete final line` warnings
 
       # Find test_that calls and extract the names of the tests
-      test_that_calls <- grep('(?:\\s|^)test_that\\("([^"]+)"', test_script)
+      test_that_calls <- grep("(?:\\s|testthat::|^)test_that\\([\"|']([^\"]+)[\"|']", test_script)
       test_that_names <- test_script[test_that_calls]
 
       # Find it calls and extract the names of the tests
-      it_calls <- grep('(?:\\s|^)it\\("([^"]+)"', test_script)
+      it_calls <- grep("(?:\\s|testthat::|^)it\\([\"|']([^\"]+)[\"|']", test_script)
       it_names <- test_script[it_calls]
 
       # Combine the names of tests and count the number of tests in each file
