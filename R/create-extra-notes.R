@@ -339,13 +339,23 @@ get_exports <- function(pkg_source_path){
   exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
 
   # Remove specific symbols from exports
-  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
-  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
-  exports <- grep(pattern, exports, value = TRUE, invert = TRUE)
+  exports <- filter_symbol_functions(exports)
 
   return(exports)
 }
 
+
+#' Remove specific symbols from vector of functions
+#'
+#' @inheritParams find_function_files
+#'
+#' @keywords internal
+filter_symbol_functions <- function(funcs){
+  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
+  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
+  funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
+  return(funcs_return)
+}
 
 #' list all package functions
 #'
@@ -362,7 +372,7 @@ get_all_functions <- function(pkg_source_path){
   pkg_functions <- purrr::map(r_files, function(r_file_i) {
     file_text <- readLines(r_file_i) %>% suppressWarnings()
     pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
-                      "^\\s*setGeneric\\s*\\(\\s*\"([[:alnum:]_\\.]+)\".*")
+                      "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
     function_calls <- file_text[grepl(pattern, file_text)]
     function_names <- gsub(pattern, "\\1\\3", function_calls)
     function_names
@@ -372,9 +382,7 @@ get_all_functions <- function(pkg_source_path){
   all_functions <- c(pkg_functions, exports) %>% unique()
 
   # Remove specific symbols from functions/exports - done again here in case they are reintroduced
-  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
-  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
-  all_functions <- grep(pattern, all_functions, value = TRUE, invert = TRUE)
+  all_functions <- filter_symbol_functions(all_functions)
 
   return(all_functions)
 }
