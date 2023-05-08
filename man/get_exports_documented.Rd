@@ -4,10 +4,12 @@
 \alias{get_exports_documented}
 \title{Get aliases of exported functions}
 \usage{
-get_exports_documented(pkg_tar_path)
+get_exports_documented(pkg_tar_path, results_dir)
 }
 \arguments{
 \item{pkg_tar_path}{path to a tarball}
+
+\item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
 }
 \value{
 a tibble
