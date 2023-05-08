@@ -125,11 +125,25 @@ create_testing_package <- function(
     # Add a file with a syntax error to the package
     func_lines <- "myfunction <- function(x { x + 1"
   }else if(type != "pass_no_functions"){
-    func_lines <- "myfunction <- function(x) { x + 1}"
+    func_lines <- glue::glue("
+    #' Adds 1 to x
+    #' @param x a number
+    #' @export
+    myfunction <- function(x) { x + 1}
+    ", .open = "{{", .close = "}}")
   }
 
   if(type != "pass_no_functions"){
     writeLines(func_lines, pkg_setup_dirs$r_file)
+    # Export function
+    if(type != "fail_func_syntax"){
+      # Basically run `devtools::document()` if the function is suitable
+      roxygen2::roxygenise(pkg_setup_dirs$pkg_dir) %>% suppressMessages()
+    }else{
+      # Manually export function if syntax issue is present (only way this scenario could happen)
+      ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
+      writeLines("export(myfunction)", ns_file)
+    }
   }
 
   # Add a test file to tests/testthat/ (unless type = 'pass_no_test_suite' or 'pass_no_functions')
