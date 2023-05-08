@@ -7,7 +7,10 @@ describe("creating extra notes", {
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
     extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
-    extra_notes_data
+
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
     # Confirm values - documentation
     expect_equal(unique(extra_notes_data$exports_df$documentation), "man/myfunction.Rd")
@@ -33,23 +36,27 @@ describe("creating extra notes", {
     res <- testthat::evaluate_promise(
       extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
     )
-   expect_equal(
-     res$messages,
-     c(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"),
-       glue::glue("In package `{pkg_setup_select$pkg_name}`, the R scripts (R/myscript.R) are missing documentation for the following exports: \nmyfunction\n\n"))
-   )
+    expect_equal(
+      res$messages,
+      c(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"),
+        glue::glue("In package `{pkg_setup_select$pkg_name}`, the R scripts (R/myscript.R) are missing documentation for the following exports: \nmyfunction\n\n"))
+    )
 
-   # Confirm values - documentation
-   expect_true(is.na(unique(extra_notes_data$exports_df$documentation)))
-   expect_equal(
-     extra_notes_data$exports_df %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-     "test-myscript.R"
-   )
-   # Confirm values - covr
-   expect_true(grepl("non-zero exit status", unique(extra_notes_data$covr_results_df$test_coverage)))
-   expect_true(is.na(unique(extra_notes_data$covr_results_df$r_script)))
-   # Confirm values - R CMD Check
-   expect_true(grepl("ERROR", extra_notes_data$check_output))
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values - documentation
+    expect_true(is.na(unique(extra_notes_data$exports_df$documentation)))
+    expect_equal(
+      extra_notes_data$exports_df %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      "test-myscript.R"
+    )
+    # Confirm values - covr
+    expect_true(grepl("non-zero exit status", unique(extra_notes_data$covr_results_df$test_coverage)))
+    expect_true(is.na(unique(extra_notes_data$covr_results_df$r_script)))
+    # Confirm values - R CMD Check
+    expect_true(grepl("ERROR", extra_notes_data$check_output))
   })
 
 
@@ -67,10 +74,10 @@ describe("creating extra notes", {
       "myfunc3 =function(x) {x + 1}"
     )
     func_lines2 <- c(
-        "setGeneric(\"myfunc4\")",
-        "setGeneric('myfunc5')",
-        "setGeneric ( 'myfunc6' )"
-      )
+      "setGeneric(\"myfunc4\")",
+      "setGeneric('myfunc5')",
+      "setGeneric ( 'myfunc6' )"
+    )
     func_names <- paste0("myfunc", 1:6)
 
     temp_file1 <- file.path(r_dir, "myscript1.R")
@@ -142,7 +149,7 @@ describe("creating extra notes", {
     # copy tests to other location within `pkg_setup_select$pkg_dir`
     test_files <- fs::dir_ls(testing_dirs)
     other_test_dir <- file.path(pkg_setup_select$pkg_dir, "inst", "other_tests")
-    fs::dir_create(other_test_dir); on.exit(fs::dir_delete(dirname(other_test_dir)))
+    fs::dir_create(other_test_dir); on.exit(fs::dir_delete(dirname(other_test_dir)), add = TRUE)
     new_test_files <- fs::file_copy(test_files, other_test_dir)
     fs::file_move(new_test_files, file.path(other_test_dir, "test-new_tests.R"))
 
