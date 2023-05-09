@@ -20,7 +20,9 @@ create_package_template <- function(
     pkg_name = "mypackage",
     pass_warning = FALSE,
     pass_note = FALSE,
-    add_tests = TRUE
+    add_tests = TRUE,
+    export_funcs = TRUE,
+    doc_funcs = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
   testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm() %>%
@@ -30,7 +32,7 @@ create_package_template <- function(
   if(fs::dir_exists(pkg_dir)) fs::dir_delete(pkg_dir)
   fs::dir_create(pkg_dir, recurse = TRUE)
 
-  # tempalte files
+  # template files
   license_md_file <- file.path(template_dir, "license_md.txt")
   license_file <- file.path(template_dir, "license.txt")
   description_file <- file.path(template_dir, "description_file.txt")
@@ -44,14 +46,30 @@ create_package_template <- function(
   # optional notes come from unused imports; additional warnings come from not importing dependencies
   make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"),
                 pass_note = pass_note, pass_warning = pass_warning)
-  fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
 
-  # init other directories and default files
+  # Create NAMESPACE file and optionally export function
+  fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
+  if(isTRUE(export_funcs)){
+    # writeLines("export(myfunction)", file.path(pkg_dir, "NAMESPACE"))
+    write("export(myfunction)", file= file.path(pkg_dir, "NAMESPACE"), append=TRUE)
+  }
+
+  ## init other directories and default files ##
+  # R/ directory
   r_dir <- file.path(pkg_dir, "R")
   fs::dir_create(r_dir)
   script_file <- file.path(r_dir, "myscript.R")
   fs::file_create(script_file)
 
+  # Documentation - man/ directory
+  if(isTRUE(doc_funcs)){
+    myfunction_rd_file <- file.path(template_dir, "myfunction.Rd")
+    man_dir <- file.path(pkg_dir, "man")
+    fs::dir_create(man_dir)
+    fs::file_copy(myfunction_rd_file, file.path(man_dir, "myfunction.Rd"))
+  }
+
+  # Tests and running of tests
   if(isTRUE(add_tests)){
     # Add a test setup for running test suite (testthat.R)
     test_dir <- file.path(pkg_dir, "tests", "testthat")
@@ -117,7 +135,9 @@ create_testing_package <- function(
     pkg_name = pkg_name,
     pass_warning = (type == "pass_warning"),
     pass_note = (type == "pass_notes"),
-    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions"))
+    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions")),
+    export_funcs = type != "pass_no_functions",
+    doc_funcs = !(type %in% c("fail_func_syntax", "pass_no_functions"))
   )
 
   # Add function to R/  (unless type = 'pass_no_functions')
@@ -135,15 +155,6 @@ create_testing_package <- function(
 
   if(type != "pass_no_functions"){
     writeLines(func_lines, pkg_setup_dirs$r_file)
-    # Export function
-    if(type != "fail_func_syntax"){
-      # Basically run `devtools::document()` if the function is suitable
-      roxygen2::roxygenise(pkg_setup_dirs$pkg_dir) %>% suppressMessages()
-    }else{
-      # Manually export function if syntax issue is present (only way this scenario could happen)
-      ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
-      writeLines("export(myfunction)", ns_file)
-    }
   }
 
   # Add a test file to tests/testthat/ (unless type = 'pass_no_test_suite' or 'pass_no_functions')
