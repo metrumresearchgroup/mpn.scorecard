@@ -47,6 +47,7 @@ Imports:
 Suggests:
     devtools,
     pdftools,
+    roxygen2,
     testthat (>= 2.1.0),
     withr
 Roxygen: list(markdown = TRUE)

@@ -1,6 +1,7 @@
 
 library(pdftools)
 library(dplyr)
+library(roxygen2)
 
 
 
@@ -37,6 +38,7 @@ create_package_template <- function(
   license_file <- file.path(template_dir, "license.txt")
   description_file <- file.path(template_dir, "description_file.txt")
   namespace_file <- file.path(template_dir, "namespace.txt")
+  rbuildignore_file <- file.path(template_dir, "Rbuildignore.txt")
 
   # modify and copy over core package files
   if(isFALSE(pass_warning)){ # (1 of 2) intentional warnings come from license file issues
@@ -49,10 +51,13 @@ create_package_template <- function(
 
   # Create NAMESPACE file and optionally export function
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
-  if(isTRUE(export_funcs)){
-    # writeLines("export(myfunction)", file.path(pkg_dir, "NAMESPACE"))
-    write("export(myfunction)", file= file.path(pkg_dir, "NAMESPACE"), append=TRUE)
-  }
+  # if(isTRUE(export_funcs)){
+  #   write("export(myfunction)", file= file.path(pkg_dir, "NAMESPACE"), append=TRUE)
+  # }
+
+  # Copy build ignore file to silence unintended warnings
+  fs::file_copy(namespace_file, file.path(pkg_dir, ".Rbuildignore"))
+
 
   ## init other directories and default files ##
   # R/ directory
@@ -62,12 +67,12 @@ create_package_template <- function(
   fs::file_create(script_file)
 
   # Documentation - man/ directory
-  if(isTRUE(doc_funcs)){
-    myfunction_rd_file <- file.path(template_dir, "myfunction.Rd")
-    man_dir <- file.path(pkg_dir, "man")
-    fs::dir_create(man_dir)
-    fs::file_copy(myfunction_rd_file, file.path(man_dir, "myfunction.Rd"))
-  }
+  # if(isTRUE(doc_funcs)){
+  #   myfunction_rd_file <- file.path(template_dir, "myfunction.Rd")
+  #   man_dir <- file.path(pkg_dir, "man")
+  #   fs::dir_create(man_dir)
+  #   fs::file_copy(myfunction_rd_file, file.path(man_dir, "myfunction.Rd"))
+  # }
 
   # Tests and running of tests
   if(isTRUE(add_tests)){
@@ -155,6 +160,15 @@ create_testing_package <- function(
 
   if(type != "pass_no_functions"){
     writeLines(func_lines, pkg_setup_dirs$r_file)
+    # Export function
+    if(type != "fail_func_syntax"){
+      # Basically run `devtools::document()`, if the function is suitable
+      roxygen2::roxygenise(pkg_setup_dirs$pkg_dir, load_code = roxygen2::load_source) %>% suppressMessages()
+    }else{
+      # Manually export function if syntax issue is present (only way this scenario could happen)
+      ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
+      write("export(myfunction)", file = ns_file, append = TRUE)
+    }
   }
 
   # Add a test file to tests/testthat/ (unless type = 'pass_no_test_suite' or 'pass_no_functions')
@@ -261,6 +275,33 @@ skip_if_render_pdf <- function() {
   }
 }
 
+
+local_check_envvar <- function(.local_envir = parent.frame()) {
+  vnames <- grep("^_R_CHECK_", names(Sys.getenv()), value = TRUE)
+  if (length(vnames)) {
+    vals <- rep(NA_character_, length(vnames))
+    names(vals) <- vnames
+  } else {
+    vals <- c()
+  }
+  vals["_R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_"] <- "FALSE"
+  vals["_R_CHECK_CRAN_INCOMING_USE_ASPELL_"] <- "FALSE"
+  vals["_R_CHECK_RD_CONTENTS_"] <- "FALSE"
+  vals["_R_CHECK_RD_LINE_WIDTHS_"] <- "FALSE"
+  vals["_R_CHECK_RD_STYLE_"] <- "FALSE"
+  vals["_R_CHECK_RD_XREFS_"] <- "FALSE"
+  vals["_R_CHECK_RD_INTERNAL_TOO_"] <- "FALSE"
+  vals["_R_CHECK_RD_CONTENTS_KEYWORDS_"] <- "FALSE"
+  vals["_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_"] <- "FALSE"
+  vals["_R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_"] <- "FALSE"
+  vals["_R_CHECK_DOC_SIZES_"] <- "FALSE"
+  vals["_R_CHECK_NATIVE_ROUTINE_REGISTRATION_"] <- "FALSE"
+  vals["_R_CHECK_FF_AS_CRAN_"] <- ""
+  # vals["_R_CHECK_EXCESSIVE_IMPORTS_"] <- "30"
+
+  withr::local_envvar(vals, .local_envir = .local_envir)
+}
+
 # Build all packages
 pkg_dirs <- setup_multiple_pkgs()
 
@@ -271,6 +312,7 @@ pkg_tars <- pkg_select %>% dplyr::pull(tar_file)
 
 # score select packages
 result_dirs_select <- purrr::map_chr(pkg_tars, ~{
+  local_check_envvar()
   score_pkg(.x, pkg_dirs$all_results_dir, overwrite = TRUE) %>% suppressMessages()
 })
 
