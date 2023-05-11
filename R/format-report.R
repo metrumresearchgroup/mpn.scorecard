@@ -557,7 +557,7 @@ format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
       )
 
     # Get testing directories for caption
-    test_dirs <- exported_func_df %>% pull(test_dirs) %>% unique() %>% paste(collapse = ", ")
+    test_dirs <- exported_func_df %>% dplyr::pull(test_dirs) %>% unique() %>% paste(collapse = ", ")
 
     # Remove testing directory column (not a column due to horizontal space limits)
     exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")

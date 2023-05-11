@@ -115,6 +115,11 @@ describe("formatting functions", {
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
     extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
     extra_notes_frmt <- format_extra_notes(extra_notes_data, return_vals = TRUE)
 
     # Test exported functions dataframe
