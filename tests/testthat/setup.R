@@ -21,9 +21,7 @@ create_package_template <- function(
     pkg_name = "mypackage",
     pass_warning = FALSE,
     pass_note = FALSE,
-    add_tests = TRUE,
-    export_funcs = TRUE,
-    doc_funcs = TRUE
+    add_tests = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
   testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm() %>%
@@ -49,15 +47,11 @@ create_package_template <- function(
   make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"),
                 pass_note = pass_note, pass_warning = pass_warning)
 
-  # Create NAMESPACE file and optionally export function
+  # Create NAMESPACE file
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
-  # if(isTRUE(export_funcs)){
-  #   write("export(myfunction)", file= file.path(pkg_dir, "NAMESPACE"), append=TRUE)
-  # }
 
   # Copy build ignore file to silence unintended warnings
   fs::file_copy(namespace_file, file.path(pkg_dir, ".Rbuildignore"))
-
 
   ## init other directories and default files ##
   # R/ directory
@@ -65,14 +59,6 @@ create_package_template <- function(
   fs::dir_create(r_dir)
   script_file <- file.path(r_dir, "myscript.R")
   fs::file_create(script_file)
-
-  # Documentation - man/ directory
-  # if(isTRUE(doc_funcs)){
-  #   myfunction_rd_file <- file.path(template_dir, "myfunction.Rd")
-  #   man_dir <- file.path(pkg_dir, "man")
-  #   fs::dir_create(man_dir)
-  #   fs::file_copy(myfunction_rd_file, file.path(man_dir, "myfunction.Rd"))
-  # }
 
   # Tests and running of tests
   if(isTRUE(add_tests)){
@@ -140,9 +126,7 @@ create_testing_package <- function(
     pkg_name = pkg_name,
     pass_warning = (type == "pass_warning"),
     pass_note = (type == "pass_notes"),
-    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions")),
-    export_funcs = type != "pass_no_functions",
-    doc_funcs = !(type %in% c("fail_func_syntax", "pass_no_functions"))
+    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions"))
   )
 
   # Add function to R/  (unless type = 'pass_no_functions')
@@ -276,6 +260,8 @@ skip_if_render_pdf <- function() {
 }
 
 
+# This function must be used before any `rcmdcheck` calls to ensure they are run
+# in the same environment as local tests (and reflect how the package will actually perform)
 local_check_envvar <- function(.local_envir = parent.frame()) {
   vnames <- grep("^_R_CHECK_", names(Sys.getenv()), value = TRUE)
   if (length(vnames)) {
@@ -285,19 +271,7 @@ local_check_envvar <- function(.local_envir = parent.frame()) {
     vals <- c()
   }
   vals["_R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_"] <- "FALSE"
-  vals["_R_CHECK_CRAN_INCOMING_USE_ASPELL_"] <- "FALSE"
-  vals["_R_CHECK_RD_CONTENTS_"] <- "FALSE"
-  vals["_R_CHECK_RD_LINE_WIDTHS_"] <- "FALSE"
-  vals["_R_CHECK_RD_STYLE_"] <- "FALSE"
   vals["_R_CHECK_RD_XREFS_"] <- "FALSE"
-  vals["_R_CHECK_RD_INTERNAL_TOO_"] <- "FALSE"
-  vals["_R_CHECK_RD_CONTENTS_KEYWORDS_"] <- "FALSE"
-  vals["_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_"] <- "FALSE"
-  vals["_R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_"] <- "FALSE"
-  vals["_R_CHECK_DOC_SIZES_"] <- "FALSE"
-  vals["_R_CHECK_NATIVE_ROUTINE_REGISTRATION_"] <- "FALSE"
-  vals["_R_CHECK_FF_AS_CRAN_"] <- ""
-  # vals["_R_CHECK_EXCESSIVE_IMPORTS_"] <- "30"
 
   withr::local_envvar(vals, .local_envir = .local_envir)
 }

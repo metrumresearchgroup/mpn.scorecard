@@ -2,7 +2,7 @@
 describe("score_pkg", {
 
   it("score_pkg overall behavior - successful package", {
-
+    local_check_envvar()
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     pkg_tar <- pkg_setup %>% pull(tar_file)
 
@@ -29,11 +29,24 @@ describe("score_pkg", {
       names(pkg_scores),
       c("pkg_name", "pkg_version", "out_dir", "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
     )
+
+    # These tests also serve to confirm the correct environment vars in `local_check_envvar` were set
+    # Check category scores
+    expect_equal(pkg_scores$category_scores$testing, 1)
+    expect_equal(pkg_scores$category_scores$documentation, 0)
+    expect_equal(pkg_scores$category_scores$maintenance, 0.5)
+    expect_equal(pkg_scores$category_scores$transparency, 0)
+    expect_equal(pkg_scores$category_scores$overall, 0.5)
+
+    # check individual scores
+    expect_equal(pkg_scores$scores$testing$check, 1)
+    expect_equal(pkg_scores$scores$testing$covr, 1)
+
   })
 
 
   it("score_pkg overall behavior - failed package", {
-
+    local_check_envvar()
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_test")
     pkg_tar <- pkg_setup %>% pull(tar_file)
 
