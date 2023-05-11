@@ -22,7 +22,7 @@ create_extra_notes <- function(
     dplyr::select("r_script", "test_coverage" = ".")
   row.names(covr_results_df) <- NULL
   # Conditional coverage formatting (if covr failed)
-  if(is.na(unique(covr_results_df$test_coverage))){
+  if(all(is.na(unique(covr_results_df$test_coverage)))){
     covr_results_df <- covr_results_df %>%
       mutate(
         r_script = NA_character_,
