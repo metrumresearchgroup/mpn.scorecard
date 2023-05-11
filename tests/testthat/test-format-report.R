@@ -109,4 +109,39 @@ describe("formatting functions", {
     expect_equal(unique(flex_df$body$dataset$Result), "Failed")
   })
 
+
+  it("format_extra_notes", {
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+    extra_notes_frmt <- format_extra_notes(extra_notes_data, return_vals = TRUE)
+
+    # Test exported functions dataframe
+    exported_func_df <- extra_notes_frmt$exported_func_flex$body$dataset
+    expect_equal(
+      names(format_colnames_to_title(extra_notes_data$exports_df %>% select(-"test_dirs"))),
+      names(exported_func_df)
+    )
+    expect_equal(
+      unique(unname(unlist(extra_notes_frmt$exported_func_flex$footer$dataset))),
+      "Testing directories: tests/testthat"
+    )
+
+    # Test covr dataframe
+    covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
+    expect_equal(
+      names(format_colnames_to_title(extra_notes_data$covr_results_df)),
+      names(covr_results_df)
+    )
+    expect_equal(
+      unique(unname(unlist(extra_notes_frmt$covr_results_flex$footer$dataset))),
+      "Test coverage is calculated per script, rather than per function"
+    )
+
+    # Test R CMD Check output
+    check_output <- extra_notes_frmt$check_output
+    expect_false(grepl("\\\\\\\\u", extra_notes_data$check_output))
+    expect_true(grepl("\\\\\\\\u", check_output))
+  })
 })

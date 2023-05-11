@@ -534,14 +534,19 @@ format_colnames_to_title <- function(df){
 #' Format extra notes
 #'
 #' @param extra_notes_data named list. Output of [create_extra_notes()]
+#' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
 #'
 #' @keywords internal
-format_extra_notes <- function(extra_notes_data){
+format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
   header_str <- "\n# Installation Documentation\n\n"
   sub_header_strs <- c("\n## Test coverage\n\n", "\n## R CMD Check\n\n", "\n## Traceability Matrix\n\n")
 
   if(is.null(extra_notes_data)){
-    cat(NULL)
+    if(isTRUE(return_vals)){
+      return(NULL)
+    }else{
+      cat(NULL)
+    }
   }else{
     ### Exported Functions ###
     # Unnest tests and testing directories
@@ -551,18 +556,22 @@ format_extra_notes <- function(extra_notes_data){
         test_dirs = purrr::map_chr(.data$test_dirs, ~paste(.x, collapse = "\n")),
       )
 
-    # If only one unique directory, remove the column
-    if(dplyr::n_distinct(exported_func_df$test_dirs) == 1){
-      exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
-    }else{
-      exported_func_df <- exported_func_df %>% dplyr::rename("test_directories"="test_dirs")
-    }
+    # Get testing directories for caption
+    test_dirs <- exported_func_df %>% pull(test_dirs) %>% unique() %>% paste(collapse = ", ")
+
+    # Remove testing directory column (not a column due to horizontal space limits)
+    exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+
     # Format Table
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
-    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 6.5) %>%
-      flextable::set_caption("Traceability Matrix")
+    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 7) %>%
+      flextable::set_caption("Traceability Matrix") %>%
+      flextable::add_footer_row(
+        values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
+        colwidths = c(4)
+      )
 
     ### Covr Results ###
     # Format Table
@@ -582,33 +591,42 @@ format_extra_notes <- function(extra_notes_data){
       flextable::add_footer_row(
         values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
         colwidths = c(2)
-        )
+      )
 
 
     ### R CMD Check Results ###
     # Format check output to escape backslashes (otherwise RMD wont render)
     check_output <- gsub("\\\\", "\\\\\\\\", extra_notes_data$check_output)
 
-
-    ### Print all Results ###
-    cat(header_str)
-    # Coverage
-    cat(sub_header_strs[1])
-    cat("\n")
-    cat(knitr::knit_print(covr_results_flex))
-    cat("\n")
-    cat("\\newpage")
-    # R CMD Check
-    cat(sub_header_strs[2])
-    cat("\n")
-    cat(check_output)
-    cat("\n")
-    cat("\\newpage")
-    # Exported Function Documentation
-    cat(sub_header_strs[3])
-    cat("\n")
-    cat(knitr::knit_print(exported_func_flex))
-    cat("\n")
+    if(isTRUE(return_vals)){
+      return(
+        list(
+          exported_func_flex = exported_func_flex,
+          covr_results_flex = covr_results_flex,
+          check_output = check_output
+        )
+      )
+    }else{
+      ### Print all Results ###
+      cat(header_str)
+      # Coverage
+      cat(sub_header_strs[1])
+      cat("\n")
+      cat(knitr::knit_print(covr_results_flex))
+      cat("\n")
+      cat("\\newpage")
+      # R CMD Check
+      cat(sub_header_strs[2])
+      cat("\n")
+      cat(check_output)
+      cat("\n")
+      cat("\\newpage")
+      # Exported Function Documentation
+      cat(sub_header_strs[3])
+      cat("\n")
+      cat(knitr::knit_print(exported_func_flex))
+      cat("\n")
+    }
 
   }
 }

@@ -4,10 +4,12 @@
 \alias{format_extra_notes}
 \title{Format extra notes}
 \usage{
-format_extra_notes(extra_notes_data)
+format_extra_notes(extra_notes_data, return_vals = FALSE)
 }
 \arguments{
 \item{extra_notes_data}{named list. Output of \code{\link[=create_extra_notes]{create_extra_notes()}}}
+
+\item{return_vals}{Logical (T/F). If \code{TRUE}, return the objects instead of printing them out for \code{rmarkdown}. Used for testing.}
 }
 \description{
 Format extra notes
