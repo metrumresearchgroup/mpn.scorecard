@@ -147,6 +147,7 @@ summarize_package_results <- function(result_dirs,
                                              append_out_dir = TRUE
   )
 
+  # Main summary variables
   risk_summary_df <- overall_risk_summary$overall_pkg_scores %>%
     tibble::as_tibble() %>%
     mutate(
@@ -157,42 +158,31 @@ summarize_package_results <- function(result_dirs,
     ) %>%
     dplyr::select(-c("mitigation", "overall_risk"))
 
+  # R CMD Check Results
+  check_results <- tibble::tibble(
+    check_output = purrr::map(risk_summary_df$check_output_path, readRDS),
+    package = purrr::map_chr(check_output, "package"),
+    version = purrr::map_chr(check_output, "version"),
+    check_status = purrr::map_int(check_output, "status"),
+    check_test_fail = purrr::map(check_output, "test_fail"),
+    check_test_output = purrr::map(check_output, "test_output"),
+    check_errors = purrr::map(check_output, "errors"),
+    check_warnings = purrr::map(check_output, "warnings")
+  )
 
-  check_results <- purrr::map(risk_summary_df$check_output_path, ~{
-    output <- readRDS(.x)
+  # Covr Results
+  covr_results <- tibble::tibble(
+    covr_output = purrr::map(risk_summary_df$covr_output_path, list(readRDS)),
+    pkg_name_ver = purrr::map_chr(covr_output, "name"),
+    covr_success = purrr::map_lgl(covr_output, ~ !is.na(.x$coverage$totalcoverage)),
+    covr_test_fail = purrr::map2(covr_success, covr_output, ~ (if(isFALSE(.x)) .y$errors$message else character(0)))
+  )
 
-    tibble::tibble_row(
-      package = output$package,
-      version = output$version,
-      check_status = output$status,
-      check_test_fail = list(output$test_fail),
-      check_test_output = list(output$test_output),
-      check_errors = list(output$errors),
-      check_warnings = list(output$warnings),
-      check_output = output
-    )
-  }) %>% purrr::list_rbind()
-
-
-  covr_results <- purrr::map(risk_summary_df$covr_output_path, ~{
-    output <- readRDS(.x)
-    covr_success <-  !is.na(output$coverage$totalcoverage)
-    covr_test_fail <- if(isFALSE(covr_success)) output$errors$message else ""
-
-    tibble::tibble_row(
-      pkg_name_ver = output$name,
-      covr_success = covr_success,
-      covr_test_fail = list(covr_test_fail),
-      covr_output = list(output)
-    )
-  }) %>% purrr::list_rbind()
-
-
+  # Join all Results
   risk_summary_df <- risk_summary_df %>%
     dplyr::left_join(check_results, by = c("package", "version")) %>%
     dplyr::left_join(covr_results, by = "pkg_name_ver") %>%
     dplyr::select(-"pkg_name_ver")
-
 
   if(isFALSE(append_results)){
     risk_summary_df <- risk_summary_df %>% dplyr::select(-c("check_output", "covr_output"))
