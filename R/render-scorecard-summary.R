@@ -134,10 +134,9 @@ build_risk_summary <- function(result_dirs,
 #' @export
 summarize_package_results <- function(result_dirs){
 
-  json_paths <- fs::dir_ls(unique(dirname(result_dirs)),
-                           glob = "*.scorecard.json", recurse = 1) %>% unname()
+  json_paths <- get_result_path(result_dirs, "scorecard.json")
 
-  risk_summary_df <- tibble(
+  risk_summary_df <- tibble::tibble(
     result_dir = dirname(json_paths),
     res_obj = purrr::map(json_paths, jsonlite::read_json),
     package = purrr::map_chr(res_obj, "pkg_name"),
@@ -154,7 +153,7 @@ summarize_package_results <- function(result_dirs){
     covr_obj = purrr::map(paste0(result_dir, "/", pkg_name_ver, ".covr.rds"), readRDS),
     covr_success = !is.na(purrr::map_dbl(covr_obj, c("coverage", "totalcoverage"))),
     covr_errors = purrr::map(covr_obj, "errors"),
-    covr_error_msg = if_else(is.na(covr_errors), NA_character_, format(covr_errors))
+    covr_error_msg = dplyr::if_else(is.na(covr_errors), NA_character_, format(covr_errors))
   ) %>% dplyr::select(-c("result_dir", "res_obj", "pkg_name_ver", "check_obj", "covr_obj", "covr_errors"))
 
 
