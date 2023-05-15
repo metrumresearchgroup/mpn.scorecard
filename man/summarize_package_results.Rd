@@ -4,18 +4,10 @@
 \alias{summarize_package_results}
 \title{Review important package metrics prior to running \code{\link[=render_scorecard_summary]{render_scorecard_summary()}}}
 \usage{
-summarize_package_results(
-  result_dirs,
-  append_results = FALSE,
-  append_result_paths = FALSE
-)
+summarize_package_results(result_dirs)
 }
 \arguments{
 \item{result_dirs}{A vector of output directories}
-
-\item{append_results}{Logical (T/F). If \code{TRUE}, return loaded \code{rcmdcheck} and \code{covr} results as additional list columns}
-
-\item{append_result_paths}{Logical (T/F). If \code{TRUE}, return \code{rcmdcheck} and \code{covr} result paths and \code{out_dir} directory as columns}
 }
 \value{
 a dataframe

@@ -129,82 +129,33 @@ build_risk_summary <- function(result_dirs,
 #' Review important package metrics prior to running [render_scorecard_summary()]
 #'
 #' @inheritParams render_scorecard_summary
-#' @param append_results Logical (T/F). If `TRUE`, return loaded `rcmdcheck` and `covr` results as additional list columns
-#' @param append_result_paths Logical (T/F). If `TRUE`, return `rcmdcheck` and `covr` result paths and `out_dir` directory as columns
 #'
 #' @returns a dataframe
 #' @export
-summarize_package_results <- function(result_dirs,
-                                      append_results = FALSE,
-                                      append_result_paths = FALSE
-){
+summarize_package_results <- function(result_dirs){
 
-  # We dont care about risk here:
-  # assign arbitrary value to `risk_breaks` so we can still rely on `build_risk_summary`
-  overall_risk_summary <- build_risk_summary(result_dirs,
-                                             risk_breaks = c(0.3, 0.7),
-                                             out_dir = NULL,
-                                             append_out_dir = TRUE
-  )
+  json_paths <- get_result_path(result_dirs, "scorecard.json")
 
-  risk_summary_df <- overall_risk_summary$overall_pkg_scores %>%
-    tibble::as_tibble() %>%
-    mutate(
-      pkg_name_ver = basename(.data$out_dir), # Used for joining covr data
-      has_mitigation = ifelse(is.na(.data$mitigation) | .data$mitigation == "No", "no", "yes"),
-      check_output_path = get_result_path(.data$out_dir, "check.rds"),
-      covr_output_path = get_result_path(.data$out_dir, "covr.rds")
-    ) %>%
-    dplyr::select(-c("mitigation", "overall_risk"))
+  risk_summary_df <- tibble::tibble(
+    result_dir = dirname(json_paths),
+    res_obj = purrr::map(json_paths, jsonlite::read_json),
+    package = purrr::map_chr(res_obj, "pkg_name"),
+    version = purrr::map_chr(res_obj, "pkg_version"),
+    pkg_name_ver = paste0(package, "_", version),
+    overall_score = purrr::map_dbl(res_obj, c("category_scores", "overall")),
+    has_mitigation = purrr::map_chr(result_dir, ~ (if(is.null(check_for_mitigation(.x))) "no" else "yes")),
+    check_obj = purrr::map(paste0(result_dir, "/", pkg_name_ver, ".check.rds"), readRDS),
+    check_status = purrr::map_int(check_obj, "status"),
+    check_test_fail = purrr::map(check_obj, "test_fail"),
+    check_test_output = purrr::map(check_obj, "test_output"),
+    check_errors = purrr::map(check_obj, "errors"),
+    check_warnings = purrr::map(check_obj, "warnings"),
+    covr_obj = purrr::map(paste0(result_dir, "/", pkg_name_ver, ".covr.rds"), readRDS),
+    covr_success = !is.na(purrr::map_dbl(covr_obj, c("coverage", "totalcoverage"))),
+    covr_errors = purrr::map(covr_obj, "errors"),
+    covr_error_msg = dplyr::if_else(is.na(covr_errors), NA_character_, format(covr_errors))
+  ) %>% dplyr::select(-c("result_dir", "res_obj", "pkg_name_ver", "check_obj", "covr_obj", "covr_errors"))
 
-
-  check_results <- purrr::map(risk_summary_df$check_output_path, ~{
-    output <- readRDS(.x)
-
-    tibble::tibble_row(
-      package = output$package,
-      version = output$version,
-      check_status = output$status,
-      check_test_fail = list(output$test_fail),
-      check_test_output = list(output$test_output),
-      check_errors = list(output$errors),
-      check_warnings = list(output$warnings),
-      check_output = output
-    )
-  }) %>% purrr::list_rbind()
-
-
-  covr_results <- purrr::map(risk_summary_df$covr_output_path, ~{
-    output <- readRDS(.x)
-    covr_success <-  !is.na(output$coverage$totalcoverage)
-    covr_test_fail <- if(isFALSE(covr_success)) output$errors$message else ""
-
-    tibble::tibble_row(
-      pkg_name_ver = output$name,
-      covr_success = covr_success,
-      covr_test_fail = list(covr_test_fail),
-      covr_output = list(output)
-    )
-  }) %>% purrr::list_rbind()
-
-
-  risk_summary_df <- risk_summary_df %>%
-    dplyr::left_join(check_results, by = c("package", "version")) %>%
-    dplyr::left_join(covr_results, by = "pkg_name_ver") %>%
-    dplyr::select(-"pkg_name_ver")
-
-
-  if(isFALSE(append_results)){
-    risk_summary_df <- risk_summary_df %>% dplyr::select(-c("check_output", "covr_output"))
-  }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("check_output", "covr_output"), .after = everything())
-  }
-
-  if(isFALSE(append_result_paths)){
-    risk_summary_df <- risk_summary_df %>% dplyr::select(-c("out_dir", "check_output_path", "covr_output_path"))
-  }else{
-    risk_summary_df <- risk_summary_df %>% dplyr::relocate(c("out_dir", "check_output_path", "covr_output_path"), .after = everything())
-  }
 
   return(risk_summary_df)
 }
