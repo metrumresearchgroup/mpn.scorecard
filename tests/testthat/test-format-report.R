@@ -109,29 +109,37 @@ describe("formatting functions", {
     expect_equal(unique(flex_df$body$dataset$Result), "Failed")
   })
 
-
-  it("format_extra_notes", {
+  it("format_traceability_matrix", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
-    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+    exports_df <- make_traceability_matrix(result_dir_x, pkg_tar_path = pkg_tar_x)
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    extra_notes_frmt <- format_extra_notes(extra_notes_data, return_vals = TRUE)
+    exported_func_flex <- format_traceability_matrix(exports_df, return_vals = TRUE)
 
     # Test exported functions dataframe
-    exported_func_df <- extra_notes_frmt$exported_func_flex$body$dataset
+    exported_func_df <- exported_func_flex$body$dataset
     expect_equal(
-      names(format_colnames_to_title(extra_notes_data$exports_df %>% select(-"test_dirs"))),
+      names(format_colnames_to_title(exports_df %>% select(-"test_dirs"))),
       names(exported_func_df)
     )
     expect_equal(
-      unique(unname(unlist(extra_notes_frmt$exported_func_flex$footer$dataset))),
+      unique(unname(unlist(exported_func_flex$footer$dataset))),
       "Testing directories: tests/testthat"
     )
+  })
+
+  it("format_appendix", {
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+
+    extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
 
     # Test covr dataframe
     covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
@@ -149,4 +157,5 @@ describe("formatting functions", {
     expect_false(grepl("\\\\\\\\u", extra_notes_data$check_output))
     expect_true(grepl("\\\\\\\\u", check_output))
   })
+
 })

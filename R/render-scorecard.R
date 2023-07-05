@@ -7,7 +7,7 @@
 #'   for a given score: `0 <= score < 0.3` is "Low Risk", `0.3 <= score < 0.7`
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
-#' @param extra_notes Logical (T/F). If `TRUE`, append extra notes summarizing covr & rcmdcheck outputs, as well as function documentation
+#' @param add_traceability Logical (T/F). If `TRUE`, append extra notes summarizing covr & rcmdcheck outputs, as well as function documentation
 #'
 #' @details
 #'
@@ -21,7 +21,7 @@ render_scorecard <- function(
     results_dir,
     risk_breaks = c(0.3, 0.7),
     overwrite = FALSE,
-    extra_notes = FALSE
+    add_traceability = FALSE
 ) {
 
   json_path <- get_result_path(results_dir, "scorecard.json")
@@ -44,11 +44,15 @@ render_scorecard <- function(
   out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
-  # Extra notes
-  if(isTRUE(extra_notes)){
-    extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+
+  # Appendix
+  extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+
+  # Traceability Matrix
+  if(isTRUE(add_traceability)){
+    exports_df <- make_traceability_matrix(pkg_scores$pkg_tar_path, results_dir)
   }else{
-    extra_notes_data <- NULL
+    exports_df <- NULL
   }
 
   # Render rmarkdown
@@ -61,7 +65,8 @@ render_scorecard <- function(
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
       pkg_scores = formatted_pkg_scores,
       mitigation_block = mitigation_block,
-      extra_notes_data = extra_notes_data
+      extra_notes_data = extra_notes_data,
+      exports_df = exports_df
     )
   )
 

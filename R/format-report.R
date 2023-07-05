@@ -531,17 +531,15 @@ format_colnames_to_title <- function(df){
 }
 
 
-#' Format extra notes
+#' Format Traceability Matrix
 #'
-#' @param extra_notes_data named list. Output of [create_extra_notes()]
+#' @param exports_df tibble. Output of [make_traceability_matrix()]
 #' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
 #'
 #' @keywords internal
-format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
-  header_str <- "\n# Installation Documentation\n\n"
-  sub_header_strs <- c("\n## Test coverage\n\n", "\n## R CMD Check\n\n", "\n## Traceability Matrix\n\n")
-
-  if(is.null(extra_notes_data)){
+format_traceability_matrix <- function(exports_df, return_vals = FALSE){
+  sub_header_str <- "\n# Traceability Matrix\n\n"
+  if(is.null(exports_df)){
     if(isTRUE(return_vals)){
       return(NULL)
     }else{
@@ -550,7 +548,7 @@ format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
   }else{
     ### Exported Functions ###
     # Unnest tests and testing directories
-    exported_func_df <- extra_notes_data$exports_df %>%
+    exported_func_df <- exports_df %>%
       mutate(
         test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n")),
         test_dirs = purrr::map_chr(.data$test_dirs, ~paste(.x, collapse = "\n")),
@@ -572,6 +570,33 @@ format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+
+    boiler_plate_txt <- paste("This table links all package functionality to the documentation
+    which describes that functionality, as well as the testing code which confirms the functionality
+    works as described.") %>% strwrap(simplify = TRUE, width = 1000)
+
+    if(isTRUE(return_vals)){
+      return(exported_func_flex)
+    }else{
+      # Exported Function Documentation
+      cat(sub_header_str)
+      cat("\n")
+      cat(boiler_plate_txt)
+      cat("\n")
+      cat(knitr::knit_print(exported_func_flex))
+      cat("\n")
+    }
+  }
+}
+
+#' Format Appendix
+#'
+#' @param extra_notes_data named list. Output of [create_extra_notes()]
+#' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
+#'
+#' @keywords internal
+format_appendix <- function(extra_notes_data, return_vals = FALSE){
+  sub_header_strs <- c("\n## R CMD Check\n\n", "\n## Test coverage\n\n")
 
     ### Covr Results ###
     # Format Table
@@ -601,32 +626,22 @@ format_extra_notes <- function(extra_notes_data, return_vals = FALSE){
     if(isTRUE(return_vals)){
       return(
         list(
-          exported_func_flex = exported_func_flex,
           covr_results_flex = covr_results_flex,
           check_output = check_output
         )
       )
     }else{
       ### Print all Results ###
-      cat(header_str)
       # Coverage
       cat(sub_header_strs[1])
       cat("\n")
-      cat(knitr::knit_print(covr_results_flex))
+      cat(check_output)
       cat("\n")
       cat("\\newpage")
       # R CMD Check
       cat(sub_header_strs[2])
       cat("\n")
-      cat(check_output)
-      cat("\n")
-      cat("\\newpage")
-      # Exported Function Documentation
-      cat(sub_header_strs[3])
-      cat("\n")
-      cat(knitr::knit_print(exported_func_flex))
+      cat(knitr::knit_print(covr_results_flex))
       cat("\n")
     }
-
-  }
 }

@@ -30,14 +30,8 @@ create_extra_notes <- function(
       )
   }
 
-  # Format documentation
-  exports_df <- get_exports_documented(pkg_tar_path, results_dir) %>%
-    dplyr::select("exported_function" = "export", everything(), -"is_documented")
-
-
   return(
     list(
-      exports_df = exports_df,
       covr_results_df = covr_results_df,
       check_output = check_results$stdout
     )
@@ -54,7 +48,7 @@ create_extra_notes <- function(
 #' @returns a tibble
 #'
 #' @keywords internal
-get_exports_documented <- function(pkg_tar_path, results_dir){
+make_traceability_matrix <- function(pkg_tar_path, results_dir){
 
   # Unpack tarball
   pkg_source_path <- unpack_tarball(pkg_tar_path)
@@ -127,13 +121,16 @@ get_exports_documented <- function(pkg_tar_path, results_dir){
   # This maps all functions to tests (not just exports) - this was intentional in case we eventually want all functions
   test_mapping_df <- map_tests_to_functions(pkg_source_path)
 
-  func_tests_doc_df <- exports_doc_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function"))
+  func_tests_doc_df <- exports_doc_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function")) %>%
+    dplyr::select("exported_function" = "export", everything())
 
   # write results to RDS
   saveRDS(
     func_tests_doc_df,
     get_result_path(results_dir, "export_doc.rds")
   )
+
+  func_tests_doc_df <- func_tests_doc_df %>% dplyr::select(-"is_documented")
 
   return(func_tests_doc_df)
 }

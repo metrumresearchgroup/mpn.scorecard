@@ -8,7 +8,7 @@ render_scorecard(
   results_dir,
   risk_breaks = c(0.3, 0.7),
   overwrite = FALSE,
-  extra_notes = FALSE
+  add_traceability = FALSE
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
 \item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
 
-\item{extra_notes}{Logical (T/F). If \code{TRUE}, append extra notes summarizing covr & rcmdcheck outputs, as well as function documentation}
+\item{add_traceability}{Logical (T/F). If \code{TRUE}, append extra notes summarizing covr & rcmdcheck outputs, as well as function documentation}
 }
 \description{
 Take a JSON from score_pkg() and render a pdf

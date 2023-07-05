@@ -25,7 +25,7 @@ describe("render_scorecard", {
       expect_equal(length(rendered_pdf_toc), 3)
 
       title_sections <- purrr::map_chr(rendered_pdf_toc, ~{.x$title})
-      expect_equal(title_sections, c("Overview", "Details", "System Info"))
+      expect_equal(title_sections, c("Overview", "Details", "Appendix"))
 
       title_sub_sections <- purrr::map_chr(rendered_pdf_toc[[2]]$children, ~{.x$title})
       expect_equal(length(title_sub_sections), 2)

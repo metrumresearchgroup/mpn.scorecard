@@ -11,6 +11,7 @@ params:
   pkg_scores: "`r list()`"
   mitigation_block: "r NULL"
   extra_notes_data: "r NULL"
+  exports_df: "r NULL"
 title: "`r params$set_title`"
 subtitle: 'MPN Scorecard'
 ---
@@ -66,16 +67,21 @@ format_mitigation(params$mitigation_block)
 
 <!-- Extra notes (formats new page) -->
 ```{r, results = "asis"}
-format_extra_notes(params$extra_notes_data)
+format_traceability_matrix(params$exports_df)
 ```
 
 \newpage
 
-# System Info
+# Appendix
+
+## System Info
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)
 ```
 
+```{r, results = "asis"}
+format_appendix(params$extra_notes_data)
+```
 
 
 
