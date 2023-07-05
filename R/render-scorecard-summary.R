@@ -139,21 +139,21 @@ summarize_package_results <- function(result_dirs){
   risk_summary_df <- tibble::tibble(
     result_dir = dirname(json_paths),
     res_obj = purrr::map(json_paths, jsonlite::read_json),
-    package = purrr::map_chr(res_obj, "pkg_name"),
-    version = purrr::map_chr(res_obj, "pkg_version"),
-    pkg_name_ver = paste0(package, "_", version),
-    overall_score = purrr::map_dbl(res_obj, c("category_scores", "overall")),
-    has_mitigation = purrr::map_chr(result_dir, ~ (if(is.null(check_for_mitigation(.x))) "no" else "yes")),
-    check_obj = purrr::map(paste0(result_dir, "/", pkg_name_ver, ".check.rds"), readRDS),
-    check_status = purrr::map_int(check_obj, "status"),
-    check_test_fail = purrr::map(check_obj, "test_fail"),
-    check_test_output = purrr::map(check_obj, "test_output"),
-    check_errors = purrr::map(check_obj, "errors"),
-    check_warnings = purrr::map(check_obj, "warnings"),
-    covr_obj = purrr::map(paste0(result_dir, "/", pkg_name_ver, ".covr.rds"), readRDS),
-    covr_success = !is.na(purrr::map_dbl(covr_obj, c("coverage", "totalcoverage"))),
-    covr_errors = purrr::map(covr_obj, "errors"),
-    covr_error_msg = dplyr::if_else(is.na(covr_errors), NA_character_, format(covr_errors))
+    package = purrr::map_chr(.data$res_obj, "pkg_name"),
+    version = purrr::map_chr(.data$res_obj, "pkg_version"),
+    pkg_name_ver = paste0(.data$package, "_", version),
+    overall_score = purrr::map_dbl(.data$res_obj, c("category_scores", "overall")),
+    has_mitigation = purrr::map_chr(.data$result_dir, ~ (if(is.null(check_for_mitigation(.x))) "no" else "yes")),
+    check_obj = purrr::map(paste0(.data$result_dir, "/", pkg_name_ver, ".check.rds"), readRDS),
+    check_status = purrr::map_int(.data$check_obj, "status"),
+    check_test_fail = purrr::map(.data$check_obj, "test_fail"),
+    check_test_output = purrr::map(.data$check_obj, "test_output"),
+    check_errors = purrr::map(.data$check_obj, "errors"),
+    check_warnings = purrr::map(.data$check_obj, "warnings"),
+    covr_obj = purrr::map(paste0(.data$result_dir, "/", pkg_name_ver, ".covr.rds"), readRDS),
+    covr_success = !is.na(purrr::map_dbl(.data$covr_obj, c("coverage", "totalcoverage"))),
+    covr_errors = purrr::map(.data$covr_obj, "errors"),
+    covr_error_msg = dplyr::if_else(is.na(.data$covr_errors), NA_character_, format(covr_errors))
   ) %>% dplyr::select(-c("result_dir", "res_obj", "pkg_name_ver", "check_obj", "covr_obj", "covr_errors"))
 
 
