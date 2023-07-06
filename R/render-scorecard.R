@@ -139,14 +139,12 @@ map_risk <- function(scores, risk_breaks) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
   risk_breaks <- sort(risk_breaks, decreasing = TRUE)
   purrr::map_chr(scores, ~ {
-    if(is.na(.x)) {
-      "Blocking"
+    if(is.na(.x) || .x < risk_breaks[2]) {
+      "High Risk"
     } else if (.x > risk_breaks[1]) {
       "Low Risk"
     } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
       "Medium Risk"
-    } else if(.x < risk_breaks[2]) {
-      "High Risk"
     } else {
       "NA - unexpected"
     }

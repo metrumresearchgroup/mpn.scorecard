@@ -117,9 +117,8 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
     flextable::color(color = "orange", j = 3, i = ~ `Risk` == 'Medium Risk') %>%
     flextable::color(color = "darkred", j = 3, i = ~ `Risk` == 'High Risk') %>%
     # Error Styling
-    flextable::bold( j = 2, i = ~ `Risk` == 'Blocking') %>%
-    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
-    flextable::bold( j = 2, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::bold(j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
     # Header/Caption
     flextable::set_header_labels(Category = "Category", Risk = "Risk Level") %>%
     flextable::set_caption("Package Risk Metrics Summary") %>%
@@ -261,8 +260,9 @@ format_testing_scores <- function(formatted_pkg_scores){
     flextable::color(color = "orange", j = 3, i = ~ Risk == "Medium Risk") %>%
     flextable::color(color = "darkred", j = 3, i = ~ Risk == "High Risk") %>%
     # Error Styling
-    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
+    flextable::color(color = "red", j = 2, i = ~ `Result` == 'Failed') %>%
     flextable::bold( j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
     flextable::set_caption(flex_caption)
 
   # testing_scores_flextable <- testing_scores_flextable %>%
