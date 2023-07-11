@@ -64,10 +64,6 @@ describe("covr and rcmdcheck success", {
     expect_true(rlang::is_empty(check_output$errors))
     expect_true(!rlang::is_empty(check_output$warnings))
     expect_true(rlang::is_empty(check_output$test_fail))
-    # print(check_output$warnings)
-    # cat(check_output$warnings)
-    # print(check_output$notes)
-    # cat(check_output$notes)
 
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
@@ -102,10 +98,6 @@ describe("covr and rcmdcheck success", {
     expect_true(rlang::is_empty(check_output$errors))
     expect_true(rlang::is_empty(check_output$warnings))
     expect_true(rlang::is_empty(check_output$test_fail))
-    # print(check_output$warnings)
-    # cat(check_output$warnings)
-    # print(check_output$notes)
-    # cat(check_output$notes)
 
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
@@ -139,8 +131,6 @@ describe("covr and rcmdcheck success", {
     expect_true(rlang::is_empty(check_output$errors))
     expect_true(rlang::is_empty(check_output$warnings))
     expect_true(rlang::is_empty(check_output$test_fail))
-    # print(check_output$warnings)
-    # print(check_output$notes)
 
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
