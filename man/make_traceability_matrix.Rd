@@ -2,9 +2,9 @@
 % Please edit documentation in R/create-extra-notes.R
 \name{make_traceability_matrix}
 \alias{make_traceability_matrix}
-\title{Get aliases of exported functions}
+\title{Create a Traceability Matrix}
 \usage{
-make_traceability_matrix(pkg_tar_path, results_dir)
+make_traceability_matrix(pkg_tar_path, results_dir = NULL)
 }
 \arguments{
 \item{pkg_tar_path}{path to a tarball}
@@ -15,6 +15,7 @@ make_traceability_matrix(pkg_tar_path, results_dir)
 a tibble
 }
 \description{
-Returns the aliases of exported functions, the name of the \code{man} file, and the R script the function is contained in
+Returns a table that links all exported functions and their aliases to their documentation (\code{man} files),
+the R scripts containing them, and the test scripts that reference them.
 }
 \keyword{internal}

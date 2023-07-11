@@ -39,16 +39,17 @@ create_extra_notes <- function(
 }
 
 
-#' Get aliases of exported functions
+#' Create a Traceability Matrix
 #'
-#' Returns the aliases of exported functions, the name of the `man` file, and the R script the function is contained in
+#' Returns a table that links all exported functions and their aliases to their documentation (`man` files),
+#' the R scripts containing them, and the test scripts that reference them.
 #'
 #' @inheritParams create_extra_notes
 #'
 #' @returns a tibble
 #'
 #' @keywords internal
-make_traceability_matrix <- function(pkg_tar_path, results_dir){
+make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
 
   # Unpack tarball
   pkg_source_path <- unpack_tarball(pkg_tar_path)
@@ -110,7 +111,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir){
     dplyr::select(-c("alias"))
 
   # We dont need documentation in report - but will use for this message
-  # TODO: if no packages on the next MPN build trigger this (when extra_notes = TRUE) - we can remove this and some of the above code
+  # TODO: if no packages on the next MPN build trigger this (when add_traceability = TRUE) - we can remove this and some of the above code
   if(any(exports_doc_df$is_documented == FALSE)){
     docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
     exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
@@ -125,10 +126,12 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir){
     dplyr::select("exported_function" = "export", everything())
 
   # write results to RDS
-  saveRDS(
-    func_tests_doc_df,
-    get_result_path(results_dir, "export_doc.rds")
-  )
+  if(!is.null(results_dir)){
+    saveRDS(
+      func_tests_doc_df,
+      get_result_path(results_dir, "export_doc.rds")
+    )
+  }
 
   func_tests_doc_df <- func_tests_doc_df %>% dplyr::select(-"is_documented")
 
