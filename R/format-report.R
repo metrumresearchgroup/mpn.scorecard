@@ -117,9 +117,8 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
     flextable::color(color = "orange", j = 3, i = ~ `Risk` == 'Medium Risk') %>%
     flextable::color(color = "darkred", j = 3, i = ~ `Risk` == 'High Risk') %>%
     # Error Styling
-    flextable::bold( j = 2, i = ~ `Risk` == 'Blocking') %>%
-    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
-    flextable::bold( j = 2, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::bold(j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
     # Header/Caption
     flextable::set_header_labels(Category = "Category", Risk = "Risk Level") %>%
     flextable::set_caption("Package Risk Metrics Summary") %>%
@@ -190,7 +189,7 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
     mutate(
       risk = factor(.data$risk, levels = RISK_LEVELS),
       criteria = gsub("_", " ", .data$criteria) %>% stringr::str_to_title() %>% gsub("Url", "URL", .)
-      )
+    )
 
   # Testing is a separate table (for now)
   scores_df <- scores_df %>% dplyr::filter(.data$category != "testing")
@@ -261,8 +260,9 @@ format_testing_scores <- function(formatted_pkg_scores){
     flextable::color(color = "orange", j = 3, i = ~ Risk == "Medium Risk") %>%
     flextable::color(color = "darkred", j = 3, i = ~ Risk == "High Risk") %>%
     # Error Styling
-    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'Blocking') %>%
+    flextable::color(color = "red", j = 2, i = ~ `Result` == 'Failed') %>%
     flextable::bold( j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
+    flextable::color(color = "red", j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
     flextable::set_caption(flex_caption)
 
   # testing_scores_flextable <- testing_scores_flextable %>%
@@ -530,3 +530,118 @@ format_colnames_to_title <- function(df){
   return(df)
 }
 
+
+#' Format Traceability Matrix
+#'
+#' @param exports_df tibble. Output of [make_traceability_matrix()]
+#' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
+#'
+#' @keywords internal
+format_traceability_matrix <- function(exports_df, return_vals = FALSE){
+  sub_header_str <- "\n# Traceability Matrix\n\n"
+  if(is.null(exports_df)){
+    if(isTRUE(return_vals)){
+      return(NULL)
+    }else{
+      cat(NULL)
+    }
+  }else{
+    ### Exported Functions ###
+    # Unnest tests and testing directories
+    exported_func_df <- exports_df %>%
+      mutate(
+        test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n")),
+        test_dirs = purrr::map_chr(.data$test_dirs, ~paste(.x, collapse = "\n")),
+      )
+
+    # Get testing directories for caption
+    test_dirs <- exported_func_df %>% dplyr::pull(test_dirs) %>% unique() %>% paste(collapse = ", ")
+
+    # Remove testing directory column (not a column due to horizontal space limits)
+    exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+
+    # Format Table
+    exported_func_df <- exported_func_df %>% format_colnames_to_title()
+
+    # Create flextable
+    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 7) %>%
+      flextable::set_caption("Traceability Matrix") %>%
+      flextable::add_footer_row(
+        values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
+        colwidths = c(4)
+      )
+
+    boiler_plate_txt <- paste("This table links all package functionality to the documentation
+    which describes that functionality, as well as the testing code which confirms the functionality
+    works as described.") %>% strwrap(simplify = TRUE, width = 1000)
+
+    if(isTRUE(return_vals)){
+      return(exported_func_flex)
+    }else{
+      # Exported Function Documentation
+      cat(sub_header_str)
+      cat("\n")
+      cat(boiler_plate_txt)
+      cat("\n")
+      cat(knitr::knit_print(exported_func_flex))
+      cat("\n")
+    }
+  }
+}
+
+#' Format Appendix
+#'
+#' @param extra_notes_data named list. Output of [create_extra_notes()]
+#' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
+#'
+#' @keywords internal
+format_appendix <- function(extra_notes_data, return_vals = FALSE){
+  sub_header_strs <- c("\n## R CMD Check\n\n", "\n## Test coverage\n\n")
+
+    ### Covr Results ###
+    # Format Table
+    covr_results_df <- extra_notes_data$covr_results_df
+    if(!is.na(unique(covr_results_df$r_script))){
+      covr_results_df <- covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%"))
+    }else{
+      # overwrite script name if covr failed
+      covr_results_df <- covr_results_df %>% dplyr::mutate(r_script = "File coverage failed")
+    }
+    covr_results_df <- covr_results_df %>% as.data.frame() %>% format_colnames_to_title()
+
+    # Create flextable
+    covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
+      flextable::set_caption("Test Coverage") %>%
+      flextable::align(align = "right", part = "all", j=2) %>%
+      flextable::add_footer_row(
+        values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
+        colwidths = c(2)
+      )
+
+
+    ### R CMD Check Results ###
+    # Format check output to escape backslashes (otherwise RMD wont render)
+    check_output <- gsub("\\\\", "\\\\\\\\", extra_notes_data$check_output)
+
+    if(isTRUE(return_vals)){
+      return(
+        list(
+          covr_results_flex = covr_results_flex,
+          check_output = check_output
+        )
+      )
+    }else{
+      ### Print all Results ###
+      # Coverage
+      cat(sub_header_strs[1])
+      cat("\n")
+      cat(check_output)
+      cat("\n")
+      cat("\\newpage")
+      # R CMD Check
+      cat(sub_header_strs[2])
+      cat("\n")
+      cat(knitr::knit_print(covr_results_flex))
+      cat("\n")
+    }
+}

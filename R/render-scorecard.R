@@ -7,6 +7,7 @@
 #'   for a given score: `0 <= score < 0.3` is "Low Risk", `0.3 <= score < 0.7`
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
+#' @param add_traceability Logical (T/F). If `TRUE`, append a table that links package functionality to the documentation and test files.
 #'
 #' @details
 #'
@@ -19,7 +20,8 @@
 render_scorecard <- function(
     results_dir,
     risk_breaks = c(0.3, 0.7),
-    overwrite = FALSE
+    overwrite = FALSE,
+    add_traceability = FALSE
 ) {
 
   json_path <- get_result_path(results_dir, "scorecard.json")
@@ -42,6 +44,17 @@ render_scorecard <- function(
   out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
+
+  # Appendix
+  extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+
+  # Traceability Matrix
+  if(isTRUE(add_traceability)){
+    exports_df <- make_traceability_matrix(pkg_scores$pkg_tar_path, results_dir)
+  }else{
+    exports_df <- NULL
+  }
+
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
@@ -49,10 +62,11 @@ render_scorecard <- function(
     output_file = basename(out_file),
     quiet = TRUE,
     params = list(
+      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
       pkg_scores = formatted_pkg_scores,
       mitigation_block = mitigation_block,
-      risk_breaks = risk_breaks,
-      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version)
+      extra_notes_data = extra_notes_data,
+      exports_df = exports_df
     )
   )
 
@@ -82,7 +96,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
       category_score = ifelse(.x == "NA", NA_integer_, .x)
     )
   }) %>% purrr::list_rbind() %>%
-    dplyr::mutate(risk = map_risk(.data$category_score, risk_breaks))
+    mutate(risk = map_risk(.data$category_score, risk_breaks))
 
   pkg_scores$formatted$overall_scores <- overall_scores
 
@@ -125,14 +139,12 @@ map_risk <- function(scores, risk_breaks) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
   risk_breaks <- sort(risk_breaks, decreasing = TRUE)
   purrr::map_chr(scores, ~ {
-    if(is.na(.x)) {
-      "Blocking"
+    if(is.na(.x) || .x < risk_breaks[2]) {
+      "High Risk"
     } else if (.x > risk_breaks[1]) {
       "Low Risk"
     } else if (.x <= risk_breaks[1] && .x >= risk_breaks[2]) {
       "Medium Risk"
-    } else if(.x < risk_breaks[2]) {
-      "High Risk"
     } else {
       "NA - unexpected"
     }

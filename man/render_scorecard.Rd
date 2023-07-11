@@ -4,7 +4,12 @@
 \alias{render_scorecard}
 \title{Take a JSON from score_pkg() and render a pdf}
 \usage{
-render_scorecard(results_dir, risk_breaks = c(0.3, 0.7), overwrite = FALSE)
+render_scorecard(
+  results_dir,
+  risk_breaks = c(0.3, 0.7),
+  overwrite = FALSE,
+  add_traceability = FALSE
+)
 }
 \arguments{
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
@@ -16,6 +21,8 @@ for a given score: \verb{0 <= score < 0.3} is "Low Risk", \verb{0.3 <= score < 0
 is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
 \item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
+
+\item{add_traceability}{Logical (T/F). If \code{TRUE}, append a table that links package functionality to the documentation and test files.}
 }
 \description{
 Take a JSON from score_pkg() and render a pdf

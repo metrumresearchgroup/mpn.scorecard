@@ -2,7 +2,18 @@ Package: mpn.scorecard
 Title: Generate a scorecard with various measures of R package quality and risk
 Version: 0.0.0.9000
 Authors@R: 
-    person("Seth", "Green", , "sethg@metrumrg.com", role = c("aut", "cre"))
+    c(person(given = "Seth",
+           family = "Green",
+           role = c("aut", "cre"),
+           email = "sethg@metrumrg.com"),
+    person(given = "Kyle",
+           family = "Barrett",
+           role = c("aut"),
+           email = "barrettk@metrumrg.com"),
+    person(given = "Kyle",
+           family = "Meyer",
+           role = c("aut"),
+           email = "kylem@metrumrg.com"))
 Description: Collects various measures of quality and risk-of-use for an R package
     and formats them into a "scorecard" report for assessment. Leans heavily on 
     the metrics developed by R Validation Hub's riskmetric package.
@@ -23,6 +34,7 @@ Imports:
     magrittr,
     markdown,
     officer,
+    pkgload,
     purrr,
     rcmdcheck,
     riskmetric,
@@ -30,10 +42,12 @@ Imports:
     rmarkdown,
     stringr,
     tibble,
+    tidyr,
     tidyselect
 Suggests:
     devtools,
     pdftools,
+    roxygen2,
     testthat (>= 2.1.0),
     withr
 Roxygen: list(markdown = TRUE)

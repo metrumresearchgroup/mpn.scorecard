@@ -1,6 +1,7 @@
 
 library(pdftools)
 library(dplyr)
+library(roxygen2)
 
 
 
@@ -30,11 +31,12 @@ create_package_template <- function(
   if(fs::dir_exists(pkg_dir)) fs::dir_delete(pkg_dir)
   fs::dir_create(pkg_dir, recurse = TRUE)
 
-  # tempalte files
+  # template files
   license_md_file <- file.path(template_dir, "license_md.txt")
   license_file <- file.path(template_dir, "license.txt")
   description_file <- file.path(template_dir, "description_file.txt")
   namespace_file <- file.path(template_dir, "namespace.txt")
+  rbuildignore_file <- file.path(template_dir, "Rbuildignore.txt")
 
   # modify and copy over core package files
   if(isFALSE(pass_warning)){ # (1 of 2) intentional warnings come from license file issues
@@ -44,14 +46,21 @@ create_package_template <- function(
   # optional notes come from unused imports; additional warnings come from not importing dependencies
   make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"),
                 pass_note = pass_note, pass_warning = pass_warning)
+
+  # Create NAMESPACE file
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
 
-  # init other directories and default files
+  # Copy build ignore file to silence unintended warnings
+  fs::file_copy(namespace_file, file.path(pkg_dir, ".Rbuildignore"))
+
+  ## init other directories and default files ##
+  # R/ directory
   r_dir <- file.path(pkg_dir, "R")
   fs::dir_create(r_dir)
   script_file <- file.path(r_dir, "myscript.R")
   fs::file_create(script_file)
 
+  # Tests and running of tests
   if(isTRUE(add_tests)){
     # Add a test setup for running test suite (testthat.R)
     test_dir <- file.path(pkg_dir, "tests", "testthat")
@@ -125,11 +134,25 @@ create_testing_package <- function(
     # Add a file with a syntax error to the package
     func_lines <- "myfunction <- function(x { x + 1"
   }else if(type != "pass_no_functions"){
-    func_lines <- "myfunction <- function(x) { x + 1}"
+    func_lines <- glue::glue("
+    #' Adds 1 to x
+    #' @param x a number
+    #' @export
+    myfunction <- function(x) { x + 1}
+    ", .open = "{{", .close = "}}")
   }
 
   if(type != "pass_no_functions"){
     writeLines(func_lines, pkg_setup_dirs$r_file)
+    # Export function
+    if(type != "fail_func_syntax"){
+      # Basically run `devtools::document()`, if the function is suitable
+      roxygen2::roxygenise(pkg_setup_dirs$pkg_dir, load_code = roxygen2::load_source) %>% suppressMessages()
+    }else{
+      # Manually export function if syntax issue is present (only way this scenario could happen)
+      ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
+      write("export(myfunction)", file = ns_file, append = TRUE)
+    }
   }
 
   # Add a test file to tests/testthat/ (unless type = 'pass_no_test_suite' or 'pass_no_functions')
@@ -236,6 +259,23 @@ skip_if_render_pdf <- function() {
   }
 }
 
+
+# This function must be used before any `rcmdcheck` calls to ensure they are run
+# in the same environment as local tests (and reflect how the package will actually perform)
+local_check_envvar <- function(.local_envir = parent.frame()) {
+  vnames <- grep("^_R_CHECK_", names(Sys.getenv()), value = TRUE)
+  if (length(vnames)) {
+    vals <- rep(NA_character_, length(vnames))
+    names(vals) <- vnames
+  } else {
+    vals <- c()
+  }
+  vals["_R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_"] <- "FALSE"
+  vals["_R_CHECK_RD_XREFS_"] <- "FALSE"
+
+  withr::local_envvar(vals, .local_envir = .local_envir)
+}
+
 # Build all packages
 pkg_dirs <- setup_multiple_pkgs()
 
@@ -246,6 +286,7 @@ pkg_tars <- pkg_select %>% dplyr::pull(tar_file)
 
 # score select packages
 result_dirs_select <- purrr::map_chr(pkg_tars, ~{
+  local_check_envvar()
   score_pkg(.x, pkg_dirs$all_results_dir, overwrite = TRUE) %>% suppressMessages()
 })
 

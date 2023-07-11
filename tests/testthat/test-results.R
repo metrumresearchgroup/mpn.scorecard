@@ -3,6 +3,7 @@
 describe("covr and rcmdcheck success", {
 
   it("no rcmdcheck warnings", {
+    local_check_envvar()
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
 
@@ -37,6 +38,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("with warnings", {
+    local_check_envvar()
     # Create temp package that will succeed with warnings
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_warning")
 
@@ -70,6 +72,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("no test directory included in package", {
+    local_check_envvar()
     # Create temp package that will succeed due to no test suite
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test_suite")
 
@@ -103,6 +106,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("no tests included in test file", {
+    local_check_envvar()
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test")
 
@@ -135,6 +139,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("no functions in R/", {
+    local_check_envvar()
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_functions")
 
@@ -171,6 +176,7 @@ describe("covr and rcmdcheck success", {
   })
 
   it("success with notes - rcmdcheck math and messages only", {
+    local_check_envvar()
     # Create temp package that will succeed
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_notes")
 
@@ -202,6 +208,7 @@ describe("covr and rcmdcheck success", {
 describe("covr and rcmdcheck failures", {
 
   it("failing tests", {
+    local_check_envvar()
     # Create temp package that will fail
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_test")
 
@@ -238,6 +245,7 @@ describe("covr and rcmdcheck failures", {
 
 
   it("bad functions - failure before tests are run", {
+    local_check_envvar()
     # Create temp package that will fail
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
 
