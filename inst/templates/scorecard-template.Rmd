@@ -14,6 +14,7 @@ params:
   exports_df: "r NULL"
 title: "`r params$set_title`"
 subtitle: 'MPN Scorecard'
+geometry: margin=1.5cm
 ---
 
 ```{r setup, include=FALSE}

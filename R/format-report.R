@@ -9,6 +9,7 @@
 #' @param doc_type Word, PDF, or HTML. Controls font size
 #' @param as_flextable logical (T/F). if `TRUE`, use `as_flextable` instead of `flextable`, which has different args and is necessary for grouped data
 #' @param digits numeric. Number of digits to round to. If `NULL`, and `as_flextable = TRUE`, flextable will round to one digit.
+#' @param font_size font size of the table.
 #' @param ... additional args to be passed to `as_flextable` or `flextable`
 #'
 #' @details
@@ -35,6 +36,7 @@ flextable_formatted <- function(tab,
                                 doc_type = "PDF",
                                 as_flextable = TRUE,
                                 digits = NULL,
+                                font_size = 10,
                                 ...){
 
   # If flextable object already, just apply formatting
@@ -68,8 +70,6 @@ flextable_formatted <- function(tab,
     checkmate::assert_numeric(column_width)
     tab_out <- flextable::width(tab_out, glue::glue("{names(column_width)}"), width = column_width)
   }
-
-  font_size <- ifelse(doc_type == "Word", 8, 10)
 
   tab_out <- tab_out %>%
     flextable::fontsize(size = 10, part = "header") %>%
@@ -562,10 +562,12 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
     exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
 
     # Format Table
+    exported_func_df <- exported_func_df %>%
+      mutate(across("exported_function":"code_file", ~ stringr::str_wrap(.x, width = 25, whitespace_only = FALSE)))
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
-    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 7) %>%
+    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 7, font_size = 9) %>%
       flextable::set_caption("Traceability Matrix") %>%
       flextable::add_footer_row(
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
