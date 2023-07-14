@@ -282,7 +282,7 @@ get_tests <- function(
 
     # Convert to dataframe and make test_dir a relative path
     test_names_tbl <- purrr::map2_df(tests_names_lst, names(tests_names_lst),
-                                     ~ tibble(test_file = .y, test_name = .x))
+                                     ~ tibble::tibble(test_file = .y, test_name = .x))
     if(!rlang::is_empty(test_names_tbl)){
       test_names_tbl <- test_names_tbl %>%
         mutate(test_dir = dirname(.data$test_file), test_file = basename(.data$test_file))

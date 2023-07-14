@@ -17,6 +17,8 @@ Authors@R:
 Description: Collects various measures of quality and risk-of-use for an R package
     and formats them into a "scorecard" report for assessment. Leans heavily on 
     the metrics developed by R Validation Hub's riskmetric package.
+URL: https://github.com/metrumresearchgroup/mpn.scorecard
+BugReports: https://github.com/metrumresearchgroup/mpn.scorecard/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
