@@ -2,9 +2,7 @@
 update_readme <- function(png_dir = here::here("man", "figures")){
 
   # Set up location for scoring package
-  pkg_tar_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "build_package") %>% fs::path_norm()
-  fs::dir_create(pkg_tar_dir)
-  withr::defer(unlink(pkg_tar_dir, recursive = TRUE))
+  pkg_tar_dir <- withr::local_tempdir("mpn-scorecard-")
 
   # Download example package tarball (can change this to MPN snapshot later if desired)
   pkg_tar <- download.packages("nmrec", destdir = pkg_tar_dir, repos = "https://s3.amazonaws.com/mpn.metworx.dev/releases/nmrec/0.1.0")
