@@ -1,15 +1,17 @@
 
 update_readme <- function(png_dir = here::here("man", "figures")){
-  # Build Package
+
+  # Set up location for scoring package
   pkg_tar_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "build_package") %>% fs::path_norm()
   fs::dir_create(pkg_tar_dir)
-  pkg_tar <- devtools::build(path = pkg_tar_dir, quiet = TRUE)
   withr::defer(unlink(pkg_tar_dir, recursive = TRUE))
 
+  # Download example package tarball (can change this to MPN snapshot later if desired)
+  pkg_tar <- download.packages("nmrec", destdir = pkg_tar_dir, repos = "https://s3.amazonaws.com/mpn.metworx.dev/releases/nmrec/0.1.0")
 
   # Score package
   results_dir <- score_pkg(
-    pkg = pkg_tar,
+    pkg = pkg_tar[,2],
     out_dir = pkg_tar_dir,
     overwrite = TRUE
   )
@@ -21,14 +23,20 @@ update_readme <- function(png_dir = here::here("man", "figures")){
 
   # Overall table
   overall_scores <- format_overall_scores(formatted_pkg_scores)
-  flextable::save_as_image(overall_scores, file.path(png_dir, "overall_scores.png"))
 
   # Package Details
   category_scores <- format_package_details(formatted_pkg_scores)
-  flextable::save_as_image(category_scores, file.path(png_dir, "category_scores.png"))
+
+  # Testing
+  testing_scores <- format_testing_scores(formatted_pkg_scores)
 
   # Traceability Matrix
   trac_matrix <- format_traceability_matrix(exports_df, return_vals = TRUE)
+
+  # Save out PNGs
+  flextable::save_as_image(overall_scores, file.path(png_dir, "overall_scores.png"))
+  flextable::save_as_image(category_scores, file.path(png_dir, "category_scores.png"))
+  flextable::save_as_image(testing_scores, file.path(png_dir, "testing_scores.png"))
   flextable::save_as_image(trac_matrix, file.path(png_dir, "trac_matrix.png"))
 
   # Render README

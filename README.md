@@ -53,6 +53,8 @@ Each of the evaluated metrics is summarized at the top of the report:
 <img src="man/figures/overall_scores.png" width="600" />
 </center>
 
+<br>
+
 #### Package Details
 
 These metrics are further broken down in the next section, indicating
@@ -61,6 +63,21 @@ specific risk assessments associated with the package:
 <center>
 <img src="man/figures/category_scores.png" width="600" />
 </center>
+
+<br>
+
+#### Testing Results
+
+Here you can see a summary of the `R CMD Check` and testing coverage
+results. These are weighted higher than the other metrics and will have
+a greater impact on the overall score. You can see the full results in
+the appendix.
+
+<center>
+<img src="man/figures/testing_scores.png" width="600" />
+</center>
+
+<br>
 
 #### Traceability Matrix (optional)
 
