@@ -563,7 +563,7 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
 
     # Format Table
     exported_func_df <- exported_func_df %>%
-      mutate(across("exported_function":"code_file", ~ stringr::str_wrap(.x, width = 25, whitespace_only = FALSE)))
+      mutate(dplyr::across("exported_function":"code_file", ~ stringr::str_wrap(.x, width = 25, whitespace_only = FALSE)))
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
