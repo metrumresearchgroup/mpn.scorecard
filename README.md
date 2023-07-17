@@ -24,7 +24,7 @@ files to the same location.
 ``` r
 results_dir <- score_pkg(
   pkg = "package_3.1.0.tar.gz",
-  out_dir = file.path(results_dir, "results")
+  out_dir = file.path(tempdir(), "results")
 )
 ```
 
