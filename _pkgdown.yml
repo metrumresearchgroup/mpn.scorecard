@@ -1,0 +1,23 @@
+url: https://metrumresearchgroup.github.io/mpn.scorecard
+
+title: mpn.scorecard
+template:
+  params:
+    bootswatch: flatly
+navbar:
+  type: inverse
+  right:
+  - icon: fa-github fa-lg
+    href: https://ghe.metrumrg.com/software-incubator/mpn.scorecard
+
+reference:
+- title: Scoring & Summary
+  contents:
+  - score_pkg
+  - summarize_package_results
+
+
+- title: Rendering Scorecards
+  contents:
+  - render_scorecard
+  - render_scorecard_summary
