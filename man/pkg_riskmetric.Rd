@@ -15,3 +15,4 @@ raw riskmetric outputs
 \description{
 Run all relevant riskmetric checks
 }
+\keyword{internal}
