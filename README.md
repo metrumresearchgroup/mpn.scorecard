@@ -2,7 +2,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- To update the ReadMe PNGs, source `update-readme.R`, and run `update_readme()` -->
 
-# mpn.scorecard <img align="right" src = "man/figures/logo.png" height="172">
+# mpn.scorecard <a href='https://metrumresearchgroup.github.io/mpn.scorecard'><img align="right" src = "man/figures/logo.png" height="172" style="float:right; height:172px;"/></a>
 
 `mpn.scorecard` is an R package designed to score other R packages on
 key attributes that help evaluate the risk of adding them to

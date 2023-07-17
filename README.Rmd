@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 ```
 
 
-# mpn.scorecard <img align="right" src = "man/figures/logo.png" height="172">
+# mpn.scorecard <a href='https://metrumresearchgroup.github.io/mpn.scorecard'><img align="right" src = "man/figures/logo.png" height="172" style="float:right; height:172px;"/></a>
 
 `mpn.scorecard` is an R package designed to score other R packages on key attributes that help evaluate the risk of adding them to [MPN](https://mpn.metworx.com/docs/). `mpn.scorecard` is essentially a wrapper of the [riskmetric](https://github.com/pharmaR/riskmetric) R package, with some additional features related to the scoring and outputs. Each package is first evaluated based on code documentation, maintenance and sustainability, and transparency. Code coverage and `R CMD Check` results are then tabulated and saved out to a specified location. These metrics are summarized in a scorecard report.
 
