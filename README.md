@@ -2,7 +2,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- To update the ReadMe PNGs, source `update-readme.R`, and run `update_readme()` -->
 
-# mpn.scorecard <img align="right" src = "man/figures/logo.png" height="172">
+# mpn.scorecard <a href='https://metrumresearchgroup.github.io/mpn.scorecard'><img align="right" src = "man/figures/logo.png" height="172" style="float:right; height:172px;"/></a>
 
 `mpn.scorecard` is an R package designed to score other R packages on
 key attributes that help evaluate the risk of adding them to
@@ -49,9 +49,7 @@ browseURL(pdf_path)
 
 Each of the evaluated metrics is summarized at the top of the report:
 
-<center>
-<img src="man/figures/overall_scores.png" width="600" />
-</center>
+<img src="man/figures/overall_scores.png" align="center" style = "width:600px;" />
 
 <br>
 
@@ -60,9 +58,7 @@ Each of the evaluated metrics is summarized at the top of the report:
 These metrics are further broken down in the next section, indicating
 specific risk assessments associated with the package:
 
-<center>
-<img src="man/figures/category_scores.png" width="600" />
-</center>
+<img src="man/figures/category_scores.png" align="center" style = "width:600px;" />
 
 <br>
 
@@ -73,9 +69,7 @@ results. These are weighted higher than the other metrics and will have
 a greater impact on the overall score. You can see the full results in
 the appendix.
 
-<center>
-<img src="man/figures/testing_scores.png" width="600" />
-</center>
+<img src="man/figures/testing_scores.png" align="center" style = "width:600px;" />
 
 <br>
 
@@ -84,9 +78,7 @@ the appendix.
 The optional argument, `add_traceability`, will append a table that
 links package exports to function documentation and test files:
 
-<center>
-<img src="man/figures/trac_matrix.png" width="900" />
-</center>
+<img src="man/figures/trac_matrix.png" align="center" style = "width:900px;" />
 
 ## Mitigation
 

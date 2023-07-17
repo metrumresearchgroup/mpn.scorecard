@@ -34,6 +34,7 @@ create_score_list_from_riskmetric <- function(res, pkg_source_path) {
 #' @inheritParams create_score_list_from_riskmetric
 #'
 #' @returns raw riskmetric outputs
+#' @keywords internal
 pkg_riskmetric <- function(pkg_source_path) {
 
   pref <- riskmetric::pkg_ref(pkg_source_path)

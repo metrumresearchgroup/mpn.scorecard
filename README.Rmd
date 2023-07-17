@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 ```
 
 
-# mpn.scorecard <img align="right" src = "man/figures/logo.png" height="172">
+# mpn.scorecard <a href='https://metrumresearchgroup.github.io/mpn.scorecard'><img align="right" src = "man/figures/logo.png" height="172" style="float:right; height:172px;"/></a>
 
 `mpn.scorecard` is an R package designed to score other R packages on key attributes that help evaluate the risk of adding them to [MPN](https://mpn.metworx.com/docs/). `mpn.scorecard` is essentially a wrapper of the [riskmetric](https://github.com/pharmaR/riskmetric) R package, with some additional features related to the scoring and outputs. Each package is first evaluated based on code documentation, maintenance and sustainability, and transparency. Code coverage and `R CMD Check` results are then tabulated and saved out to a specified location. These metrics are summarized in a scorecard report.
 
@@ -52,42 +52,28 @@ browseURL(pdf_path)
 #### Overall Scores
 Each of the evaluated metrics is summarized at the top of the report:
 
-
-<center>
-![](man/figures/overall_scores.png){width=600px}
-</center>
+<img src="man/figures/overall_scores.png" align="center" style = "width:600px;" />
 
 <br>
 
 #### Package Details
 These metrics are further broken down in the next section, indicating specific risk assessments associated with the package:
 
-
-<center>
-![](man/figures/category_scores.png){width=600px}
-</center>
+<img src="man/figures/category_scores.png" align="center" style = "width:600px;" />
 
 <br>
-
 
 #### Testing Results
 Here you can see a summary of the `R CMD Check` and testing coverage results. These are weighted higher than the other metrics and will have a greater impact on the overall score. You can see the full results in the appendix.
 
-
-<center>
-![](man/figures/testing_scores.png){width=600px}
-</center>
+<img src="man/figures/testing_scores.png" align="center" style = "width:600px;" />
 
 <br>
 
 #### Traceability Matrix (optional)
 The optional argument, `add_traceability`, will append a table that links package exports to function documentation and test files:
 
-
-<center>
-![](man/figures/trac_matrix.png){width=900px}
-</center>
-
+<img src="man/figures/trac_matrix.png" align="center" style = "width:900px;" />
 
 ## Mitigation
 Packages with low scores that fall short of initial expectations may include a mitigation text file. The presence of a mitigation section indicates that we are aware the score is low but are proceeding with adding the package to MPN. The rationale for doing so is included in the mitigation file itself. If a mitigation file matching the expected naming convention (`<package_tarball_name>.mitigation.txt` or `package_3.1.0.mitigation.txt` in the above example) is found in `results_dir`, this section will automatically be included.
