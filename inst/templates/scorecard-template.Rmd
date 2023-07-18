@@ -4,18 +4,31 @@ output:
     toc: true
     toc_depth: 3
     latex_engine: xelatex
+    includes:
+      in_header: header.tex
 header-includes:
     - \usepackage{caption}
+    - \usepackage{graphicx}
+    - \usepackage{fancyhdr}
+    - \pagestyle{fancy}
+    - \setlength\headheight{20pt}
+    - \fancyhead[L]{\includegraphics[width=1.5cm]{mpn.png}}
+    - \rfoot{\thepage} 
+    - \fancyfoot[R]{Metrum Research Group}
 params:
   set_title: "Scorecard"
   pkg_scores: "`r list()`"
   mitigation_block: "r NULL"
   extra_notes_data: "r NULL"
   exports_df: "r NULL"
-title: "`r params$set_title`"
+title: >
+  `r params$set_title`
 subtitle: 'MPN Scorecard'
-geometry: margin=1.5cm
+geometry: "left=1.5cm,right=1.5cm,top=2cm,bottom=2cm"
 ---
+
+\fontsize{11}{15}
+\selectfont
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
