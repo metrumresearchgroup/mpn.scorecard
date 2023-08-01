@@ -1,4 +1,5 @@
 ---
+geometry: "left=1.5cm,right=1.5cm,top=2cm,bottom=2cm"
 output:
   pdf_document:
     toc: true
@@ -19,8 +20,9 @@ header-includes:
     - \usepackage{graphicx}
     - \usepackage{fancyhdr}
     - \pagestyle{fancy}
-    - \setlength\headheight{20pt}
-    - \fancyhead[L]{\includegraphics[width=1.5cm]{mpn.png}}
+    - \setlength\headheight{24pt}
+    - \addtolength{\topmargin}{-4pt}
+    - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo.png}}
     - \rfoot{\thepage} 
     - \fancyfoot[R]{Metrum Research Group}
 params:
@@ -28,7 +30,6 @@ params:
   set_subtitle: "xxxx-xx-xx"
 title: "Scorecard Summary"
 subtitle: "`r paste('MPN Snapshot', params$set_subtitle)`"
-geometry: "left=1.5cm,right=1.5cm,top=2cm,bottom=2cm"
 ---
 
 \fontsize{11}{15}
