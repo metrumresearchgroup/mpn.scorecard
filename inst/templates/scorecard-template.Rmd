@@ -30,7 +30,6 @@ set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding
 
 ```{r setup_data}
 formatted_pkg_scores <- params$pkg_scores
-metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METWORX_VERSION)
 ```
 
 <!-- Remove 'Table x:' prefixes -->
@@ -40,7 +39,7 @@ metworx_ver <- paste("Metworx", formatted_pkg_scores$metadata$info$env_vars$METW
 
 # Overview
 
-This document contains evidence that `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` is validated for use on `r metworx_ver` and contains proof points in support of the principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community, as described in **whatever general MPN doc we create**. 
+This document contains evidence and proof points for `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` in support of Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community. Information about the system on which this assessment was performed is included in the System Info section, near the bottom of this document. 
 
 ```{r}
 format_overall_scores(formatted_pkg_scores)
