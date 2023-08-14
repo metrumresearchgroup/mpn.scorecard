@@ -9,7 +9,8 @@ score_pkg(
   out_dir,
   pkg_info = NULL,
   overwrite = FALSE,
-  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE)
+  rcmdcheck_args = list(timeout = Inf, args = "--no-manual", quiet = TRUE),
+  covr_timeout = Inf
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ score_pkg(
 
 \item{rcmdcheck_args}{list of arguments to pass to \code{rcmdcheck}. \strong{Note} that the tarball \code{path} and \code{error_on = "never"}
 are automatically appended to this list.}
+
+\item{covr_timeout}{Timeout for covr run to finish. It may be any value
+accepted by \code{\link[callr:r]{callr::r_safe()}} and defaults to \code{Inf} (no timeout).}
 }
 \value{
 a directory containing json file (contains all scores), and individual results

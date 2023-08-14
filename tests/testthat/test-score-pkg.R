@@ -80,6 +80,29 @@ describe("score_pkg", {
 
   })
 
+  it("supports covr timeout", {
+    tdir <- withr::local_tempdir("mpn-scorecard-tests-")
+    local_check_envvar()
+
+    setups <- pkg_dirs$pkg_setups_df
+    tar_orig <- setups$tar_file[setups$pkg_type == "pass_success"]
+
+    checkmate::assert_string(tar_orig)
+    pkg_tar <- file.path(tdir, basename(tar_orig))
+    fs::file_copy(tar_orig, pkg_tar)
+
+    result_dir <- score_pkg(pkg_tar, tdir, covr_timeout = 0.1)
+
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    expect_equal(pkg_scores$scores$testing$check, 1)
+    expect_identical(pkg_scores$scores$testing$covr, "NA")
+
+    covr_res <- readRDS(get_result_path(result_dir, "covr.rds"))
+    expect_s3_class(covr_res$errors, "callr_timeout_error")
+  })
+
   it("create_score_list_from_riskmetric", {
 
     pkg_setup <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")

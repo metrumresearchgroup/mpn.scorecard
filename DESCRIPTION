@@ -24,6 +24,7 @@ Encoding: UTF-8
 Depends:
     R (>= 3.5)
 Imports:
+    callr,
     checkmate,
     covr,
     dplyr,

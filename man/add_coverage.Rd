@@ -4,12 +4,14 @@
 \alias{add_coverage}
 \title{Run covr and potentially save results to disk}
 \usage{
-add_coverage(pkg_source_path, out_dir)
+add_coverage(pkg_source_path, out_dir, timeout = Inf)
 }
 \arguments{
 \item{pkg_source_path}{package installation directory}
 
 \item{out_dir}{directory for saving results}
+
+\item{timeout}{Timeout to pass to \code{\link[callr:r]{callr::r_safe()}} when running covr.}
 }
 \description{
 Run covr and potentially save results to disk
