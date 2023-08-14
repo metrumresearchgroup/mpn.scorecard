@@ -33,10 +33,6 @@ add_coverage <- function(pkg_source_path, out_dir) {
   error = function(cond){
     coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
     list(name = pkg_name, coverage = coverage_list, errors = cond, notes = NA)
-  },
-  warning = function(cond){
-    coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
-    list(name = pkg_name, coverage = coverage_list, errors = cond, notes = NA)
   })
 
 
