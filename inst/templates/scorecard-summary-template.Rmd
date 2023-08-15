@@ -1,8 +1,11 @@
 ---
+geometry: "left=1.5cm,right=1.5cm,top=2cm,bottom=2cm"
 output:
   pdf_document:
     toc: true
     toc_depth: 3
+    includes:
+      in_header: header.tex
   bookdown::pdf_book:
     citation_package: biblatex
 bibliography: ["sum_links.bib"]
@@ -12,6 +15,16 @@ link-citations: true
 csl: https://www.zotero.org/styles/chicago-fullnote-bibliography
 # needed to prevent additional bibliography section
 suppress-bibliography: true
+header-includes:
+    - \usepackage{caption}
+    - \usepackage{graphicx}
+    - \usepackage{fancyhdr}
+    - \pagestyle{fancy}
+    - \setlength\headheight{24pt}
+    - \addtolength{\topmargin}{-4pt}
+    - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo.png}}
+    - \rfoot{\thepage} 
+    - \fancyfoot[R]{Metrum Research Group}
 params:
   overall_risk_summary: "`r list()`"
   set_subtitle: "xxxx-xx-xx"
@@ -19,12 +32,15 @@ title: "Scorecard Summary"
 subtitle: "`r paste('MPN Snapshot', params$set_subtitle)`"
 ---
 
+\fontsize{11}{15}
+\selectfont
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
                       fig.height = 8, fig.width = 10, ft.keepnext = FALSE)
 library(dplyr)
 library(flextable)
-set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4)
+set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
 ```
 
 ```{r setup_data}
@@ -66,6 +82,7 @@ As recommended by the R Validation Hub, we take a risk-based approach to assessi
 
 To be clear, not all packages will have all of these components in place. These are meant to enumerate the principles that are used to assess risk for a particular package.
 
+\newpage
 
 # Summary of Proof Points
 

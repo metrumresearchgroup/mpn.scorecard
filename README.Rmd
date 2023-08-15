@@ -89,4 +89,3 @@ pdf_sum_path <- render_scorecard_summary(result_dirs, snapshot = as.character(Sy
 
 browseURL(pdf_sum_path)
 ```
-
