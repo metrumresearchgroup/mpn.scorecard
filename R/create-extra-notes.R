@@ -26,7 +26,7 @@ create_extra_notes <- function(
     covr_results_df <- covr_results_df %>%
       mutate(
         r_script = NA_character_,
-        test_coverage = glue::glue("{covr_results$errors$message}")
+        test_coverage = conditionMessage(covr_results$errors)
       )
   }
 

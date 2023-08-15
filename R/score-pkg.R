@@ -9,6 +9,8 @@
 #' @param overwrite Logical (T/F). Whether or not to overwrite existing scorecard results
 #' @param rcmdcheck_args list of arguments to pass to `rcmdcheck`. **Note** that the tarball `path` and `error_on = "never"`
 #'        are automatically appended to this list.
+#' @param covr_timeout Timeout for covr run to finish. It may be any value
+#'   accepted by [callr::r_safe()] and defaults to `Inf` (no timeout).
 #'
 #' @returns a directory containing json file (contains all scores), and individual results
 #'
@@ -22,7 +24,8 @@ score_pkg <- function(
     timeout = Inf,
     args = "--no-manual",
     quiet = TRUE
-  )
+  ),
+  covr_timeout = Inf
 ) {
   # Input checking
   checkmate::assert_string(pkg)
@@ -71,7 +74,11 @@ score_pkg <- function(
   # run check and covr and write results to disk
   rcmdcheck_args$path <- pkg
   res$scores$testing$check <- add_rcmdcheck(out_dir, rcmdcheck_args) # use tarball
-  res$scores$testing$covr <- add_coverage(pkg_source_path, out_dir) # must use untarred package dir
+  res$scores$testing$covr <- add_coverage(
+    pkg_source_path,  # must use untarred package dir
+    out_dir,
+    covr_timeout
+  )
 
   # capture system and package metadata
   res$metadata <- get_metadata() # TODO: at some point expose args to this

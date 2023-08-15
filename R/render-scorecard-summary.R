@@ -153,7 +153,9 @@ summarize_package_results <- function(result_dirs){
     covr_obj = purrr::map(paste0(.data$result_dir, "/", .data$pkg_name_ver, ".covr.rds"), readRDS),
     covr_success = !is.na(purrr::map_dbl(.data$covr_obj, c("coverage", "totalcoverage"))),
     covr_errors = purrr::map(.data$covr_obj, "errors"),
-    covr_error_msg = dplyr::if_else(is.na(.data$covr_errors), NA_character_, format(.data$covr_errors))
+    covr_error_msg = purrr::map_chr(
+      .data$covr_errors,
+      function(x) if (inherits(x, "error")) conditionMessage(x) else NA_character_)
   ) %>% dplyr::select(-c("result_dir", "res_obj", "pkg_name_ver", "check_obj", "covr_obj", "covr_errors"))
 
 

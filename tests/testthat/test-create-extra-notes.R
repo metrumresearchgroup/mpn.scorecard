@@ -24,7 +24,7 @@ describe("creating extra notes", {
     extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
 
     # Confirm values - covr
-    expect_true(grepl("non-zero exit status", unique(extra_notes_data$covr_results_df$test_coverage)))
+    expect_true(grepl("cannot open", unique(extra_notes_data$covr_results_df$test_coverage)))
     expect_true(is.na(unique(extra_notes_data$covr_results_df$r_script)))
     # Confirm values - R CMD Check
     expect_true(grepl("ERROR", extra_notes_data$check_output))

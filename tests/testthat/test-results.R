@@ -239,7 +239,7 @@ describe("covr and rcmdcheck failures", {
 
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
-    expect_true(!is.na(covr_output$errors))
+    expect_s3_class(covr_output$errors, "callr_error")
     expect_true(is.na(covr_output$coverage$totalcoverage)) # technically tested above as well
   })
 
@@ -276,7 +276,7 @@ describe("covr and rcmdcheck failures", {
 
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
-    expect_true(!is.na(covr_output$errors$message))
+    expect_s3_class(covr_output$errors, "callr_error")
     expect_true(is.na(covr_output$coverage$totalcoverage)) # technically tested above as well
   })
 

@@ -2,18 +2,18 @@
 #'
 #' @param pkg_source_path package installation directory
 #' @param out_dir directory for saving results
+#' @param timeout Timeout to pass to [callr::r_safe()] when running covr.
 #'
 #' @details
 #' The basename of `out_dir` should be the package name and version pasted together
 #'
 #' @keywords internal
-add_coverage <- function(pkg_source_path, out_dir) {
+add_coverage <- function(pkg_source_path, out_dir, timeout = Inf) {
   # run covr
   pkg_name <- basename(out_dir)
 
   res_cov <- tryCatch({
-    coverage <- covr::package_coverage(pkg_source_path, type = "tests")
-    coverage_list <- covr::coverage_to_list(coverage)
+    coverage_list <- run_covr(pkg_source_path, timeout)
 
     # If no testable functions are found in the package, `filecoverage` and `totalcoverage`
     # will yield logical(0) and NaN respectively. Coerce to usable format
@@ -32,11 +32,11 @@ add_coverage <- function(pkg_source_path, out_dir) {
   },
   error = function(cond){
     coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
-    list(name = pkg_name, coverage = coverage_list, errors = cond, notes = NA)
-  },
-  warning = function(cond){
-    coverage_list <- list(filecoverage = NA, totalcoverage = NA_integer_)
-    list(name = pkg_name, coverage = coverage_list, errors = cond, notes = NA)
+    list(
+      name = pkg_name, coverage = coverage_list,
+      errors = wrap_callr_error(cond),
+      notes = NA
+    )
   })
 
 
@@ -61,4 +61,35 @@ add_coverage <- function(pkg_source_path, out_dir) {
   }
 
   return(total_cov)
+}
+
+#' Run covr in subprocess with timeout
+#'
+#' @noRd
+run_covr <- function(path, timeout) {
+  callr::r_safe(
+    function(p) {
+      covr::coverage_to_list(covr::package_coverage(p, type = "tests"))
+    },
+    args = list(path),
+    libpath = .libPaths(),
+    repos = NULL,
+    package = FALSE,
+    user_profile = FALSE,
+    error = "error",
+    timeout = timeout
+  )
+}
+
+wrap_callr_error <- function(e) {
+  class(e) <- c("scorecard_covr_error", class(e))
+  return(e)
+}
+
+#' @export
+conditionMessage.scorecard_covr_error <- function(c) {
+  # Prevent rlib_error_3_0 method from adding ansi escape sequences, which would
+  # trigger a LateX failure on render.
+  withr::local_options(list("crayon.enabled" = FALSE))
+  NextMethod()
 }
