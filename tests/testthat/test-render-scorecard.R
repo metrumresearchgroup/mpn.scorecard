@@ -42,7 +42,7 @@ describe("render scorecard and scorecard summary reports", {
     expect_equal(length(rendered_pdf_toc), 4)
 
     title_sections <- purrr::map_chr(rendered_pdf_toc, ~{.x$title})
-    expect_equal(title_sections, c("Summary", "Principles", "Summary of Proof Points", "System Info"))
+    expect_equal(title_sections, c("Summary", "Background", "Summary of Proof Points", "System Info"))
 
     title_sub_sections <- purrr::map_chr(rendered_pdf_toc[[2]]$children, ~{.x$title})
     expect_equal(length(title_sub_sections), 1)
