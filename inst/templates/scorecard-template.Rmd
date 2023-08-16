@@ -16,9 +16,10 @@ header-includes:
     - \addtolength{\topmargin}{-4pt}
     - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo.png}}
     - \rfoot{\thepage} 
-    - \fancyfoot[R]{Metrum Research Group}
+    - \fancyfoot[R]{`r params$scorecard_footer`}
 params:
   set_title: "Scorecard"
+  scorecard_footer: "Generated with mpn.scorecard"
   pkg_scores: "`r list()`"
   mitigation_block: "r NULL"
   extra_notes_data: "r NULL"

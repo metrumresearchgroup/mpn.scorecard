@@ -24,10 +24,11 @@ header-includes:
     - \addtolength{\topmargin}{-4pt}
     - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo.png}}
     - \rfoot{\thepage} 
-    - \fancyfoot[R]{Metrum Research Group}
+    - \fancyfoot[R]{`r params$scorecard_footer`}
 params:
   overall_risk_summary: "`r list()`"
   set_subtitle: "xxxx-xx-xx"
+  scorecard_footer: "Generated with mpn.scorecard"
 title: "Scorecard Summary"
 subtitle: "`r paste('MPN Snapshot', params$set_subtitle)`"
 ---

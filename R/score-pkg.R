@@ -47,8 +47,12 @@ score_pkg <- function(
   out_dir <- file.path(out_dir, pkg_name_ver)
   if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
 
+  # mpn.scorecard version
+  mpn_scorecard_ver <- as.character(utils::packageVersion("mpn.scorecard"))
+
   # start building up scorecard list
   res <- list(
+    mpn_scorecard_version = mpn_scorecard_ver,
     pkg_name = pkg_name,
     pkg_version = pkg_ver,
     out_dir = out_dir,
