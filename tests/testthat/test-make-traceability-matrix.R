@@ -1,7 +1,7 @@
 
 describe("creating extra notes", {
 
-  it("create_extra_notes - success integration test", {
+  it("make_traceability_matrix - success integration test", {
 
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -18,10 +18,10 @@ describe("creating extra notes", {
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
       "test-myscript.R"
     )
-
   })
 
-  it("create_extra_notes - failure integration test", {
+
+  it("make_traceability_matrix - missing documentation", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -46,6 +46,33 @@ describe("creating extra notes", {
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
       "test-myscript.R"
+    )
+  })
+
+
+  it("make_traceability_matrix - no test suite", {
+    # Bad package - no documentation (at all)
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test_suite")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    # Check for two separate notes
+    expect_warning(
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x),
+      "no testing directory found at"
+    )
+
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      ""
+    )
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_dirs) %>% pull(test_dirs) %>% unique(),
+      "No tests found"
     )
   })
 
@@ -90,8 +117,8 @@ describe("creating extra notes", {
       get_all_functions(pkg_setup_select$pkg_dir),
       c("myfunction", func_names)
     )
-
   })
+
 
   it("find_export_script", {
     # `find_export_script` should work regardless of documentation presence (in `man/`)
@@ -159,6 +186,7 @@ describe("creating extra notes", {
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
 
   })
+
 
   it("correctly finding relevant tests per export", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
