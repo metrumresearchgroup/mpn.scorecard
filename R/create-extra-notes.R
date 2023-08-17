@@ -63,7 +63,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
   rd_files <- rd_files[grep("\\.Rd$", rd_files)]
   aliases_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
-    rd_lines <- readLines(rd_file.i)
+    rd_lines <- readLines(rd_file.i) %>% suppressWarnings()
 
     # Get Rd file and aliases for exported functions
     aliases <- gsub("\\}", "", gsub("\\\\alias\\{", "",
@@ -219,7 +219,8 @@ get_testing_dir <- function(pkg_source_path){
   pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE) #fs::dir_ls(pkg_source_path)
   test_dir_outer <- pkg_dir_ls[grep("^(/[^/]+)+/tests$", pkg_dir_ls)]
   if(length(test_dir_outer) == 0){
-    stop(glue::glue("no testing directory found at {pkg_source_path}"))
+    warning(glue::glue("no testing directory found at {pkg_source_path}"))
+    return(NULL)
   }
 
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
@@ -317,17 +318,24 @@ map_tests_to_functions <- function(pkg_source_path){
 
   pkg_functions <- get_all_functions(pkg_source_path)
 
-  pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
-    func_lst <- find_function_files(
-      funcs = pkg_functions,
-      search_dir = test_dir_x,
-      func_declaration = FALSE
+  if(!is.null(test_dirs)){
+    pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
+      func_lst <- find_function_files(
+        funcs = pkg_functions,
+        search_dir = test_dir_x,
+        func_declaration = FALSE
+      )
+      if(rlang::is_empty(func_lst)) return(NULL)
+      tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
+        mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
+    })
+  }else{
+    pkg_func_df <- tibble::tibble(
+      pkg_function = pkg_functions,
+      test_file = "",
+      test_dir = "No tests found",
     )
-    if(rlang::is_empty(func_lst)) return(NULL)
-    tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
-      mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
-  })
-
+  }
 
   # Nest test files
   func_test_df <- pkg_func_df %>% dplyr::group_by(.data$pkg_function) %>%
