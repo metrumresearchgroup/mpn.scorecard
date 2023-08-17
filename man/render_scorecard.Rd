@@ -8,7 +8,7 @@ render_scorecard(
   results_dir,
   risk_breaks = c(0.3, 0.7),
   overwrite = FALSE,
-  add_traceability = FALSE
+  add_traceability = TRUE
 )
 }
 \arguments{
