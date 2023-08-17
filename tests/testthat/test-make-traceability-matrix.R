@@ -160,5 +160,33 @@ describe("creating extra notes", {
 
   })
 
+  it("correctly finding relevant tests per export", {
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    test_dir <- file.path(pkg_setup_select$pkg_dir, "tests", "testthat")
+
+    # Examples that should -not- get picked up by find_function_files
+    test_lines1 <- c(
+      "# comment about myfunction",
+      "do.call(myfunction, list(1))", # remove if support for this is added later
+      "myfunction2 <- myfunction",
+      "myfunction2(1)"
+    )
+
+    func_name <- "myfunction"
+
+    temp_file1 <- file.path(test_dir, "test-myscript-fake.R")
+    fs::file_create(temp_file1); on.exit(fs::file_delete(temp_file1), add = TRUE)
+    writeLines(test_lines1, temp_file1)
+
+    # Search for test files - expect only original test
+
+    # Test internal function
+    test_files <- find_function_files("myfunction", search_dir = test_dir, func_declaration = FALSE)
+    expect_equal(length(test_files$myfunction), 1)
+
+    # Test overall function
+    test_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest("test_files")
+    expect_equal(unique(test_df$test_files), "test-myscript.R")
+  })
 
 })
