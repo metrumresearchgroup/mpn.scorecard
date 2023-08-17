@@ -44,11 +44,12 @@ create_extra_notes <- function(
 #'
 #' @param pkg_tar_path path to a tarball
 #' @inheritParams create_extra_notes
+#' @param verbose Logical (`TRUE`/`FALSE`). If `TRUE`, show any warnings/messages per function.
 #'
 #' @returns a tibble
 #'
 #' @keywords internal
-make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
+make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose = FALSE){
 
   # Unpack tarball
   pkg_source_path <- unpack_tarball(pkg_tar_path)
@@ -80,7 +81,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
       }
     }else{
       # Triggered if documentation exists, but no referenced R script
-      message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
+      if(isTRUE(verbose)){
+        message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
+      }
     }
 
 
@@ -98,7 +101,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
       dplyr::relocate(c("export", "documentation"))
   }else{
     exports_doc_df <- exports_df %>% mutate(documentation = NA_character_, alias = NA_character_)
-    message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+    if(isTRUE(verbose)){
+      message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+    }
   }
 
 
@@ -111,7 +116,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
 
   # We dont need documentation in report - but will use for this message
   # TODO: if no packages on the next MPN build trigger this (when add_traceability = TRUE) - we can remove this and some of the above code
-  if(any(exports_doc_df$is_documented == FALSE)){
+  if(any(exports_doc_df$is_documented == FALSE) && isTRUE(verbose)){
     docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
     exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
     code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
@@ -220,13 +225,14 @@ get_testing_dir <- function(pkg_source_path){
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
   test_dirs <- test_dir_ls[grep("^(/[^/]+)+/testthat$", test_dir_ls)]
   if(length(test_dirs) == 0){
-    stop(glue::glue("no `testthat` directory found at {test_dir_outer}"))
+    message(glue::glue("no `testthat` directory found at {test_dir_outer}"))
   }
 
   # Look for cases of test_that & describe/it in other directories
   other_dirs <- pkg_dir_ls[-grep(test_dir_outer, pkg_dir_ls)]
   tests_df <- get_tests(pkg_source_path = pkg_source_path, test_dirs = other_dirs)
 
+  # Concatenate found test directories
   if(!rlang::is_empty(tests_df)){
     other_test_dirs <- file.path(pkg_source_path, unique(tests_df$test_dir))
     test_dirs <- c(test_dirs, other_test_dirs)
