@@ -46,7 +46,7 @@ render_scorecard <- function(
 
 
   # Appendix
-  extra_notes_data <- create_extra_notes(results_dir, pkg_scores$pkg_tar_path)
+  extra_notes_data <- create_extra_notes(results_dir)
 
   # Traceability Matrix
   if(isTRUE(add_traceability)){
