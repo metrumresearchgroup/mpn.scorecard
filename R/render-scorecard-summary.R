@@ -19,7 +19,9 @@ render_scorecard_summary <- function(result_dirs,
                                      overwrite = TRUE){
 
   checkmate::assert_string(snapshot, null.ok = TRUE)
-  if(is.null(snapshot)) snapshot <- as.character(Sys.Date())
+  if(!is.null(snapshot)){
+    snapshot <- paste('MPN Snapshot', snapshot)
+  }
 
   # Format overall scores and risk
   overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks, out_dir)
