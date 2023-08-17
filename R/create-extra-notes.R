@@ -1,12 +1,10 @@
 #' Create extra notes summarizing the covr & rcmdcheck outputs, and documentation
 #'
 #' @inheritParams render_scorecard
-#' @param pkg_tar_path path to a tarball
 #'
 #' @keywords internal
 create_extra_notes <- function(
-    results_dir,
-    pkg_tar_path
+    results_dir
 ){
   covr_path <- get_result_path(results_dir, "covr.rds")
   check_path <- get_result_path(results_dir, "check.rds")
@@ -44,6 +42,7 @@ create_extra_notes <- function(
 #' Returns a table that links all exported functions and their aliases to their documentation (`man` files),
 #' the R scripts containing them, and the test scripts that reference them.
 #'
+#' @param pkg_tar_path path to a tarball
 #' @inheritParams create_extra_notes
 #'
 #' @returns a tibble

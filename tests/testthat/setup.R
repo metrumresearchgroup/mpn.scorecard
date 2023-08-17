@@ -165,8 +165,15 @@ create_testing_package <- function(
     test_lines <- "testthat::test_that('this works', { expect_equal(myfunction(1), 2)})"
   }
 
+  test_lines2 <- "
+  # comment that shouldnt trigger myfunction
+  # other regex cases to avoid
+
+  "
+
   if(!(type %in% c("pass_no_test_suite", "pass_no_functions"))){
     writeLines(test_lines, pkg_setup_dirs$test_file)
+    writeLines(test_lines2, pkg_setup_dirs$test_file)
   }
 
 
