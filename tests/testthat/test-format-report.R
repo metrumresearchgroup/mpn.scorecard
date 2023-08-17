@@ -124,7 +124,7 @@ describe("formatting functions", {
     # Test exported functions dataframe
     exported_func_df <- exported_func_flex$body$dataset
     expect_equal(
-      names(format_colnames_to_title(exports_df %>% select(-"test_dirs"))),
+      names(format_colnames_to_title(exports_df %>% dplyr::select(-"test_dirs"))),
       names(exported_func_df)
     )
     expect_equal(

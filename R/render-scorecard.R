@@ -21,7 +21,7 @@ render_scorecard <- function(
     results_dir,
     risk_breaks = c(0.3, 0.7),
     overwrite = FALSE,
-    add_traceability = TRUE
+    add_traceability = FALSE
 ) {
 
   json_path <- get_result_path(results_dir, "scorecard.json")
