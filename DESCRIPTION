@@ -28,7 +28,7 @@ Imports:
     checkmate,
     covr,
     dplyr,
-    flextable,
+    flextable (>= 0.8.4),
     fs,
     glue,
     here,
