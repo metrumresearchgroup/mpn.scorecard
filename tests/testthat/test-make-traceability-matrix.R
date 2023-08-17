@@ -51,12 +51,11 @@ describe("creating extra notes", {
 
 
   it("make_traceability_matrix - no test suite", {
-    # Bad package - no documentation (at all)
+    # No test suite
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test_suite")
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
 
-    # Check for two separate notes
     expect_warning(
       trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x),
       "no testing directory found at"
@@ -65,7 +64,7 @@ describe("creating extra notes", {
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    # Confirm values
+    # Confirm values - empty strings will show up as empty cells when formatted with format_traceability_matrix
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
       ""
