@@ -87,7 +87,7 @@ To be clear, not all packages will have all of these components in place. These 
 
 # Summary of Proof Points
 
-The table below summarizes the proof points for risk assessment of all packages on MPN Snapshot `r params$set_subtitle`. Detailed proof points are presented in a separate document for each package.
+The table below summarizes the proof points for risk assessment of all packages listed. Detailed proof points are presented in a separate document for each package.
 
 ```{r}
 format_score_summaries(risk_summary_df)
