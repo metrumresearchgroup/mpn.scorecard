@@ -238,6 +238,10 @@ get_testing_dir <- function(pkg_source_path){
     test_dirs <- c(test_dirs, other_test_dirs)
   }
 
+  # If no sub directories are found, but test_dir_outer is not empty (e.g. MASS package)
+  if(rlang::is_empty(test_dirs) && length(test_dir_outer) != 0){
+    test_dirs <- test_dir_outer
+  }
 
   return(test_dirs)
 }
