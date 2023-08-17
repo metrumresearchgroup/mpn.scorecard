@@ -10,9 +10,6 @@
 calc_overall_scores <- function(scorelist) {
   scorelist$category_scores <- list()
 
-  # TODO: write real calc_overall_scores() algorithm
-  # this is where the real algorithm will go
-  # all of this is just stand-in code to hook up the pipes
   categories <- names(scorelist$scores)
   scorelist$category_scores <- purrr::map(categories, ~{
    round(mean(unlist(scorelist$scores[[.x]]), na.rm = TRUE), 3)

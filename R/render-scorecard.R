@@ -107,7 +107,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
 
   pkg_scores$formatted$overall_scores <- overall_scores
 
-  # TODO: map riskmetric categories to human-readable names, and 1/0 to Yes/No
+  # map riskmetric categories
   pkg_scores$formatted$category_scores <- purrr::imap(pkg_scores$scores, function(category_list, category_name) {
     formatted_df <- purrr::imap(category_list, ~{
       data.frame(
