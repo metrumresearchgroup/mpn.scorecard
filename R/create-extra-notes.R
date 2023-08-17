@@ -162,12 +162,13 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 
     result <- list()
     for(func in funcs){
+      func_search <- paste0("\\Q", func, "\\E")
       if(isTRUE(func_declaration)){
-        pattern <- paste0(paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
-                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func, "[\"|'].*")
+        pattern <- paste0(paste0("^\\s*", func_search, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
+                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func_search, "[\"|'].*")
         )
       }else{
-        pattern <- paste0("(?:\\(|\\s|^)(", func, "\\s*\\()")
+        pattern <- paste0("(?:\\(|\\s|^)(", func_search, "\\s*\\()")
       }
       matches <- grep(pattern, file_text, value = TRUE)
       if(length(matches) > 0){
