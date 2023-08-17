@@ -29,7 +29,7 @@ describe("creating extra notes", {
 
     # Check for two separate notes
     res <- testthat::evaluate_promise(
-      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x)
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE)
     )
     expect_equal(
       res$messages,

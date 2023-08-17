@@ -4,12 +4,14 @@
 \alias{make_traceability_matrix}
 \title{Create a Traceability Matrix}
 \usage{
-make_traceability_matrix(pkg_tar_path, results_dir = NULL)
+make_traceability_matrix(pkg_tar_path, results_dir = NULL, verbose = FALSE)
 }
 \arguments{
 \item{pkg_tar_path}{path to a tarball}
 
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
+
+\item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
 }
 \value{
 a tibble
