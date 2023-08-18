@@ -610,7 +610,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       # overwrite script name if covr failed
       covr_results_df <- covr_results_df %>% dplyr::mutate(r_script = "File coverage failed")
     }
-    covr_results_df <- covr_results_df %>% as.data.frame() %>% format_colnames_to_title()
+    covr_results_df <- covr_results_df %>% format_colnames_to_title()
 
     # Create flextable
     covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
