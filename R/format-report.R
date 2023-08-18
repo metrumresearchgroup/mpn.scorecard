@@ -606,7 +606,13 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
     covr_results_df <- extra_notes_data$covr_results_df
     if (is.numeric(covr_results_df$test_coverage)) {
       covr_results_df <- covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%"))
+    }else{
+      # Escape characters for callr errors
+      covr_results_df <- covr_results_df %>% mutate(
+        test_coverage = gsub("\\\\n", " ", test_coverage)
+      )
     }
+
     covr_results_df <- covr_results_df %>% format_colnames_to_title()
 
     # Create flextable
