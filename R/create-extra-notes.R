@@ -14,18 +14,22 @@ create_extra_notes <- function(
 
   # Format coverage
   covr_results <- readRDS(covr_path)
-  covr_results_df <- covr_results$coverage$filecoverage %>% as.data.frame()
-  covr_results_df <- covr_results_df %>%
-    mutate(r_script = row.names(covr_results_df)) %>%
-    dplyr::select("r_script", "test_coverage" = ".")
-  row.names(covr_results_df) <- NULL
-  # Conditional coverage formatting (if covr failed)
-  if(all(is.na(unique(covr_results_df$test_coverage)))){
+  if (inherits(covr_results$errors, "error")) {
+    covr_results_df <- data.frame(
+      r_script = "File coverage failed",
+      test_coverage = conditionMessage(covr_results$errors)
+    )
+  } else if (length(covr_results$coverage$filecoverage)) {
+    covr_results_df <- covr_results$coverage$filecoverage %>% as.data.frame()
     covr_results_df <- covr_results_df %>%
-      mutate(
-        r_script = NA_character_,
-        test_coverage = conditionMessage(covr_results$errors)
-      )
+      mutate(r_script = row.names(covr_results_df)) %>%
+      dplyr::select("r_script", "test_coverage" = ".")
+    row.names(covr_results_df) <- NULL
+  } else {
+    covr_results_df <- data.frame(
+      r_script = "No coverage results",
+      test_coverage = covr_results$notes
+    )
   }
 
   return(
