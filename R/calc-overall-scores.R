@@ -21,7 +21,6 @@ calc_overall_scores <- function(scorelist) {
   weighted_category_scores <- category_score_weighting * unlist(scorelist$category_scores[names(category_score_weighting)])
 
   scorelist$category_scores$overall <- round(sum(weighted_category_scores), 3)
-  ##### end stand-in code
 
   return(scorelist)
 
