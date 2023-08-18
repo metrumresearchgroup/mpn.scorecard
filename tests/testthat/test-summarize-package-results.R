@@ -9,7 +9,7 @@ describe("summarize_package_results", {
       left_join(pkg_select %>% select(pkg_name, pkg_type), by = c("package" = "pkg_name")) %>%
       relocate(c("package", "pkg_type"))
 
-    expect_equal(dim(pkg_results), c(4, 12))
+    expect_equal(dim(pkg_results), c(length(result_dirs_select), 12))
 
     # Make sure package names are parsed correctly - integration test
     expect_equal(pkg_results$package, pkg_select$pkg_name)
