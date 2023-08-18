@@ -27,7 +27,8 @@ describe("score_pkg", {
     # Check json attributes
     expect_equal(
       names(pkg_scores),
-      c("pkg_name", "pkg_version", "out_dir", "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
+      c("mpn_scorecard_version","pkg_name", "pkg_version", "out_dir",
+        "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
     )
 
     # These tests also serve to confirm the correct environment vars in `local_check_envvar` were set
@@ -71,7 +72,8 @@ describe("score_pkg", {
     # Check json attributes
     expect_equal(
       names(pkg_scores),
-      c("pkg_name", "pkg_version", "out_dir", "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
+      c("mpn_scorecard_version", "pkg_name", "pkg_version", "out_dir",
+        "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
     )
 
     expect_equal(pkg_scores$scores$testing$check, 0)

@@ -55,6 +55,12 @@ render_scorecard <- function(
     exports_df <- NULL
   }
 
+  # mpn.scorecard version
+  mpn_scorecard_ver <- format_scorecard_version(
+    pkg_scores$mpn_scorecard_version,
+    as.character(utils::packageVersion("mpn.scorecard"))
+  )
+
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
@@ -63,6 +69,7 @@ render_scorecard <- function(
     quiet = TRUE,
     params = list(
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
+      scorecard_footer = mpn_scorecard_ver,
       pkg_scores = formatted_pkg_scores,
       mitigation_block = mitigation_block,
       extra_notes_data = extra_notes_data,
@@ -210,4 +217,29 @@ check_for_mitigation <- function(results_dir){
     mitigation_block <- NULL
   }
   return(mitigation_block)
+}
+
+
+#' Format mpn.scorecard version as a footer note
+#'
+#' Formats mpn.scorecard version as a footer note for use in `render_scorecard`
+#' or `render_scorecard_summary`
+#'
+#' @param json_ver version of mpn.scorecard as recorded in `score_pkg`.
+#' Set to `NULL` for use with `render_scorecard_summary`.
+#' @param scorecard_ver version of mpn.scorecard as recorded in `render_scorecard`
+#' or `render_scorecard_summary`
+#'
+#' @keywords internal
+format_scorecard_version <- function(json_ver = NULL, scorecard_ver){
+  scorecard_version <-
+    if(is.null(json_ver) || identical(json_ver, scorecard_ver)){
+      glue::glue("Generated with mpn.scorecard {scorecard_ver}")
+    }else{
+      glue::glue("Package scored with mpn.scorecard {json_ver},
+               document generated with mpn.scorecard {scorecard_ver}")
+    }
+
+  # Latex line breaks dont work with fancyfoot - remove for now
+  as.character(scorecard_version) %>% gsub("\n", "", .)
 }

@@ -28,6 +28,12 @@ render_scorecard_summary <- function(result_dirs,
   out_file <- get_result_path(overall_risk_summary$out_dir, "summary.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
+  # mpn.scorecard version
+  mpn_scorecard_ver <- format_scorecard_version(
+    json_ver = NULL,
+    as.character(utils::packageVersion("mpn.scorecard"))
+  )
+
   # Render rmarkdown
   rendered_file <- rmarkdown::render(
     system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE),
@@ -36,7 +42,8 @@ render_scorecard_summary <- function(result_dirs,
     quiet = TRUE,
     params = list(
       overall_risk_summary = overall_risk_summary,
-      set_subtitle = snapshot
+      set_subtitle = snapshot,
+      scorecard_footer = mpn_scorecard_ver
     )
   )
 
