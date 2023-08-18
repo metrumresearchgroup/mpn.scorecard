@@ -146,7 +146,28 @@ describe("score_pkg", {
 
   })
 
+  it("calc_overall_scores summarizes scores correctly", {
+    result_dir <- result_dirs_select[["pass_success"]]
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    # Remove overall scores
+    pkg_scores$category_scores <- NULL
+
+    # Normal behavior
+    res <- calc_overall_scores(pkg_scores)
+    expect_equal(res$category_scores$testing, 1)
+    expect_equal(res$category_scores$documentation, 0)
+    expect_equal(res$category_scores$maintenance, 0.5)
+    expect_equal(res$category_scores$transparency, 0)
+    expect_equal(res$category_scores$overall, 0.5)
+
+    # With failed coverage
+    pkg_scores$scores$testing$covr <- NA
+    res <- calc_overall_scores(pkg_scores)
+    expect_equal(res$category_scores$testing, 0.5)
+    expect_equal(res$category_scores$overall, 0.3)
+  })
+
 })
-
-
 

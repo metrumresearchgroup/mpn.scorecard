@@ -12,7 +12,12 @@ calc_overall_scores <- function(scorelist) {
 
   categories <- names(scorelist$scores)
   scorelist$category_scores <- purrr::map(categories, ~{
-   round(mean(unlist(scorelist$scores[[.x]]), na.rm = TRUE), 3)
+    indiv_scores <- unlist(scorelist$scores[[.x]])
+    # Penalize coverage failures: NA --> 0
+    if("covr" %in% names(indiv_scores) && is.na(indiv_scores[["covr"]])){
+      indiv_scores[["covr"]] <- 0
+    }
+   round(mean(indiv_scores), 3)
   }) %>% purrr::set_names(categories)
 
   # Category weighting
