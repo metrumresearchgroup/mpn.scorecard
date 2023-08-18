@@ -25,7 +25,7 @@ describe("creating extra notes", {
 
     # Confirm values - covr
     expect_true(grepl("cannot open", unique(extra_notes_data$covr_results_df$test_coverage)))
-    expect_true(is.na(unique(extra_notes_data$covr_results_df$r_script)))
+    expect_identical(extra_notes_data$covr_results_df$r_script, "File coverage failed")
     # Confirm values - R CMD Check
     expect_true(grepl("ERROR", extra_notes_data$check_output))
   })
