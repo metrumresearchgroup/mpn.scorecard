@@ -33,9 +33,7 @@ describe("creating extra notes", {
     case <- setups$pkg_type == "pass_no_functions"
 
     result_dir <- setups$pkg_result_dir[case]
-    pkg_tar <- setups$tar_file[case]
-
-    res <- create_extra_notes(result_dir, pkg_tar)
+    res <- create_extra_notes(result_dir)
     expect_identical(
       res$covr_results_df$r_script,
       "No coverage results"
