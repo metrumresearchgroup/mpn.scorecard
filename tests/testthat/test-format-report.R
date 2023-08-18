@@ -124,7 +124,7 @@ describe("formatting functions", {
     # Test exported functions dataframe
     exported_func_df <- exported_func_flex$body$dataset
     expect_equal(
-      names(format_colnames_to_title(exports_df %>% select(-"test_dirs"))),
+      names(format_colnames_to_title(exports_df %>% dplyr::select(-"test_dirs"))),
       names(exported_func_df)
     )
     expect_equal(
@@ -136,9 +136,8 @@ describe("formatting functions", {
   it("format_appendix", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
-    pkg_tar_x <- pkg_setup_select$tar_file
-    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
 
+    extra_notes_data <- create_extra_notes(result_dir_x)
     extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
 
     # Test covr dataframe

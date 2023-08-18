@@ -30,7 +30,7 @@ params:
   set_subtitle: "xxxx-xx-xx"
   scorecard_footer: "Generated with mpn.scorecard"
 title: "Scorecard Summary"
-subtitle: "`r paste('MPN Snapshot', params$set_subtitle)`"
+subtitle: "`r params$set_subtitle`"
 ---
 
 \fontsize{11}{15}
@@ -51,7 +51,7 @@ metadata <- params$overall_risk_summary$metadata
 
 
 # Summary
-This document contains evidence and a summary of proof points for all packages on MPN Snapshot `r params$set_subtitle` in support of Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community (described in more detail below). Information about the system on which this assessment was performed is included in the System Info section, near the bottom of this document.  
+This document contains evidence and a summary of proof points for all packages listed below in support of Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community (described in more detail below). Information about the system on which this assessment was performed is included in the System Info section, near the bottom of this document.  
 
 # Background
 The process documented here relies heavily on principles articulated by the R Validation Hub^[@R-Validation-Hub], a cross-industry initiative whose mission is to enable the use of R by the bio-pharmaceutical industry in a regulatory setting. 
@@ -87,7 +87,7 @@ To be clear, not all packages will have all of these components in place. These 
 
 # Summary of Proof Points
 
-The table below summarizes the proof points for risk assessment of all packages on MPN Snapshot `r params$set_subtitle`. Detailed proof points are presented in a separate document for each package.
+The table below summarizes the proof points for risk assessment of all packages listed. Detailed proof points are presented in a separate document for each package.
 
 ```{r}
 format_score_summaries(risk_summary_df)

@@ -4,12 +4,10 @@
 \alias{create_extra_notes}
 \title{Create extra notes summarizing the covr & rcmdcheck outputs, and documentation}
 \usage{
-create_extra_notes(results_dir, pkg_tar_path)
+create_extra_notes(results_dir)
 }
 \arguments{
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
-
-\item{pkg_tar_path}{path to a tarball}
 }
 \description{
 Create extra notes summarizing the covr & rcmdcheck outputs, and documentation

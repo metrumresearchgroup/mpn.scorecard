@@ -1,6 +1,6 @@
 Package: mpn.scorecard
 Title: Generate a scorecard with various measures of R package quality and risk
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: 
     c(person(given = "Seth",
            family = "Green",
@@ -28,7 +28,7 @@ Imports:
     checkmate,
     covr,
     dplyr,
-    flextable,
+    flextable (>= 0.8.4),
     fs,
     glue,
     here,

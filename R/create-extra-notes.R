@@ -1,12 +1,10 @@
 #' Create extra notes summarizing the covr & rcmdcheck outputs, and documentation
 #'
 #' @inheritParams render_scorecard
-#' @param pkg_tar_path path to a tarball
 #'
 #' @keywords internal
 create_extra_notes <- function(
-    results_dir,
-    pkg_tar_path
+    results_dir
 ){
   covr_path <- get_result_path(results_dir, "covr.rds")
   check_path <- get_result_path(results_dir, "check.rds")
@@ -44,12 +42,14 @@ create_extra_notes <- function(
 #' Returns a table that links all exported functions and their aliases to their documentation (`man` files),
 #' the R scripts containing them, and the test scripts that reference them.
 #'
+#' @param pkg_tar_path path to a tarball
 #' @inheritParams create_extra_notes
+#' @param verbose Logical (`TRUE`/`FALSE`). If `TRUE`, show any warnings/messages per function.
 #'
 #' @returns a tibble
 #'
 #' @keywords internal
-make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
+make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose = FALSE){
 
   # Unpack tarball
   pkg_source_path <- unpack_tarball(pkg_tar_path)
@@ -63,7 +63,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
   rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
   rd_files <- rd_files[grep("\\.Rd$", rd_files)]
   aliases_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
-    rd_lines <- readLines(rd_file.i)
+    rd_lines <- readLines(rd_file.i) %>% suppressWarnings()
 
     # Get Rd file and aliases for exported functions
     aliases <- gsub("\\}", "", gsub("\\\\alias\\{", "",
@@ -81,7 +81,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
       }
     }else{
       # Triggered if documentation exists, but no referenced R script
-      message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
+      if(isTRUE(verbose)){
+        message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
+      }
     }
 
 
@@ -99,7 +101,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
       dplyr::relocate(c("export", "documentation"))
   }else{
     exports_doc_df <- exports_df %>% mutate(documentation = NA_character_, alias = NA_character_)
-    message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+    if(isTRUE(verbose)){
+      message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+    }
   }
 
 
@@ -112,7 +116,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL){
 
   # We dont need documentation in report - but will use for this message
   # TODO: if no packages on the next MPN build trigger this (when add_traceability = TRUE) - we can remove this and some of the above code
-  if(any(exports_doc_df$is_documented == FALSE)){
+  if(any(exports_doc_df$is_documented == FALSE) && isTRUE(verbose)){
     docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
     exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
     code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
@@ -158,12 +162,13 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 
     result <- list()
     for(func in funcs){
+      func_search <- paste0("\\Q", func, "\\E")
       if(isTRUE(func_declaration)){
-        pattern <- paste0(paste0("^\\s*", func, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
-                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func, "[\"|'].*")
+        pattern <- paste0(paste0("^\\s*", func_search, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
+                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func_search, "[\"|'].*")
         )
       }else{
-        pattern <- func
+        pattern <- paste0("(?:\\(|\\s|^)(", func_search, "\\s*\\()")
       }
       matches <- grep(pattern, file_text, value = TRUE)
       if(length(matches) > 0){
@@ -215,24 +220,30 @@ get_testing_dir <- function(pkg_source_path){
   pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE) #fs::dir_ls(pkg_source_path)
   test_dir_outer <- pkg_dir_ls[grep("^(/[^/]+)+/tests$", pkg_dir_ls)]
   if(length(test_dir_outer) == 0){
-    stop(glue::glue("no testing directory found at {pkg_source_path}"))
+    warning(glue::glue("no testing directory found at {pkg_source_path}"))
+    return(NULL)
   }
 
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
   test_dirs <- test_dir_ls[grep("^(/[^/]+)+/testthat$", test_dir_ls)]
   if(length(test_dirs) == 0){
-    stop(glue::glue("no `testthat` directory found at {test_dir_outer}"))
+    message(glue::glue("no `testthat` directory found at {test_dir_outer}"))
   }
 
   # Look for cases of test_that & describe/it in other directories
   other_dirs <- pkg_dir_ls[-grep(test_dir_outer, pkg_dir_ls)]
   tests_df <- get_tests(pkg_source_path = pkg_source_path, test_dirs = other_dirs)
 
+  # Concatenate found test directories
   if(!rlang::is_empty(tests_df)){
     other_test_dirs <- file.path(pkg_source_path, unique(tests_df$test_dir))
     test_dirs <- c(test_dirs, other_test_dirs)
   }
 
+  # If no sub directories are found, but test_dir_outer is not empty (e.g. MASS package)
+  if(rlang::is_empty(test_dirs) && length(test_dir_outer) != 0){
+    test_dirs <- test_dir_outer
+  }
 
   return(test_dirs)
 }
@@ -308,17 +319,24 @@ map_tests_to_functions <- function(pkg_source_path){
 
   pkg_functions <- get_all_functions(pkg_source_path)
 
-  pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
-    func_lst <- find_function_files(
-      funcs = pkg_functions,
-      search_dir = test_dir_x,
-      func_declaration = FALSE
+  if(!is.null(test_dirs)){
+    pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
+      func_lst <- find_function_files(
+        funcs = pkg_functions,
+        search_dir = test_dir_x,
+        func_declaration = FALSE
+      )
+      if(rlang::is_empty(func_lst)) return(NULL)
+      tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
+        mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
+    })
+  }else{
+    pkg_func_df <- tibble::tibble(
+      pkg_function = pkg_functions,
+      test_file = "",
+      test_dir = "No tests found",
     )
-    if(rlang::is_empty(func_lst)) return(NULL)
-    tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
-      mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
-  })
-
+  }
 
   # Nest test files
   func_test_df <- pkg_func_df %>% dplyr::group_by(.data$pkg_function) %>%

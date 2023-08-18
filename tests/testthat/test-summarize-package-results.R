@@ -6,7 +6,7 @@ describe("summarize_package_results", {
 
     # summarize package results - join pkg_type for potential inspection
     pkg_results <- summarize_package_results(result_dirs_select) %>%
-      left_join(pkg_select %>% select(pkg_name, pkg_type), by = c("package" = "pkg_name")) %>%
+      left_join(pkg_select %>% dplyr::select(pkg_name, pkg_type), by = c("package" = "pkg_name")) %>%
       relocate(c("package", "pkg_type"))
 
     expect_equal(dim(pkg_results), c(4, 12))

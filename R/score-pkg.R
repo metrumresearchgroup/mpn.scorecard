@@ -69,9 +69,6 @@ score_pkg <- function(
   # add riskmetric scores
   res <- create_score_list_from_riskmetric(res, pkg_source_path)
 
-  # TODO: get name and version _not_ from riskmetric
-  # so that we can a) be independent and b) put this at the top.
-  # We'll also need to remove the pkg_name and pkg_version from create_score_list_from_riskmetric()
   out_path <- get_result_path(out_dir, "scorecard.json")
   check_exists_and_overwrite(out_path, overwrite)
 

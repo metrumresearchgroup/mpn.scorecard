@@ -6,9 +6,8 @@ describe("render scorecard and scorecard summary reports", {
   it("render_scorecard", {
 
     # `result_dirs_select` defined in tests/testthat/setup.R
-
     pdf_paths <- purrr::map_chr(result_dirs_select, ~{
-      render_scorecard(results_dir = .x, overwrite = TRUE)
+      render_scorecard(results_dir = .x, overwrite = TRUE) %>% suppressWarnings()
     })
 
     on.exit(fs::file_delete(pdf_paths), add = TRUE)
@@ -22,7 +21,7 @@ describe("render scorecard and scorecard summary reports", {
       expect_equal(length(rendered_pdf_toc), 3)
 
       title_sections <- purrr::map_chr(rendered_pdf_toc, ~{.x$title})
-      expect_equal(title_sections, c("Overview", "Details", "Appendix"))
+      expect_equal(title_sections, c("Overview", "Details","Appendix"))
 
       title_sub_sections <- purrr::map_chr(rendered_pdf_toc[[2]]$children, ~{.x$title})
       expect_equal(length(title_sub_sections), 2)
@@ -30,10 +29,29 @@ describe("render scorecard and scorecard summary reports", {
     }
   })
 
+  it("render_scorecard - with traceability matrix", {
+
+    # `result_dirs_select` defined in tests/testthat/setup.R
+    result_dir_x <- result_dirs_select[1]
+    pdf_path <- render_scorecard(
+      results_dir = result_dir_x,
+      overwrite = TRUE, add_traceability = TRUE
+    )
+
+    on.exit(fs::file_delete(pdf_path), add = TRUE)
+    on.exit(fs::file_delete(get_result_path(result_dir_x, "export_doc.rds")), add = TRUE)
+
+    # Check attributes
+    rendered_pdf_toc <- pdftools::pdf_toc(pdf = pdf_path)$children
+    expect_equal(length(rendered_pdf_toc), 4)
+
+    title_sections <- purrr::map_chr(rendered_pdf_toc, ~{.x$title})
+    expect_equal(title_sections, c("Overview", "Details", "Traceability Matrix","Appendix"))
+  })
+
   it("render_scorecard_summary", {
 
     # `result_dirs_select` defined in tests/testthat/setup.R
-
     pdf_path <- render_scorecard_summary(result_dirs_select)
     on.exit(fs::file_delete(pdf_path), add = TRUE)
 
@@ -47,6 +65,5 @@ describe("render scorecard and scorecard summary reports", {
     title_sub_sections <- purrr::map_chr(rendered_pdf_toc[[2]]$children, ~{.x$title})
     expect_equal(length(title_sub_sections), 1)
     expect_equal(title_sub_sections, c("Principles of Good Practice"))
-
   })
 })

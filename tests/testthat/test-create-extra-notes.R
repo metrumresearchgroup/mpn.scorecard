@@ -5,8 +5,7 @@ describe("creating extra notes", {
 
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
-    pkg_tar_x <- pkg_setup_select$tar_file
-    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+    extra_notes_data <- create_extra_notes(result_dir_x)
 
     # Confirm values - covr
     expect_equal(unique(extra_notes_data$covr_results_df$test_coverage), 100)
@@ -20,8 +19,7 @@ describe("creating extra notes", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
-    pkg_tar_x <- pkg_setup_select$tar_file
-    extra_notes_data <- create_extra_notes(result_dir_x, pkg_tar_path = pkg_tar_x)
+    extra_notes_data <- create_extra_notes(result_dir_x)
 
     # Confirm values - covr
     expect_true(grepl("cannot open", unique(extra_notes_data$covr_results_df$test_coverage)))
