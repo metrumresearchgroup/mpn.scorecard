@@ -30,4 +30,21 @@ describe("creating extra notes", {
     expect_true(grepl("ERROR", extra_notes_data$check_output))
   })
 
+  it("create_extra_notes - no coverage results", {
+    setups <- pkg_dirs$pkg_setups_df
+    case <- setups$pkg_type == "pass_no_functions"
+
+    result_dir <- setups$pkg_result_dir[case]
+    pkg_tar <- setups$tar_file[case]
+
+    res <- create_extra_notes(result_dir, pkg_tar)
+    expect_identical(
+      res$covr_results_df$r_script,
+      "No coverage results"
+    )
+    expect_identical(
+      res$covr_results_df$test_coverage,
+      "No testable functions found"
+    )
+  })
 })
