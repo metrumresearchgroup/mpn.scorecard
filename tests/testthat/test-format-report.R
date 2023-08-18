@@ -42,7 +42,7 @@ describe("formatting functions", {
 
   it("format_overall_scores", {
 
-    result_dir <- result_dirs_select[1]
+    result_dir <- result_dirs_select[["pass_success"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -55,7 +55,7 @@ describe("formatting functions", {
 
   it("format_package_details", {
 
-    result_dir <- result_dirs_select[1]
+    result_dir <- result_dirs_select[["pass_success"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -70,7 +70,7 @@ describe("formatting functions", {
   it("format_testing_scores", {
 
     ## Fully passing rcmdcheck score ##
-    result_dir <- result_dirs_select[1]
+    result_dir <- result_dirs_select[["pass_success"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -84,7 +84,7 @@ describe("formatting functions", {
     expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100%"))
 
     ## Medium rcmdcheck score ##
-    result_dir <- result_dirs_select[2]
+    result_dir <- result_dirs_select[["pass_warning"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -97,7 +97,7 @@ describe("formatting functions", {
 
 
     ## Failing rcmdcheck score ##
-    result_dir <- result_dirs_select[3]
+    result_dir <- result_dirs_select[["fail_func_syntax"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 

@@ -283,6 +283,7 @@ pkg_dirs <- setup_multiple_pkgs()
 # only need a subset of these for majority of tests
 pkg_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type %in% c("pass_success", "pass_warning", "fail_func_syntax", "fail_test"))
 pkg_tars <- pkg_select %>% dplyr::pull(tar_file)
+names(pkg_tars) <- pkg_select$pkg_type
 
 # score select packages
 result_dirs_select <- purrr::map_chr(pkg_tars, ~{

@@ -5,7 +5,7 @@ describe("mitigation file is properly included", {
 
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
-    result_dir <- result_dirs_select[3]
+    result_dir <- result_dirs_select[["fail_func_syntax"]]
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(result_dirs_select)
@@ -33,14 +33,16 @@ describe("mitigation file is properly included", {
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
     # Add mitigation to non-high-risk package
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[1])
-    new_mitigation_name <- get_result_path(result_dirs_select[1], "mitigation.txt")
+    pass_idx <- match("pass_success", names(result_dirs_select))
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[[pass_idx]])
+    new_mitigation_name <- get_result_path(result_dirs_select[[pass_idx]], "mitigation.txt")
     fs::file_move(mitigation_file, new_mitigation_name)
     on.exit(fs::file_delete(new_mitigation_name), add = TRUE)
 
     # Add mitigation to high-risk package
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[4])
-    new_mitigation_name_high <- get_result_path(result_dirs_select[4], "mitigation.txt")
+    fail_idx <- match("fail_test", names(result_dirs_select))
+    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[[fail_idx]])
+    new_mitigation_name_high <- get_result_path(result_dirs_select[[fail_idx]], "mitigation.txt")
     fs::file_move(mitigation_file, new_mitigation_name_high)
     on.exit(fs::file_delete(new_mitigation_name_high), add = TRUE)
 
@@ -49,8 +51,8 @@ describe("mitigation file is properly included", {
     overall_pkg_scores <- overall_risk_summary$overall_pkg_scores
 
     # Check specific packages for mitigation
-    expect_true(overall_pkg_scores$mitigation[1] == "Yes")
-    expect_true(overall_pkg_scores$mitigation[4] == "Yes")
+    expect_true(overall_pkg_scores$mitigation[pass_idx] == "Yes")
+    expect_true(overall_pkg_scores$mitigation[fail_idx] == "Yes")
 
     # Make sure we have at least one case of High risk and "no" ()
     overall_pkg_scores <- overall_pkg_scores %>% mutate(
@@ -74,7 +76,7 @@ describe("mitigation file is properly included", {
     skip_if_render_pdf()
     mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
 
-    result_dir <- result_dirs_select[3]
+    result_dir <- result_dirs_select[["fail_func_syntax"]]
 
     # For inspecting
     # rstudioapi::filesPaneNavigate(result_dir)
