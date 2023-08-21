@@ -98,3 +98,42 @@ extract_score_list <- function(risk_res, metrics) {
   names(.sl) <- metrics
   return(.sl)
 }
+
+
+#' Check category scores for non-numeric values
+#'
+#' @details
+#' `covr` scores are the only individual scores that allow for NA scores.
+#' However when determining overall category scores, all values should be
+#' coerced to numeric (0 in the case of `covr`). Any potential errors or
+#' character values should be coerced to `NA` when passed through `mean()` in
+#' `calc_overall_scores`.
+#'
+#' This function serves to confirm that all category scores are in fact numeric
+#' values. The only way a non-numeric value could be anything *other than* `NA`,
+#' is if `mean()` returned an error message or some other value. This scenario
+#' would likely cause issues before writing the score list out to json, so the
+#' additional `is.numeric` check is primarily a precautionary measure.
+#'
+#' @param pkg_scores a named list containing the build up of score elements and
+#' overall category scores.
+#' @param json_path a JSON file path.
+#'
+#' @keywords internal
+check_scores_numeric <- function(pkg_scores, json_path){
+
+  # Coerce "NA" character to NA
+  category_scores <- purrr::map(pkg_scores$category_scores, function(cat_score){
+    ifelse(cat_score == "NA", NA_integer_, cat_score)
+  })
+
+  # Check if any values are NA or are otherwise non-numeric
+  error_cond <- is.na(category_scores) | (!sapply(category_scores,is.numeric))
+  if(any(error_cond)){
+    error_cats <- names(category_scores[error_cond]) %>% paste(collapse = ", ")
+    abort(glue("The following categories returned `NA` or were otherwise non-numeric:
+               {error_cats}
+               Read in the json to see what went wrong: {json_path}"))
+  }
+
+}

@@ -169,5 +169,24 @@ describe("score_pkg", {
     expect_equal(res$category_scores$overall, 0.3)
   })
 
+  it("error out for NA and non-numeric category scores", {
+    result_dir <- result_dirs_select[["pass_success"]]
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    # Manually set category scores to problematic values (NA and non-numeric)
+    pkg_scores$category_scores$documentation <- "NA"
+    pkg_scores$category_scores$maintenance <- "error"
+    pkg_scores$category_scores$transparency <- list(error="error")
+
+    # Test that both category scores show up in error message
+    error_msgs <- testthat::capture_error({
+      check_scores_numeric(pkg_scores, json_path)
+    })
+    expect_true(grepl("documentation", error_msgs$message))
+    expect_true(grepl("maintenance", error_msgs$message))
+    expect_true(grepl("transparency", error_msgs$message))
+  })
+
 })
 

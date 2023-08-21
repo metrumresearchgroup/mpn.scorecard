@@ -98,6 +98,7 @@ score_pkg <- function(
     out_path
   )
 
+  check_scores_numeric(res, out_path)
 
   return(invisible(out_dir))
 }
