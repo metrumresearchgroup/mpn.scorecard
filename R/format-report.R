@@ -632,13 +632,13 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       )
     }else{
       ### Print all Results ###
-      # Coverage
+      # R CMD Check
       cat(sub_header_strs[1])
       cat("\n")
       cat(check_output)
       cat("\n")
       cat("\\newpage")
-      # R CMD Check
+      # Coverage
       cat(sub_header_strs[2])
       cat("\n")
       cat(knitr::knit_print(covr_results_flex))
