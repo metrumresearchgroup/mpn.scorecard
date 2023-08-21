@@ -12,17 +12,17 @@ create_score_list_from_riskmetric <- function(res, pkg_source_path) {
   # add riskmetric outputs
   res$scores$documentation <- extract_score_list(
     risk_res,
-    c("has_vignettes", "has_website", "has_news") #, export_help)
+    DOCUMENTATION_METRICS
   )
 
   res$scores$maintenance <- extract_score_list(
     risk_res,
-    c("has_maintainer", "news_current")#, "last_30_bugs_status")
+    MAINTENANCE_METRICS
   )
 
   res$scores$transparency <- extract_score_list(
     risk_res,
-    c("has_source_control", "has_bug_reports_url")
+    TRANSPARENCY_METRICS
   )
 
   return(res)
@@ -98,3 +98,4 @@ extract_score_list <- function(risk_res, metrics) {
   names(.sl) <- metrics
   return(.sl)
 }
+
