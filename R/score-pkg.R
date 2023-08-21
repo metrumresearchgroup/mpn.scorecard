@@ -46,6 +46,8 @@ score_pkg <- function(
   # Add pkg_name subdirectory and create if it doesnt exist
   out_dir <- file.path(out_dir, pkg_name_ver)
   if (!fs::dir_exists(out_dir)) fs::dir_create(out_dir)
+  out_path <- get_result_path(out_dir, "scorecard.json")
+  check_exists_and_overwrite(out_path, overwrite)
 
   # mpn.scorecard version
   mpn_scorecard_ver <- as.character(utils::packageVersion("mpn.scorecard"))
@@ -69,9 +71,6 @@ score_pkg <- function(
 
   # add riskmetric scores
   res <- create_score_list_from_riskmetric(res, pkg_source_path)
-
-  out_path <- get_result_path(out_dir, "scorecard.json")
-  check_exists_and_overwrite(out_path, overwrite)
 
   # run check and covr and write results to disk
   rcmdcheck_args$path <- pkg
