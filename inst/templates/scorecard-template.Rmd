@@ -10,6 +10,7 @@ output:
 header-includes:
     - \usepackage{caption}
     - \usepackage{graphicx}
+    - \usepackage{spverbatim}
     - \usepackage{fancyhdr}
     - \pagestyle{fancy}
     - \setlength\headheight{24pt}

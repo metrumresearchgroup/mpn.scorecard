@@ -620,8 +620,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
 
 
     ### R CMD Check Results ###
-    # Format check output to escape backslashes (otherwise RMD wont render)
-    check_output <- gsub("\\\\", "\\\\\\\\", extra_notes_data$check_output)
+    check_output <- extra_notes_data$check_output
 
     if(isTRUE(return_vals)){
       return(
@@ -634,9 +633,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       ### Print all Results ###
       # R CMD Check
       cat(sub_header_strs[1])
-      cat("\n")
-      cat(check_output)
-      cat("\n")
+      cat_verbatim(check_output)
       cat("\\newpage")
       # Coverage
       cat(sub_header_strs[2])
@@ -644,4 +641,30 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       cat(knitr::knit_print(covr_results_flex))
       cat("\n")
     }
+}
+
+cat_verbatim <- function(s) {
+  # At the markdown level, we need to make sure that nothing in s makes pandoc
+  # end the raw block early.
+  s <- gsub("(?m)(^[ \t]*```[ \t]*)$", "<SANITIZED>\\1", s, perl = TRUE)
+  # At the LaTeX level, we need to escape any "\end{spverbatim}".
+  s <- gsub(
+    "\\end{spverbatim}",
+    "<SANITIZED BACKSLASH>end{spverbatim}",
+    s,
+    fixed = TRUE
+  )
+
+  cat(
+    # pandoc should automatically detect this snippet and treat it as raw LaTeX,
+    # but mark it explicitly to avoid potential edge cases.
+    "\n\n```{=latex}",
+    "\\begin{small}",
+    "\\begin{spverbatim}",
+    s,
+    "\\end{spverbatim}",
+    "\\end{small}",
+    "```\n\n",
+    sep = "\n"
+  )
 }

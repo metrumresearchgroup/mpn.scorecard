@@ -150,11 +150,29 @@ describe("formatting functions", {
       unique(unname(unlist(extra_notes_frmt$covr_results_flex$footer$dataset))),
       "Test coverage is calculated per script, rather than per function"
     )
-
-    # Test R CMD Check output
-    check_output <- extra_notes_frmt$check_output
-    expect_false(grepl("\\\\\\\\u", extra_notes_data$check_output))
-    expect_true(grepl("\\\\\\\\u", check_output))
   })
 
+})
+
+describe("cat_verbatim", {
+  it("sanitizes spverbatim end", {
+    expect_output(
+      cat_verbatim("foo\n\\end{spverbatim}"),
+      "foo\n<SANITIZED BACKSLASH>end{spverbatim}",
+      fixed = TRUE
+    )
+    expect_output(
+      cat_verbatim("\\end{spverbatim}\nfoo \\end{spverbatim} bar"),
+      "<SANITIZED BACKSLASH>end{spverbatim}\nfoo <SANITIZED BACKSLASH>end{spverbatim} bar",
+      fixed = TRUE
+    )
+  })
+
+  it("sanitizes code block end", {
+    expect_output(
+      cat_verbatim("foo\n\t``` \n```\na```\n```b\n"),
+      "foo\n<SANITIZED>\t``` \n<SANITIZED>```\na```\n```b\n",
+      fixed = TRUE
+    )
+  })
 })
