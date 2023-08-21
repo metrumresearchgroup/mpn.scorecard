@@ -179,10 +179,11 @@ describe("score_pkg", {
     pkg_scores$category_scores$maintenance <- "error"
     pkg_scores$category_scores$transparency <- list(error="error")
 
-    # Test that both category scores show up in error message
-    error_msgs <- testthat::capture_error({
-      check_scores_valid(pkg_scores, json_path)
-    })
+    # Test that all category scores show up in error message
+    error_msgs <- tryCatch(
+      check_scores_valid(pkg_scores, json_path),
+      error = function(cond) cond
+    )
     expect_true(grepl("documentation", error_msgs$message))
     expect_true(grepl("maintenance", error_msgs$message))
     expect_true(grepl("transparency", error_msgs$message))
@@ -196,9 +197,10 @@ describe("score_pkg", {
     pkg_scores$scores$documentation$has_vignettes <- NULL
     pkg_scores$scores$maintenance$news_current <- NULL
 
-    error_msgs <- testthat::capture_error({
-      check_scores_valid(pkg_scores, json_path)
-    })
+    error_msgs <- tryCatch(
+      check_scores_valid(pkg_scores, json_path),
+      error = function(cond) cond
+    )
     expect_true(grepl("has_vignettes", error_msgs$message))
     expect_true(grepl("news_current", error_msgs$message))
   })
