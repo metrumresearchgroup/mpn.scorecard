@@ -12,17 +12,17 @@ create_score_list_from_riskmetric <- function(res, pkg_source_path) {
   # add riskmetric outputs
   res$scores$documentation <- extract_score_list(
     risk_res,
-    c("has_vignettes", "has_website", "has_news") #, export_help)
+    DOCUMENTATION_METRICS
   )
 
   res$scores$maintenance <- extract_score_list(
     risk_res,
-    c("has_maintainer", "news_current")#, "last_30_bugs_status")
+    MAINTENANCE_METRICS
   )
 
   res$scores$transparency <- extract_score_list(
     risk_res,
-    c("has_source_control", "has_bug_reports_url")
+    TRANSPARENCY_METRICS
   )
 
   return(res)
@@ -100,9 +100,20 @@ extract_score_list <- function(risk_res, metrics) {
 }
 
 
-#' Check category scores for non-numeric values
+#' Check that package scores are valid
+#'
+#' Check that individual scores are retained and category scores are numeric.
 #'
 #' @details
+#'
+#' **Individual Score checks**
+#'
+#' The only checks performed on the individual scores are that they still exist
+#' when written out to json. This would only *not* be the case if an individual
+#' score was set to `NULL`, removing it from the list.
+#'
+#' **Category Score checks**
+#'
 #' `covr` scores are the only individual scores that allow for NA scores.
 #' However when determining overall category scores, all values should be
 #' coerced to numeric (0 in the case of `covr`). Any potential errors or
@@ -115,12 +126,29 @@ extract_score_list <- function(risk_res, metrics) {
 #' would likely cause issues before writing the score list out to json, so the
 #' additional `is.numeric` check is primarily a precautionary measure.
 #'
+#'
 #' @param pkg_scores a named list containing the build up of score elements and
 #' overall category scores.
 #' @param json_path a JSON file path.
 #'
 #' @keywords internal
-check_scores_numeric <- function(pkg_scores, json_path){
+check_scores_valid <- function(pkg_scores, json_path){
+
+  # Check that names are preserved at the end - confirms `NULL` is not returned
+  # for individual scores
+  score_names <- purrr::map(pkg_scores$scores, function(score_name){
+    names(score_name)
+  }) %>% purrr::flatten_chr() %>% sort()
+
+  score_names_chk <- c(DOCUMENTATION_METRICS, MAINTENANCE_METRICS,
+                       TRANSPARENCY_METRICS, TESTING_METRICS) %>% sort()
+
+  if(!all(score_names_chk %in% score_names)){
+    missing_scores <- setdiff(score_names_chk, score_names) %>%
+      paste(collapse = ", ")
+    abort(glue("The following categories were unintentionally removed:
+               {missing_scores}"))
+  }
 
   # Coerce "NA" character to NA
   category_scores <- purrr::map(pkg_scores$category_scores, function(cat_score){

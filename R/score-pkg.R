@@ -66,6 +66,7 @@ score_pkg <- function(
       transparency = list()
     )
   )
+
   # add riskmetric scores
   res <- create_score_list_from_riskmetric(res, pkg_source_path)
 
@@ -98,7 +99,7 @@ score_pkg <- function(
     out_path
   )
 
-  check_scores_numeric(res, out_path)
+  check_scores_valid(res, out_path)
 
   return(invisible(out_dir))
 }

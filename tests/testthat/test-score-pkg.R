@@ -181,11 +181,26 @@ describe("score_pkg", {
 
     # Test that both category scores show up in error message
     error_msgs <- testthat::capture_error({
-      check_scores_numeric(pkg_scores, json_path)
+      check_scores_valid(pkg_scores, json_path)
     })
     expect_true(grepl("documentation", error_msgs$message))
     expect_true(grepl("maintenance", error_msgs$message))
     expect_true(grepl("transparency", error_msgs$message))
+  })
+
+  it("error out if any individual scores are missing", {
+    result_dir <- result_dirs_select[["pass_success"]]
+    json_path <- get_result_path(result_dir, "scorecard.json")
+    pkg_scores <- jsonlite::fromJSON(json_path)
+
+    pkg_scores$scores$documentation$has_vignettes <- NULL
+    pkg_scores$scores$maintenance$news_current <- NULL
+
+    error_msgs <- testthat::capture_error({
+      check_scores_valid(pkg_scores, json_path)
+    })
+    expect_true(grepl("has_vignettes", error_msgs$message))
+    expect_true(grepl("news_current", error_msgs$message))
   })
 
 })

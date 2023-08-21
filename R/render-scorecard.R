@@ -33,7 +33,7 @@ render_scorecard <- function(
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
-  check_scores_numeric(pkg_scores, json_path)
+  check_scores_valid(pkg_scores, json_path)
 
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
