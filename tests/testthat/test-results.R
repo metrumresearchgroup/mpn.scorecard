@@ -154,7 +154,7 @@ describe("covr and rcmdcheck success", {
     )
     expect_message(
       res_covr <- add_coverage(pkg_setup$pkg_dir, pkg_setup$pkg_result_dir),
-      glue::glue("R coverage for {basename(pkg_setup$pkg_result_dir)} had notes: No testable functions found")
+      glue::glue("R coverage for {basename(pkg_setup$pkg_result_dir)} had notes: no testable functions found")
     )
 
     # confirm success and values - zero coverage
@@ -171,7 +171,7 @@ describe("covr and rcmdcheck success", {
     # check covr output
     covr_output <- readRDS(get_result_path(pkg_setup$pkg_result_dir, "covr.rds"))
     expect_true(is.na(covr_output$errors))
-    expect_equal(covr_output$notes, "No testable functions found")
+    expect_equal(covr_output$notes, "no testable functions found")
     expect_equal(covr_output$coverage$totalcoverage, 0) # technically tested above as well
   })
 

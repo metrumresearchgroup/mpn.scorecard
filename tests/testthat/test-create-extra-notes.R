@@ -40,7 +40,7 @@ describe("creating extra notes", {
     )
     expect_identical(
       res$covr_results_df$test_coverage,
-      "No testable functions found"
+      "no testable functions found"
     )
   })
 })
