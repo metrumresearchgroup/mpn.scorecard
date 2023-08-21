@@ -605,19 +605,21 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
     # Format Table
     covr_results_df <- extra_notes_data$covr_results_df
     if (is.numeric(covr_results_df$test_coverage)) {
-      covr_results_df <- covr_results_df %>% dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%"))
+      covr_results_df <- covr_results_df %>%
+        dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
+        format_colnames_to_title()
+
+      # Create flextable
+      covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
+        flextable::set_caption("Test Coverage") %>%
+        flextable::align(align = "right", part = "all", j=2) %>%
+        flextable::add_footer_row(
+          values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
+          colwidths = c(2)
+        )
+    } else {
+      covr_results_flex <- NULL
     }
-    covr_results_df <- covr_results_df %>% format_colnames_to_title()
-
-    # Create flextable
-    covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
-      flextable::set_caption("Test Coverage") %>%
-      flextable::align(align = "right", part = "all", j=2) %>%
-      flextable::add_footer_row(
-        values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
-        colwidths = c(2)
-      )
-
 
     ### R CMD Check Results ###
     check_output <- extra_notes_data$check_output
@@ -638,7 +640,24 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       # Coverage
       cat(sub_header_strs[2])
       cat("\n")
-      cat(knitr::knit_print(covr_results_flex))
+
+      if (is.null(covr_results_flex)) {
+        err_type <- covr_results_df$r_script
+        if (identical(err_type, "File coverage failed")) {
+          cat("\n\nCalculating code coverage failed with following error:\n\n")
+          cat_verbatim(covr_results_df$test_coverage)
+        } else if (identical(err_type, "No coverage results")) {
+          cat(
+            "\n\n", "Unable to calculate coverage: ",
+            covr_results_df$test_coverage, "\n\n"
+          )
+        } else {
+          stop("Unknown error type: ", err_type)
+        }
+      } else {
+        cat(knitr::knit_print(covr_results_flex))
+      }
+
       cat("\n")
     }
 }
