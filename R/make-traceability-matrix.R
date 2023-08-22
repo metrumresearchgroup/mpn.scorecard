@@ -139,14 +139,14 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 
   # nested function to check for the exported functions in a file
   find_functions <- function(file_path, funcs, func_declaration) {
-    file_text <- readLines(file_path) %>% paste(collapse = "\n")
+    file_text <- readLines(file_path) %>% paste(collapse = "\n ")
 
     result <- list()
     for(func in funcs){
       func_search <- paste0("\\Q", func, "\\E")
       if(isTRUE(func_declaration)){
-        pattern <- paste0(paste0("^\\s*", func_search, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
-                          paste0("^\\s*setGeneric\\s*\\(\\s*[\"|']", func_search, "[\"|'].*")
+        pattern <- paste0(paste0("\\s*", func_search, "\\s*(<\\-|=)\\s*function\\s*.*"), "|",
+                          paste0("\\s*setGeneric\\s*\\(\\s*[\"|']", func_search, "[\"|'].*")
         )
       }else{
         pattern <- paste0("(?:\\(|\\s|^)(", func_search, "\\s*\\()")
