@@ -22,6 +22,8 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 
   # some of this code was taken/inspired from riskmetric (finding aliases and man_name from Rd file)
   # see `riskmetric:::pkg_ref_cache.help_aliases.pkg_source` for overlap
+  # TODO: though this code is mainly taken from riskmetric, it falls short for older packages where Rd files
+  # dont necessarily reference the R script they were written in.
   rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
   rd_files <- rd_files[grep("\\.Rd$", rd_files)]
   aliases_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
@@ -33,9 +35,20 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
     man_name <- strsplit(rd_file.i, "\\/man\\/")[[1]][2]
 
     # Get R script function is in
+    # Search man file first, look for name matching if not found
+    # older packages or man files written by hand may not have the following lines
     r_script <- gsub("\\% Please edit documentation in", "",
                      rd_lines[grep("^\\% Please edit documentation in", rd_lines)]) %>%
       stringr::str_trim()
+
+    # look for name matching if not found (i.e. search for my_function in my_function.R)
+    if(rlang::is_empty(r_script)){
+      r_script_search <- find_function_files(fs::path_ext_remove(man_name), file.path(pkg_source_path, "R")) %>%
+        unlist()
+      if(!is.null(r_script_search)){
+        r_script <- file.path("R", basename(r_script_search))
+      }
+    }
 
     if(!rlang::is_empty(r_script)){
       if(grepl(",", r_script)){ # if multiple linked scripts, separate by comma
