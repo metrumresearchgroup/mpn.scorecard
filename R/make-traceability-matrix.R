@@ -340,10 +340,17 @@ map_tests_to_functions <- function(pkg_source_path){
 #' @keywords internal
 get_exports <- function(pkg_source_path){
   # Get exports
-  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+  pkg_namespace <- pkgload::parse_ns_file(pkg_source_path)
+  exports <- unname(unlist(pkg_namespace[c("exports","exportMethods")]))
 
   # Remove specific symbols from exports
   exports <- filter_symbol_functions(exports)
+
+  # Check if everything is exported ("^[[:alpha:]]+" means export everything)
+  if(!rlang::is_empty(pkg_namespace$exportPatterns) &&
+     pkg_namespace$exportPatterns == "^[[:alpha:]]+"){
+    exports <- get_all_functions(pkg_source_path)
+  }
 
   return(exports)
 }
@@ -368,9 +375,6 @@ filter_symbol_functions <- function(funcs){
 #' @keywords internal
 get_all_functions <- function(pkg_source_path){
 
-  # Get exports
-  exports <- get_exports(pkg_source_path)
-
   # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
   r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
   pkg_functions <- purrr::map(r_files, function(r_file_i) {
@@ -382,10 +386,9 @@ get_all_functions <- function(pkg_source_path){
     function_names
   })
   pkg_functions <- purrr::reduce(pkg_functions, c)
+  all_functions <- unique(pkg_functions)
 
-  all_functions <- c(pkg_functions, exports) %>% unique()
-
-  # Remove specific symbols from functions/exports - done again here in case they are reintroduced
+  # Remove specific symbols from functions - done again here in case they are reintroduced
   all_functions <- filter_symbol_functions(all_functions)
 
   return(all_functions)
