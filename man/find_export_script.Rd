@@ -10,6 +10,6 @@ find_export_script(pkg_source_path)
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
 }
 \description{
-We need to know the script so we can determine documentation percentage per script
+Find the R script containing the export
 }
 \keyword{internal}

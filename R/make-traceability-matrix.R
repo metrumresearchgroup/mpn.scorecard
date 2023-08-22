@@ -17,70 +17,16 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   pkg_source_path <- unpack_tarball(pkg_tar_path)
   on.exit(unlink(dirname(pkg_source_path), recursive = TRUE), add = TRUE)
 
-  # Locate script for each export - aliases will be joined per script
+  # Locate script for each exported function
   exports_df <- find_export_script(pkg_source_path)
 
-  # some of this code was taken/inspired from riskmetric (finding aliases and man_name from Rd file)
-  # see `riskmetric:::pkg_ref_cache.help_aliases.pkg_source` for overlap
-  rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
-  rd_files <- rd_files[grep("\\.Rd$", rd_files)]
-  aliases_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
-    rd_lines <- readLines(rd_file.i) %>% suppressWarnings()
+  # Map all Rd files to functions, then join back to exports
+  docs_df <- map_functions_to_docs(pkg_source_path, verbose)
+  exports_df <- dplyr::left_join(exports_df, docs_df, by = c("export" = "pkg_function"))
 
-    # Get Rd file and aliases for exported functions
-    aliases <- gsub("\\}", "", gsub("\\\\alias\\{", "",
-                                    rd_lines[grep("^\\\\alias", rd_lines)]))
-    man_name <- strsplit(rd_file.i, "\\/man\\/")[[1]][2]
-
-    # Get R script function is in
-    r_script <- gsub("\\% Please edit documentation in", "",
-                     rd_lines[grep("^\\% Please edit documentation in", rd_lines)]) %>%
-      stringr::str_trim()
-
-    if(!rlang::is_empty(r_script)){
-      if(grepl(",", r_script)){ # if multiple linked scripts, separate by comma
-        r_script <- strsplit(r_script, ",")[[1]] %>% stringr::str_trim()
-      }
-    }else{
-      # Triggered if documentation exists, but no referenced R script
-      if(isTRUE(verbose)){
-        message(glue::glue("In package `{basename(pkg_source_path)}`, could not find an R script associated with man file: {man_name}"))
-      }
-    }
-
-
-    tidyr::crossing(
-      documentation = paste0("man/", man_name),
-      code_file = r_script,
-      alias = aliases
-    )
-  })
-
-  # This will drop unexported aliases (such as an overall package help file)
-  if(!rlang::is_empty(aliases_df)){
-    aliases_df <- aliases_df %>% dplyr::filter(.data$alias %in% exports_df$export) %>% mutate(export = .data$alias)
-    exports_doc_df <- exports_df %>% dplyr::left_join(aliases_df, by = c("export", "code_file")) %>%
-      dplyr::relocate(c("export", "documentation"))
-  }else{
-    exports_doc_df <- exports_df %>% mutate(documentation = NA_character_, alias = NA_character_)
-    if(isTRUE(verbose)){
-      message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
-    }
-  }
-
-
-  # Tabulate documentation percent per R script - checks that exported functions are documented
-  is_documented_df <- exports_doc_df %>% dplyr::group_by(.data$export, .data$documentation, .data$code_file) %>%
-    dplyr::summarise(is_documented = .data$export %in% .data$alias, .groups = "keep")
-
-  exports_doc_df <- dplyr::full_join(exports_doc_df, is_documented_df, by = c("export", "documentation", "code_file")) %>%
-    dplyr::select(-c("alias"))
-
-  # We dont need documentation in report - but will use for this message
-  # TODO: This triggers messages for a lot of packages. Mostly because this dataframe includes all exports (such as exported data)
-  # Would be nice to know if the export is a function or not, or refine which types should actually trigger messages
-  if(any(exports_doc_df$is_documented == FALSE) && isTRUE(verbose)){
-    docs_missing <- exports_doc_df %>% dplyr::filter(.data$is_documented == FALSE)
+  # Message if any exported functions aren't documented
+  if (any(is.na(exports_df$documentation)) && isTRUE(verbose)) {
+    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$documentation))
     exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
     code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
     message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
@@ -89,10 +35,8 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   # This maps all functions to tests (not just exports) - this was intentional in case we eventually want all functions
   test_mapping_df <- map_tests_to_functions(pkg_source_path)
 
-  func_tests_doc_df <- exports_doc_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function")) %>%
+  func_tests_doc_df <- exports_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function")) %>%
     dplyr::select("exported_function" = "export", everything())
-
-  func_tests_doc_df <- func_tests_doc_df %>% dplyr::select(-"is_documented")
 
   # write results to RDS
   if(!is.null(results_dir)){
@@ -151,8 +95,6 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 
 #' Find the R script containing the export
 #'
-#' We need to know the script so we can determine documentation percentage per script
-#'
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
 #'
 #' @keywords internal
@@ -171,6 +113,46 @@ find_export_script <- function(pkg_source_path){
   return(export_df)
 }
 
+#' Map all Rd files to the functions they describe
+#'
+#' @inheritParams find_export_script
+#' @inheritParams make_traceability_matrix
+#' @keywords internal
+map_functions_to_docs <- function(pkg_source_path, verbose) {
+
+  rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
+  rd_files <- rd_files[grep("\\.Rd$", rd_files)]
+  if (length(rd_files) == 0) {
+    if(isTRUE(verbose)){
+      message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
+    }
+    return(data.frame(pkg_function = character(), documentation = character()))
+  }
+
+  docs_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
+    rd_lines <- readLines(rd_file.i) %>% suppressWarnings()
+
+    # Get Rd file and aliases for exported functions
+    function_names_lines <- rd_lines[grep("(^\\\\alias)|(^\\\\name)", rd_lines)]
+    function_names <- unique(gsub("\\}", "", gsub("((\\\\alias)|(\\\\name))\\{", "", function_names_lines)))
+
+    man_name <- paste0("man/", basename(rd_file.i))
+
+    data.frame(
+      pkg_function = function_names,
+      documentation = rep(man_name, length(function_names))
+    )
+  })
+
+  # if any functions are aliased in more than 1 Rd file, collapse those Rd files to a single row
+  # TODO: is this necessary? is it even possible to have this scenario without R CMD CHECK failing?
+  docs_df <- docs_df %>%
+    dplyr::group_by(.data$pkg_function) %>%
+    dplyr::summarize(documentation = paste(unique(.data$documentation), collapse = ", ")) %>%
+    dplyr::ungroup()
+
+  return(docs_df)
+}
 
 
 #' Get tests/testthat directory from package directory
