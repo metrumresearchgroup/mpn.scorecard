@@ -19,6 +19,10 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 
   # Locate script for each export - aliases will be joined per script
   exports_df <- find_export_script(pkg_source_path)
+  if(is.null(exports_df)){
+    warning(glue::glue("No exports found in package {basename(pkg_source_path)}"))
+    return(invisible(NULL))
+  }
 
   # some of this code was taken/inspired from riskmetric (finding aliases and man_name from Rd file)
   # see `riskmetric:::pkg_ref_cache.help_aliases.pkg_source` for overlap
@@ -176,6 +180,11 @@ find_export_script <- function(pkg_source_path){
 
   # Search for scripts functions are defined in
   export_lst <- find_function_files(funcs = exports, search_dir = file.path(pkg_source_path, "R"))
+
+  # Return NULL if no exports
+  if(rlang::is_empty(export_lst)){
+    return(NULL)
+  }
 
   # convert to dataframe and format code_file column
   export_df <- export_lst %>% tibble::enframe(name = "export", value = "code_file") %>% tidyr::unnest(cols = "code_file") %>%
