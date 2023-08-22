@@ -122,7 +122,7 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 
   # nested function to check for the exported functions in a file
   find_functions <- function(file_path, funcs, func_declaration) {
-    file_text <- readLines(file_path)
+    file_text <- readLines(file_path) %>% paste(collapse = "\n")
 
     result <- list()
     for(func in funcs){
