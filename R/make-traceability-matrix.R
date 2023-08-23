@@ -357,13 +357,28 @@ get_all_functions <- function(pkg_source_path){
   r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     file_text <- readLines(r_file_i) %>% suppressWarnings()
-    pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
-                      "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
-    function_calls <- file_text[grepl(pattern, file_text)]
-    function_names <- gsub(pattern, "\\1\\3", function_calls)
-    # TODO: these patterns ^ are still missing some things... need to address in future commit
+    # TODO: these patterns may still be missing some patterns
 
-    if (length(function_names) == 0 ) {
+    # Single line function declaration
+    pattern_oneline <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
+                              "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
+    function_calls <- file_text[grepl(pattern_oneline, file_text)]
+    function_names <- gsub(pattern_oneline, "\\1\\3", function_calls)
+
+    # Multi-line function declaration (only one pattern type)
+    pattern_multi <- c("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*", "^\\s*function\\s*.*")
+    function_names_multi <- character()
+    for(i in seq_along(file_text)) {
+      if(grepl(pattern_multi[1], file_text[i]) && grepl(pattern_multi[2], file_text[i+1])){
+        function_multi <- gsub(pattern_multi[1], "\\1", file_text[i])
+        function_names_multi <- c(function_names_multi, function_multi)
+      }
+    }
+    if(!rlang::is_empty(function_names_multi)){
+      function_names <- c(function_names, function_names_multi)
+    }
+
+    if(length(function_names) == 0){
       return(tibble::tibble(func = character(), code_file = character()))
     }
     return(tibble::tibble(
