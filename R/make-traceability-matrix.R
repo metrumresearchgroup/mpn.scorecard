@@ -313,16 +313,21 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 #' @keywords internal
 get_exports <- function(pkg_source_path){
   # Get exports
-  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+  nsInfo <- pkgload::parse_ns_file(pkg_source_path)
+  exports <- unname(unlist(nsInfo[c("exports","exportMethods")]))
 
-  # TODO: need to refactor to add support for exportPattern
-  #   could potentially use get_all_functions here, but also might look
-  #   into other approaches (parse() tree, or other pkgload helpers?)
+  # Look for export patterns
+  if(!rlang::is_empty(nsInfo$exportPatterns)){
+    all_functions <- get_all_functions(pkg_source_path)$func
+    for (p in nsInfo$exportPatterns) {
+      exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
+    }
+  }
 
   # Remove specific symbols from exports
   exports <- filter_symbol_functions(exports)
 
-  return(tibble::tibble(exported_function = exports))
+  return(tibble::tibble(exported_function = unique(exports)))
 }
 
 
@@ -332,8 +337,8 @@ get_exports <- function(pkg_source_path){
 #'
 #' @keywords internal
 filter_symbol_functions <- function(funcs){
-  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
-  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
+  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+", "\\%", "<-")
+  pattern <- paste0("(", paste(ignore_patterns, collapse = "|"), ")")
   funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
   return(funcs_return)
 }
