@@ -2,14 +2,15 @@
 % Please edit documentation in R/make-traceability-matrix.R
 \name{get_all_functions}
 \alias{get_all_functions}
-\title{list all package functions}
+\title{list all functions defined in the package code}
 \usage{
 get_all_functions(pkg_source_path)
 }
-\arguments{
-\item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
+\value{
+A data.frame with the columns \code{func} and \code{code_file} with a row for
+every function defined in the package.
 }
 \description{
-list all package functions
+list all functions defined in the package code
 }
 \keyword{internal}

@@ -7,7 +7,7 @@
 filter_symbol_functions(funcs)
 }
 \arguments{
-\item{funcs}{a vector of function names to search for}
+\item{funcs}{vector of functions to filter}
 }
 \description{
 Remove specific symbols from vector of functions
