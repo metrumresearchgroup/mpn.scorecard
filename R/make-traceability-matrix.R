@@ -17,6 +17,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   pkg_source_path <- unpack_tarball(pkg_tar_path)
   on.exit(unlink(dirname(pkg_source_path), recursive = TRUE), add = TRUE)
 
+  # Check that package is valid
+  check_trac_is_possible(pkg_source_path)
+
   # Get data.frame of exported functions
   exports_df <- get_exports(pkg_source_path)
 
@@ -40,6 +43,14 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 
 
   return(exports_df)
+}
+
+
+check_trac_is_possible <- function(pkg_source_path){
+  r_dir <- file.path(pkg_source_path, "R")
+  if(!fs::dir_exists(r_dir)){
+    stop("an R directory is needed to create a traceability matrix")
+  }
 }
 
 
