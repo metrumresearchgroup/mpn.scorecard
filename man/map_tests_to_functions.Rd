@@ -2,14 +2,23 @@
 % Please edit documentation in R/make-traceability-matrix.R
 \name{map_tests_to_functions}
 \alias{map_tests_to_functions}
-\title{map test files and directories to all functions}
+\title{Map test files and directories to all functions}
 \usage{
-map_tests_to_functions(pkg_source_path)
+map_tests_to_functions(exports_df, pkg_source_path)
 }
 \arguments{
+\item{exports_df}{data.frame with a column, named \code{exported_function},
+containing the names of all exported functions. Can also have other columns
+(which will be returned unmodified).}
+
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
 }
+\value{
+Returns the data.frame passed to \code{exports_df}, with \code{test_files} and
+\code{test_dirs} columns appended. These columns will contain the paths to the
+test files that call the associated exported functions.
+}
 \description{
-map test files and directories to all functions
+Map test files and directories to all functions
 }
 \keyword{internal}

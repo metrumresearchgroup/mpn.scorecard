@@ -2,7 +2,7 @@
 % Please edit documentation in R/make-traceability-matrix.R
 \name{find_export_script}
 \alias{find_export_script}
-\title{Find the R script containing the export}
+\title{Get all exported functions and map them to R script where they are defined}
 \usage{
 find_export_script(pkg_source_path)
 }
@@ -10,6 +10,6 @@ find_export_script(pkg_source_path)
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
 }
 \description{
-Find the R script containing the export
+Get all exported functions and map them to R script where they are defined
 }
 \keyword{internal}

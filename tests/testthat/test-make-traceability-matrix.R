@@ -33,8 +33,7 @@ describe("creating extra notes", {
     )
     expect_equal(
       res$messages,
-      c(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"),
-        glue::glue("In package `{pkg_setup_select$pkg_name}`, the R scripts (R/myscript.R) are missing documentation for the following exports: \nmyfunction\n\n"))
+      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
     )
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
@@ -121,7 +120,7 @@ describe("creating extra notes", {
 
   it("find_export_script", {
     # `find_export_script` should work regardless of documentation presence (in `man/`)
-    template_df <- tibble::tibble(export = "myfunction", code_file = "R/myscript.R")
+    template_df <- tibble::tibble(exported_function = "myfunction", code_file = "R/myscript.R")
 
     # Documented correctly
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
@@ -156,8 +155,9 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_name, "this works")
     expect_equal(tests_df$test_dir, "tests/testthat")
 
-    map_tests_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
-    expect_equal(map_tests_df$pkg_function, "myfunction")
+    exports_df <- find_export_script(pkg_setup_select$pkg_dir)
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
+    expect_equal(map_tests_df$exported_function, "myfunction")
     expect_equal(map_tests_df$test_files, "test-myscript.R")
     expect_equal(map_tests_df$test_dirs, "tests/testthat")
 
@@ -179,8 +179,9 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_name, rep("this works", 2))
     expect_equal(tests_df$test_dir, c("tests/testthat", "inst/other_tests"))
 
-    map_tests_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
-    expect_equal(map_tests_df$pkg_function, rep("myfunction", 2))
+    exports_df <- find_export_script(pkg_setup_select$pkg_dir)
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
+    expect_equal(map_tests_df$exported_function, rep("myfunction", 2))
     expect_equal(map_tests_df$test_files, c("test-myscript.R", "test-new_tests.R"))
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
 
@@ -212,7 +213,8 @@ describe("creating extra notes", {
     expect_equal(length(test_files$myfunction), 1)
 
     # Test overall function
-    test_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest("test_files")
+    exports_df <- find_export_script(pkg_setup_select$pkg_dir)
+    test_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest("test_files")
     expect_equal(unique(test_df$test_files), "test-myscript.R")
   })
 

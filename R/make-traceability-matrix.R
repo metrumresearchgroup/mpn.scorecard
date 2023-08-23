@@ -21,33 +21,22 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   exports_df <- find_export_script(pkg_source_path)
 
   # Map all Rd files to functions, then join back to exports
-  docs_df <- map_functions_to_docs(pkg_source_path, verbose)
-  exports_df <- dplyr::left_join(exports_df, docs_df, by = c("export" = "pkg_function"))
+  exports_df <- map_functions_to_docs(exports_df, pkg_source_path, verbose)
 
-  # Message if any exported functions aren't documented
-  if (any(is.na(exports_df$documentation)) && isTRUE(verbose)) {
-    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$documentation))
-    exports_missing <- unique(docs_missing$export) %>% paste(collapse = "\n")
-    code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
-    message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
-  }
-
-  # This maps all functions to tests (not just exports) - this was intentional in case we eventually want all functions
-  test_mapping_df <- map_tests_to_functions(pkg_source_path)
-
-  func_tests_doc_df <- exports_df %>% dplyr::left_join(test_mapping_df, by = c("export" = "pkg_function")) %>%
-    dplyr::select("exported_function" = "export", everything())
+  # This maps all functions to tests, then join back to exports
+  exports_df <- map_tests_to_functions(exports_df, pkg_source_path)
 
   # write results to RDS
+  exports_df <- dplyr::select(exports_df, "exported_function", everything())
   if(!is.null(results_dir)){
     saveRDS(
-      func_tests_doc_df,
+      exports_df,
       get_result_path(results_dir, "export_doc.rds")
     )
   }
 
 
-  return(func_tests_doc_df)
+  return(exports_df)
 }
 
 
@@ -93,21 +82,23 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
   return(func_lst)
 }
 
-#' Find the R script containing the export
+#' Get all exported functions and map them to R script where they are defined
 #'
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#'
+#' @value A data.frame with the columns `exported_function` and `code_file`.
 #'
 #' @keywords internal
 find_export_script <- function(pkg_source_path){
 
-  # Get exports
+  # Get exported functions
   exports <- get_exports(pkg_source_path)
 
   # Search for scripts functions are defined in
   export_lst <- find_function_files(funcs = exports, search_dir = file.path(pkg_source_path, "R"))
 
   # convert to dataframe and format code_file column
-  export_df <- export_lst %>% tibble::enframe(name = "export", value = "code_file") %>% tidyr::unnest(cols = "code_file") %>%
+  export_df <- export_lst %>% tibble::enframe(name = "exported_function", value = "code_file") %>% tidyr::unnest(cols = "code_file") %>%
     mutate(code_file = paste0("R/", basename(.data$code_file)))
 
   return(export_df)
@@ -115,10 +106,18 @@ find_export_script <- function(pkg_source_path){
 
 #' Map all Rd files to the functions they describe
 #'
+#' @param exports_df data.frame with a column, named `exported_function`,
+#'   containing the names of all exported functions. Can also have other columns
+#'   (which will be returned unmodified).
 #' @inheritParams find_export_script
 #' @inheritParams make_traceability_matrix
+#'
+#' @return Returns the data.frame passed to `exports_df`, with a `documentation`
+#'   column appended. This column will contain the path to the `.Rd` files in
+#'   `man/` that document the associated exported functions.
+#'
 #' @keywords internal
-map_functions_to_docs <- function(pkg_source_path, verbose) {
+map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 
   rd_files <- list.files(file.path(pkg_source_path, "man"), full.names = TRUE)
   rd_files <- rd_files[grep("\\.Rd$", rd_files)]
@@ -126,7 +125,7 @@ map_functions_to_docs <- function(pkg_source_path, verbose) {
     if(isTRUE(verbose)){
       message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
     }
-    return(data.frame(pkg_function = character(), documentation = character()))
+    return(dplyr::mutate(exports_df, "documentation" = NA))
   }
 
   docs_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
@@ -151,7 +150,18 @@ map_functions_to_docs <- function(pkg_source_path, verbose) {
     dplyr::summarize(documentation = paste(unique(.data$documentation), collapse = ", ")) %>%
     dplyr::ungroup()
 
-  return(docs_df)
+  # join back to filter to only exported functions
+  exports_df <- dplyr::left_join(exports_df, docs_df, by = c("exported_function" = "pkg_function"))
+
+  # message if any exported functions aren't documented
+  if (any(is.na(exports_df$documentation)) && isTRUE(verbose)) {
+    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$documentation))
+    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
+    code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
+    message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
+  }
+
+  return(exports_df)
 }
 
 
@@ -254,12 +264,15 @@ get_tests <- function(
 }
 
 
-#' map test files and directories to all functions
+#' Map test files and directories to all functions
 #'
-#' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams map_functions_to_docs
+#' @return Returns the data.frame passed to `exports_df`, with `test_files` and
+#'   `test_dirs` columns appended. These columns will contain the paths to the
+#'   test files that call the associated exported functions.
 #'
 #' @keywords internal
-map_tests_to_functions <- function(pkg_source_path){
+map_tests_to_functions <- function(exports_df, pkg_source_path){
 
   test_dirs <- get_testing_dir(pkg_source_path)
 
@@ -289,7 +302,9 @@ map_tests_to_functions <- function(pkg_source_path){
     dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
     dplyr::ungroup()
 
-  return(func_test_df)
+  exports_df <- exports_df %>% dplyr::left_join(func_test_df, by = c("exported_function" = "pkg_function"))
+
+  return(exports_df)
 
 }
 

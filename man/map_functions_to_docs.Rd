@@ -4,12 +4,21 @@
 \alias{map_functions_to_docs}
 \title{Map all Rd files to the functions they describe}
 \usage{
-map_functions_to_docs(pkg_source_path, verbose)
+map_functions_to_docs(exports_df, pkg_source_path, verbose)
 }
 \arguments{
+\item{exports_df}{data.frame with a column, named \code{exported_function},
+containing the names of all exported functions. Can also have other columns
+(which will be returned unmodified).}
+
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
 
 \item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
+}
+\value{
+Returns the data.frame passed to \code{exports_df}, with a \code{documentation}
+column appended. This column will contain the path to the \code{.Rd} files in
+\verb{man/} that document the associated exported functions.
 }
 \description{
 Map all Rd files to the functions they describe
