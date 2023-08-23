@@ -13,6 +13,8 @@ describe("Traceability Matrix", {
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
     # Confirm values - documentation
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
     expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
@@ -69,7 +71,9 @@ describe("Traceability Matrix", {
     expect_true(fs::file_exists(export_doc_path))
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    # Confirm values - documentation
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_true(is.na(unique(trac_mat$code_file)))
     expect_true(is.na(unique(trac_mat$documentation)))
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
