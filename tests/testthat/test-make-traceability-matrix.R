@@ -156,7 +156,8 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_dir, "tests/testthat")
 
     exports_df <- find_export_script(pkg_setup_select$pkg_dir)
-    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest(c(test_files, test_dirs))
     expect_equal(map_tests_df$exported_function, "myfunction")
     expect_equal(map_tests_df$test_files, "test-myscript.R")
     expect_equal(map_tests_df$test_dirs, "tests/testthat")
@@ -180,7 +181,8 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_dir, c("tests/testthat", "inst/other_tests"))
 
     exports_df <- find_export_script(pkg_setup_select$pkg_dir)
-    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest(c(test_files, test_dirs))
     expect_equal(map_tests_df$exported_function, rep("myfunction", 2))
     expect_equal(map_tests_df$test_files, c("test-myscript.R", "test-new_tests.R"))
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
@@ -192,11 +194,11 @@ describe("creating extra notes", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     test_dir <- file.path(pkg_setup_select$pkg_dir, "tests", "testthat")
 
-    # Examples that should -not- get picked up by find_function_files
+    # Examples that should -not- get picked up by map_tests_to_functions()
     test_lines1 <- c(
       "# comment about myfunction",
-      "do.call(myfunction, list(1))", # remove if support for this is added later
-      "myfunction2 <- myfunction",
+      "do.call('myfunction', list(1))", # remove if support for strings in this case is added later
+      "print('calling my myfunction() is the best')",
       "myfunction2(1)"
     )
 
@@ -214,7 +216,8 @@ describe("creating extra notes", {
 
     # Test overall function
     exports_df <- find_export_script(pkg_setup_select$pkg_dir)
-    test_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir) %>% tidyr::unnest("test_files")
+    test_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest("test_files")
     expect_equal(unique(test_df$test_files), "test-myscript.R")
   })
 

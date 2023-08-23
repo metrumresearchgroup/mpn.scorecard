@@ -24,7 +24,7 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   exports_df <- map_functions_to_docs(exports_df, pkg_source_path, verbose)
 
   # This maps all functions to tests, then join back to exports
-  exports_df <- map_tests_to_functions(exports_df, pkg_source_path)
+  exports_df <- map_tests_to_functions(exports_df, pkg_source_path, verbose)
 
   # write results to RDS
   exports_df <- dplyr::select(exports_df, "exported_function", everything())
@@ -86,7 +86,7 @@ find_function_files <- function(funcs, search_dir, func_declaration = TRUE){
 #'
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
 #'
-#' @value A data.frame with the columns `exported_function` and `code_file`.
+#' @return A data.frame with the columns `exported_function` and `code_file`.
 #'
 #' @keywords internal
 find_export_script <- function(pkg_source_path){
@@ -272,37 +272,69 @@ get_tests <- function(
 #'   test files that call the associated exported functions.
 #'
 #' @keywords internal
-map_tests_to_functions <- function(exports_df, pkg_source_path){
+map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
+  # collect test directories and test files
   test_dirs <- get_testing_dir(pkg_source_path)
-
-  pkg_functions <- get_all_functions(pkg_source_path)
-
-  if(!is.null(test_dirs)){
-    pkg_func_df <- purrr::map_dfr(test_dirs, function(test_dir_x){
-      func_lst <- find_function_files(
-        funcs = pkg_functions,
-        search_dir = test_dir_x,
-        func_declaration = FALSE
-      )
-      if(rlang::is_empty(func_lst)) return(NULL)
-      tibble::enframe(func_lst, name = "pkg_function", value = "test_file") %>% tidyr::unnest("test_file") %>%
-        mutate(test_dir = fs::path_rel(test_dir_x, pkg_source_path), test_file = basename(.data$test_file))
-    })
-  }else{
-    pkg_func_df <- tibble::tibble(
-      pkg_function = pkg_functions,
-      test_file = "",
-      test_dir = "No tests found",
-    )
+  if (is.null(test_dirs)) {
+    # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
+    #   (instead just check if passed dirs exist and error if not?)
+    if (isTRUE(verbose)) {
+      message(glue::glue("No testing directories found in {pkg_source_path}"))
+    }
+    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
   }
 
-  # Nest test files
-  func_test_df <- pkg_func_df %>% dplyr::group_by(.data$pkg_function) %>%
+  test_files <- fs::dir_ls(test_dirs, glob = "*.R")
+  if (length(test_files) == 0) {
+    if (isTRUE(verbose)) {
+      message(glue::glue("No test files found in {paste(test_dirs, collapse = ', ')} for {pkg_source_path}"))
+    }
+    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
+  }
+
+  # map over test files and parse all functions called in those files
+  func_test_df <- purrr::map_dfr(test_files, function(test_file.i) {
+    parsed_df <- test_file.i %>%
+      parse(keep.source = TRUE) %>%
+      utils::getParseData() %>%
+      tibble::as_tibble()
+
+    # NOTE: this also collects all symbols, to account for
+    #   non-standard function calls (e.g. purrr, do.call, etc.).
+    #   Unrelated symbols (and functions) are filtered out by the left_join below.
+    uniq_funcs <- parsed_df %>%
+      dplyr::filter(.data$token %in% c("SYMBOL_FUNCTION_CALL", "SYMBOL")) %>%
+      dplyr::pull("text") %>%
+      unique()
+
+    if (length(uniq_funcs) == 0) {
+      # probably only possible if the file is basically empty
+      return(data.frame(func = character(), test_file = character(), test_dir = character()))
+    }
+
+    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
+    return(data.frame(
+      func = uniq_funcs,
+      test_file = rep(basename(test_file.i), length(uniq_funcs)),
+      test_dir = rep(test_dir.i, length(uniq_funcs))
+    ))
+  })
+
+  # collapse to one row per unique function
+  func_test_df <- func_test_df %>% dplyr::group_by(.data$func) %>%
     dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
     dplyr::ungroup()
 
-  exports_df <- exports_df %>% dplyr::left_join(func_test_df, by = c("exported_function" = "pkg_function"))
+  # left_join to exports_df to filter back to only this package's exported functions
+  exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
+
+  # message if any exported functions aren't documented
+  if (any(is.na(exports_df$test_files)) && isTRUE(verbose)) {
+    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$test_files))
+    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
+    message(glue::glue("In package `{basename(pkg_source_path)}`, the following exported functions were not found in any tests in {paste(test_dirs, collapse = ', ')}: \n{exports_missing}"))
+  }
 
   return(exports_df)
 

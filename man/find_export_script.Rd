@@ -9,6 +9,9 @@ find_export_script(pkg_source_path)
 \arguments{
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
 }
+\value{
+A data.frame with the columns \code{exported_function} and \code{code_file}.
+}
 \description{
 Get all exported functions and map them to R script where they are defined
 }
