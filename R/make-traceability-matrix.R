@@ -348,7 +348,7 @@ get_exports <- function(pkg_source_path){
 #'
 #' @keywords internal
 filter_symbol_functions <- function(funcs){
-  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
+  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+", "\\%", "<-")
   pattern <- paste0("(", paste(ignore_patterns, collapse = "|"), ")")
   funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
   return(funcs_return)
