@@ -74,6 +74,17 @@ describe("Traceability Matrix", {
     )
   })
 
+  it("make_traceability_matrix - no R directory integration test", {
+    # No R directory
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_R_dir")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    expect_error(
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x),
+      "an R directory is needed to create a traceability matrix"
+    )
+  })
 
   it("get_all_functions: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
