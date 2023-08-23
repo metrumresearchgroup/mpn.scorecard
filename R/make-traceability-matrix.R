@@ -322,7 +322,7 @@ get_exports <- function(pkg_source_path){
   # Remove specific symbols from exports
   exports <- filter_symbol_functions(exports)
 
-  return(data.frame(exported_function = exports))
+  return(tibble::tibble(exported_function = exports))
 }
 
 
@@ -359,9 +359,9 @@ get_all_functions <- function(pkg_source_path){
     # TODO: these patterns ^ are still missing some things... need to address in future commit
 
     if (length(function_names) == 0 ) {
-      return(data.frame(func = character(), code_file = character()))
+      return(tibble::tibble(func = character(), code_file = character()))
     }
-    return(data.frame(
+    return(tibble::tibble(
       func = function_names,
       code_file = rep(paste0("R/", basename(r_file_i)), length(function_names))
     ))

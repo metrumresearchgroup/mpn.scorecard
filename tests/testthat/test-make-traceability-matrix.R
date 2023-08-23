@@ -107,7 +107,7 @@ describe("creating extra notes", {
     )
 
     # Confirm correct location
-    expect_equal(basename(unique(unlist(funcs_found$code_file))), c("myscript1.R", "myscript2.R"))
+    expect_equal(basename(unique(funcs_found$code_file)), c("myscript.R","myscript1.R", "myscript2.R"))
   })
 
 
