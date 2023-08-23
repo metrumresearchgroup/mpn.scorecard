@@ -325,11 +325,16 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 #' @keywords internal
 get_exports <- function(pkg_source_path){
   # Get exports
-  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+  nsInfo <- pkgload::parse_ns_file(pkg_source_path)
+  exports <- unname(unlist(nsInfo[c("exports","exportMethods")]))
 
-  # TODO: need to refactor to add support for exportPattern
-  #   could potentially use get_all_functions here, but also might look
-  #   into other approaches (parse() tree, or other pkgload helpers?)
+  # Look for export patterns
+  if(!rlang::is_empty(nsInfo$exportPatterns)){
+    all_functions <- get_toplevel_assignments(pkg_source_path)$func
+    for (p in nsInfo$exportPatterns) {
+      exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
+    }
+  }
 
   # Remove specific symbols from exports
   exports <- unique(exports)

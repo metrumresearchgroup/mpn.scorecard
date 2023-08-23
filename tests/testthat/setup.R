@@ -123,7 +123,7 @@ create_package_template <- function(
 create_testing_package <- function(
     pkg_name = "mypackage",
     type = c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite",
-             "pass_no_functions", "pass_no_R_dir", "pass_no_docs",
+             "pass_no_functions", "pass_no_R_dir","pass_export_patterns", "pass_no_docs",
              "fail_func_syntax", "fail_test"),
     nest_results_dir = TRUE
 ){
@@ -158,6 +158,10 @@ create_testing_package <- function(
     if(!(type %in% c("fail_func_syntax", "pass_no_docs"))){
       # Basically run `devtools::document()`, if the function is suitable
       roxygen2::roxygenise(pkg_setup_dirs$pkg_dir, load_code = roxygen2::load_source) %>% suppressMessages()
+      if(type == "pass_export_patterns"){
+        ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
+        write("exportPattern(\"^[[:alpha:]]+\")", file = ns_file)
+      }
     }else{
       # Manually export function if syntax issue is present (only way this scenario could happen)
       ns_file <- file.path(pkg_setup_dirs$pkg_dir, "NAMESPACE")
@@ -216,7 +220,7 @@ create_testing_package <- function(
 setup_multiple_pkgs <- function(){
 
   pkg_types <- c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite",
-                 "pass_no_functions", "pass_no_R_dir", "pass_no_docs",
+                 "pass_no_functions", "pass_no_R_dir", "pass_export_patterns", "pass_no_docs",
                  "fail_func_syntax", "fail_test")
   pkg_names <- paste0("package", seq_along(pkg_types))
 

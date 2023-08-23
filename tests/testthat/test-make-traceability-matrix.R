@@ -46,6 +46,49 @@ describe("Traceability Matrix", {
     )
   })
 
+
+  it("make_traceability_matrix - export patterns integration test", {
+    # Normal behavior
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_export_patterns")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE)
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
+    expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      "test-myscript.R"
+    )
+
+    # Syntax error (cant find R script)
+    # Add syntax error to new script
+    r_script <- file.path(pkg_setup_select$pkg_dir, "R", "myscript_error.R")
+    on.exit(fs::file_delete(r_script), add = TRUE)
+    func_lines <- "myfunction2 <- function(x { x + 1"
+    writeLines(func_lines, r_script)
+
+    # these both generate this warning because this test hits the exportPattern
+    # path in get_exports, which calls get_toplevel_assignments() (the source of this warning)
+    expect_warning({
+        exports_df <- get_exports(pkg_setup_select$pkg_dir)
+        exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
+      },
+      "Failed to parse"
+    )
+
+    expect_equal(unique(exports_df$exported_function), "myfunction")
+    expect_equal(unique(exports_df$code_file), "R/myscript.R")
+
+  })
+
+
   it("make_traceability_matrix - cant link exports integration test", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
@@ -129,6 +172,20 @@ describe("Traceability Matrix", {
       glue("No exports found in package {basename(pkg_setup_select$pkg_dir)}")
     )
   })
+
+
+  it("get_exports", {
+    # Test individual exports
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    expect_equal(exports_df$exported_function, "myfunction")
+
+    # Test export patterns
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_export_patterns")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    expect_equal(exports_df$exported_function, "myfunction")
+  })
+
 
   it("get_toplevel_assignments: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
