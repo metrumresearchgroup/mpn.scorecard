@@ -336,9 +336,14 @@ get_exports <- function(pkg_source_path){
   }
 
   # Remove specific symbols from exports
+  exports <- unique(exports)
   exports <- filter_symbol_functions(exports)
 
-  return(tibble::tibble(exported_function = unique(exports)))
+  if(rlang::is_empty(exports)){
+    stop(glue::glue("No exports found in package {basename(pkg_source_path)}"))
+  }
+
+  return(tibble::tibble(exported_function = exports))
 }
 
 
