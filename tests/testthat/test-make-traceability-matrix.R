@@ -131,16 +131,18 @@ describe("Traceability Matrix", {
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
     func_lines1 <- c(
-      "myfunc1 <- function(x) {x + 1}",
-      "myfunc2<-function(x) {x + 1}",
-      "myfunc3 =function(x) {x + 1}"
+      "myfunc1 <- function(x) {x + 1}", # normal
+      "myfunc2<-function(x) {x + 1}", # spacing
+      "myfunc3 =function(x) {x + 1}", # equal sign
+      "myfunc4 <-
+      function(x) {x + 1}" # multi-line declaration
     )
     func_lines2 <- c(
-      "setGeneric(\"myfunc4\")",
-      "setGeneric('myfunc5')",
-      "setGeneric ( 'myfunc6' )"
+      "setGeneric(\"myfunc5\")", # setGeneric
+      "setGeneric('myfunc6')", # different quotes
+      "setGeneric ( 'myfunc7' )" # spacing
     )
-    func_names <- paste0("myfunc", 1:6)
+    func_names <- paste0("myfunc", 1:7)
 
     temp_file1 <- file.path(r_dir, "myscript1.R")
     fs::file_create(temp_file1); on.exit(fs::file_delete(temp_file1), add = TRUE)
