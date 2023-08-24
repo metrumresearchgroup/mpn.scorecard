@@ -21,6 +21,7 @@ create_package_template <- function(
     pkg_name = "mypackage",
     pass_warning = FALSE,
     pass_note = FALSE,
+    add_R_dir = TRUE,
     add_tests = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
@@ -55,10 +56,14 @@ create_package_template <- function(
 
   ## init other directories and default files ##
   # R/ directory
-  r_dir <- file.path(pkg_dir, "R")
-  fs::dir_create(r_dir)
-  script_file <- file.path(r_dir, "myscript.R")
-  fs::file_create(script_file)
+  if(isTRUE(add_R_dir)){
+    r_dir <- file.path(pkg_dir, "R")
+    fs::dir_create(r_dir)
+    script_file <- file.path(r_dir, "myscript.R")
+    fs::file_create(script_file)
+  }else{
+    script_file <- NULL
+  }
 
   # Tests and running of tests
   if(isTRUE(add_tests)){
@@ -78,7 +83,10 @@ create_package_template <- function(
     # Test file
     test_file <- file.path(test_dir, "test-myscript.R")
     fs::file_create(test_file)
+  }else{
+    test_file <- NULL
   }
+
 
 
   return(
@@ -114,7 +122,8 @@ create_package_template <- function(
 #' @keywords internal
 create_testing_package <- function(
     pkg_name = "mypackage",
-    type = c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
+    type = c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite",
+             "pass_no_functions", "pass_no_R_dir",
              "fail_func_syntax", "fail_test"),
     nest_results_dir = TRUE
 ){
@@ -126,14 +135,15 @@ create_testing_package <- function(
     pkg_name = pkg_name,
     pass_warning = (type == "pass_warning"),
     pass_note = (type == "pass_notes"),
-    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions"))
+    add_R_dir = (type != "pass_no_R_dir"),
+    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions", "pass_no_R_dir"))
   )
 
   # Add function to R/  (unless type = 'pass_no_functions')
   if(type == "fail_func_syntax"){
     # Add a file with a syntax error to the package
     func_lines <- "myfunction <- function(x { x + 1"
-  }else if(type != "pass_no_functions"){
+  }else if(!(type %in% c("pass_no_functions", "pass_no_R_dir"))){
     func_lines <- glue::glue("
     #' Adds 1 to x
     #' @param x a number
@@ -142,7 +152,7 @@ create_testing_package <- function(
     ", .open = "{{", .close = "}}")
   }
 
-  if(type != "pass_no_functions"){
+  if(!(type %in% c("pass_no_functions", "pass_no_R_dir"))){
     writeLines(func_lines, pkg_setup_dirs$r_file)
     # Export function
     if(type != "fail_func_syntax"){
@@ -166,7 +176,7 @@ create_testing_package <- function(
   }
 
 
-  if(!(type %in% c("pass_no_test_suite", "pass_no_functions"))){
+  if(!(type %in% c("pass_no_test_suite", "pass_no_functions", "pass_no_R_dir"))){
     writeLines(test_lines, pkg_setup_dirs$test_file)
   }
 
@@ -205,9 +215,10 @@ create_testing_package <- function(
 #' @keywords internal
 setup_multiple_pkgs <- function(){
 
-  pkg_names <- paste0("package", 1:8)
-  pkg_types <- c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite", "pass_no_functions",
+  pkg_types <- c("pass_success", "pass_warning", "pass_notes", "pass_no_test", "pass_no_test_suite",
+                 "pass_no_functions", "pass_no_R_dir",
                  "fail_func_syntax", "fail_test")
+  pkg_names <- paste0("package", seq_along(pkg_types))
 
   pkg_setups <- purrr::map2_dfr(pkg_names, pkg_types, ~{
     pkg_setup <- create_testing_package(
