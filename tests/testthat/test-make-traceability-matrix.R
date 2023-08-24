@@ -1,5 +1,5 @@
 
-describe("creating extra notes", {
+describe("Traceability Matrix", {
 
   it("make_traceability_matrix - success integration test", {
 
@@ -21,7 +21,7 @@ describe("creating extra notes", {
   })
 
 
-  it("make_traceability_matrix - missing documentation", {
+  it("make_traceability_matrix - missing documentation integration test", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -49,7 +49,7 @@ describe("creating extra notes", {
   })
 
 
-  it("make_traceability_matrix - no test suite", {
+  it("make_traceability_matrix - no test suite integration test", {
     # No test suite
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test_suite")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -74,22 +74,58 @@ describe("creating extra notes", {
     )
   })
 
+  it("make_traceability_matrix - no R directory or functions integration test", {
 
-  it("identify functions and the script they're coded in", {
+    # No R directory
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_R_dir")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    expect_error(
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x),
+      "an R directory is needed to create a traceability matrix"
+    )
+
+    # No R functions found
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_functions")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    # expect_warning(
+    #   trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x),
+    #   "an R directory is needed to create a traceability matrix"
+    # )
+  })
+
+  it("get_exports", {
+    # Test individual exports
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    expect_equal(exports_df$exported_function, "myfunction")
+
+    # Test export patterns
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_export_patterns")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    expect_equal(exports_df$exported_function, "myfunction")
+  })
+
+  it("get_all_functions: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
     func_lines1 <- c(
-      "myfunc1 <- function(x) {x + 1}",
-      "myfunc2<-function(x) {x + 1}",
-      "myfunc3 =function(x) {x + 1}"
+      "myfunc1 <- function(x) {x + 1}", # normal
+      "myfunc2<-function(x) {x + 1}", # spacing
+      "myfunc3 =function(x) {x + 1}", # equal sign
+      "myfunc4 <-
+      function(x) {x + 1}" # multi-line declaration
     )
     func_lines2 <- c(
-      "setGeneric(\"myfunc4\")",
-      "setGeneric('myfunc5')",
-      "setGeneric ( 'myfunc6' )"
+      "setGeneric(\"myfunc5\")", # setGeneric
+      "setGeneric('myfunc6')", # different quotes
+      "setGeneric ( 'myfunc7' )" # spacing
     )
-    func_names <- paste0("myfunc", 1:6)
+    func_names <- paste0("myfunc", 1:7)
 
     temp_file1 <- file.path(r_dir, "myscript1.R")
     fs::file_create(temp_file1); on.exit(fs::file_delete(temp_file1), add = TRUE)
