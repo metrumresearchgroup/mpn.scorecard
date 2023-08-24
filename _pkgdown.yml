@@ -14,6 +14,7 @@ reference:
 - title: Scoring & Summary
   contents:
   - score_pkg
+  - make_traceability_matrix
   - summarize_package_results
 
 
