@@ -33,8 +33,7 @@ describe("creating extra notes", {
     )
     expect_equal(
       res$messages,
-      c(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"),
-        glue::glue("In package `{pkg_setup_select$pkg_name}`, the R scripts (R/myscript.R) are missing documentation for the following exports: \nmyfunction\n\n"))
+      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
     )
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
@@ -77,10 +76,6 @@ describe("creating extra notes", {
 
 
   it("identify functions and the script they're coded in", {
-    # `find_function_files` and `get_all_functions` follow slightly different forms of regex for finding functions and extracting their names
-    # Both must be tested separately to ensure the regex matches up
-
-    # Test `find_function_files`
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
@@ -104,37 +99,36 @@ describe("creating extra notes", {
     fs::file_create(temp_file2); on.exit(fs::file_delete(temp_file2), add = TRUE)
     writeLines(func_lines2, temp_file2)
 
-    funcs_found <- find_function_files(func_names, search_dir = r_dir)
-
-    # Confirm all function variants are found
-    expect_equal(names(funcs_found), func_names)
-    # Confirm correct location
-    expect_equal(basename(unique(unlist(funcs_found))), c("myscript1.R", "myscript2.R"))
-
     # Test get_all_functions - also contains the original `myfunction`
+    funcs_found <- get_all_functions(pkg_setup_select$pkg_dir)
     expect_equal(
-      get_all_functions(pkg_setup_select$pkg_dir),
+      funcs_found$func,
       c("myfunction", func_names)
     )
+
+    # Confirm correct location
+    expect_equal(basename(unique(funcs_found$code_file)), c("myscript.R","myscript1.R", "myscript2.R"))
   })
 
 
-  it("find_export_script", {
-    # `find_export_script` should work regardless of documentation presence (in `man/`)
-    template_df <- tibble::tibble(export = "myfunction", code_file = "R/myscript.R")
+  it("map_functions_to_scripts", {
+    # `map_functions_to_scripts` should work regardless of documentation presence (in `man/`)
+    template_df <- tibble::tibble(exported_function = "myfunction", code_file = "R/myscript.R")
 
     # Documented correctly
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
     expect_equal(
       template_df,
-      find_export_script(pkg_setup_select$pkg_dir)
+      map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE)
     )
 
     # Not documented, but still exported
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
     expect_equal(
       template_df,
-      find_export_script(pkg_setup_select$pkg_dir)
+      map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE)
     )
   })
 
@@ -156,8 +150,10 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_name, "this works")
     expect_equal(tests_df$test_dir, "tests/testthat")
 
-    map_tests_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
-    expect_equal(map_tests_df$pkg_function, "myfunction")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest(c(test_files, test_dirs))
+    expect_equal(map_tests_df$exported_function, "myfunction")
     expect_equal(map_tests_df$test_files, "test-myscript.R")
     expect_equal(map_tests_df$test_dirs, "tests/testthat")
 
@@ -179,8 +175,10 @@ describe("creating extra notes", {
     expect_equal(tests_df$test_name, rep("this works", 2))
     expect_equal(tests_df$test_dir, c("tests/testthat", "inst/other_tests"))
 
-    map_tests_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest(c(test_files, test_dirs))
-    expect_equal(map_tests_df$pkg_function, rep("myfunction", 2))
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    map_tests_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest(c(test_files, test_dirs))
+    expect_equal(map_tests_df$exported_function, rep("myfunction", 2))
     expect_equal(map_tests_df$test_files, c("test-myscript.R", "test-new_tests.R"))
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
 
@@ -191,11 +189,11 @@ describe("creating extra notes", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     test_dir <- file.path(pkg_setup_select$pkg_dir, "tests", "testthat")
 
-    # Examples that should -not- get picked up by find_function_files
+    # Examples that should -not- get picked up by map_tests_to_functions()
     test_lines1 <- c(
       "# comment about myfunction",
-      "do.call(myfunction, list(1))", # remove if support for this is added later
-      "myfunction2 <- myfunction",
+      "do.call('myfunction', list(1))", # remove if support for strings in this case is added later
+      "print('calling my myfunction() is the best')",
       "myfunction2(1)"
     )
 
@@ -206,13 +204,9 @@ describe("creating extra notes", {
     writeLines(test_lines1, temp_file1)
 
     # Search for test files - expect only original test
-
-    # Test internal function
-    test_files <- find_function_files("myfunction", search_dir = test_dir, func_declaration = FALSE)
-    expect_equal(length(test_files$myfunction), 1)
-
-    # Test overall function
-    test_df <- map_tests_to_functions(pkg_setup_select$pkg_dir) %>% tidyr::unnest("test_files")
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+    test_df <- map_tests_to_functions(exports_df, pkg_setup_select$pkg_dir, verbose = FALSE) %>%
+      tidyr::unnest("test_files")
     expect_equal(unique(test_df$test_files), "test-myscript.R")
   })
 

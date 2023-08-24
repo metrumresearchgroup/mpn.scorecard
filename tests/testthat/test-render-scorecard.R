@@ -32,7 +32,12 @@ describe("render scorecard and scorecard summary reports", {
   it("render_scorecard - with traceability matrix", {
 
     # `result_dirs_select` defined in tests/testthat/setup.R
-    result_dir_x <- result_dirs_select[1]
+    result_dir_x <- pkg_select$pkg_result_dir[1]
+    result_tar_x <- pkg_select$tar_file[1]
+
+    # Create traceability matrix
+    make_traceability_matrix(result_tar_x, result_dir_x)
+
     pdf_path <- render_scorecard(
       results_dir = result_dir_x,
       overwrite = TRUE, add_traceability = TRUE

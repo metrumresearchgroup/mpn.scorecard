@@ -51,7 +51,7 @@ render_scorecard <- function(
 
   # Traceability Matrix
   if(isTRUE(add_traceability)){
-    exports_df <- make_traceability_matrix(pkg_scores$pkg_tar_path, results_dir)
+    exports_df <- check_for_traceability(results_dir)
   }else{
     exports_df <- NULL
   }
@@ -220,6 +220,23 @@ check_for_mitigation <- function(results_dir){
   return(mitigation_block)
 }
 
+
+#' Look for Traceability matrix RDS file and return contents if is found
+#'
+#' @inheritParams render_scorecard
+#'
+#' @keywords internal
+check_for_traceability <- function(results_dir){
+  # Traceability matrix (if any)
+  # infer traceability matrix path from `results_dir`
+  trac_path <- get_result_path(results_dir, "export_doc.rds")
+  if(fs::file_exists(trac_path)){
+    trac_mat <- readRDS(trac_path)
+  }else{
+    trac_mat <- NULL
+  }
+  return(trac_mat)
+}
 
 #' Format mpn.scorecard version as a footer note
 #'
