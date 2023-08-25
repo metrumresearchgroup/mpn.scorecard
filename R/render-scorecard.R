@@ -8,11 +8,15 @@
 #'   is "Medium Risk", and `0.7 <= score < 1` is "High Risk".
 #' @param overwrite Logical (T/F). If `TRUE`, will overwrite an existing file path if it exists
 #' @param add_traceability Logical (T/F). If `TRUE`, append a table that links package functionality to the documentation and test files.
+#' Defaults to "auto", which will include the matrix if found.
 #'
 #' @details
 #'
 #' If a plain text mitigation file is found in `results_dir`, it will automatically be included.
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.mitigation.txt`
+#'
+#' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
+#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
 #'
 #' A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
 #'
@@ -21,7 +25,7 @@ render_scorecard <- function(
     results_dir,
     risk_breaks = c(0.3, 0.7),
     overwrite = FALSE,
-    add_traceability = FALSE
+    add_traceability = "auto"
 ) {
 
   json_path <- get_result_path(results_dir, "scorecard.json")
@@ -50,11 +54,7 @@ render_scorecard <- function(
   extra_notes_data <- create_extra_notes(results_dir)
 
   # Traceability Matrix
-  if(isTRUE(add_traceability)){
-    exports_df <- check_for_traceability(results_dir)
-  }else{
-    exports_df <- NULL
-  }
+  exports_df <- check_for_traceability(results_dir, add_traceability)
 
   # mpn.scorecard version
   mpn_scorecard_ver <- format_scorecard_version(
@@ -226,13 +226,16 @@ check_for_mitigation <- function(results_dir){
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
-check_for_traceability <- function(results_dir){
-  # Traceability matrix (if any)
+check_for_traceability <- function(results_dir, add_traceability){
+  checkmate::assert_true(add_traceability == "auto" || is.logical(add_traceability))
   # infer traceability matrix path from `results_dir`
   trac_path <- get_result_path(results_dir, "export_doc.rds")
-  if(fs::file_exists(trac_path)){
+  if(fs::file_exists(trac_path) && !isFALSE(add_traceability)){
     trac_mat <- readRDS(trac_path)
   }else{
+    if(isTRUE(add_traceability)){
+      stop(glue("No traceability matrix found at {trac_path}"))
+    }
     trac_mat <- NULL
   }
   return(trac_mat)
