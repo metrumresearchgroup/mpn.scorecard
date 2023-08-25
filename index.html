@@ -140,12 +140,8 @@
 </li>
 <li>Call <code>make_traceability_matrix</code> using the <code>results_dir</code> returned from <code>score_pkg</code>
 </li>
-<li>Set <code>add_traceability = TRUE</code> in <code>render_scorecard</code>
-<ul>
-<li>If an <code>RDS</code> file matching the expected naming convention (<code>&lt;package_tarball_name&gt;.export_doc.rds</code> or <code>package_3.1.0.export_doc.rds</code> in the above example) is found in <code>results_dir</code>, the traceability matrix can be picked up. However <code>add_traceability</code> must be set to <code>TRUE</code> to include this section in the scorecard.</li>
 </ul>
-</li>
-</ul>
+<p>If an <code>RDS</code> file matching the expected naming convention (<code>&lt;package_tarball_name&gt;.export_doc.rds</code> or <code>package_3.1.0.export_doc.rds</code> in the above example) is found in <code>results_dir</code>, the traceability matrix will be picked up and automatically included. Users can override this by setting <code>add_traceability</code> to <code>FALSE</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/score_pkg.html">score_pkg</a></span><span class="op">(</span></span>
 <span>  pkg <span class="op">=</span> <span class="st">"package_3.1.0.tar.gz"</span>,</span>
@@ -164,7 +160,7 @@
 <div class="section level2">
 <h2 id="mitigation-optional">Mitigation (optional)<a class="anchor" aria-label="anchor" href="#mitigation-optional"></a>
 </h2>
-<p>Packages with low scores that fall short of initial expectations may include a mitigation text file. The presence of a mitigation section indicates that we are aware the score is low but are proceeding with adding the package to MPN. The rationale for doing so is included in the mitigation file itself. Inclusion of this section works the same as a traceability matrix, but will automatically be included if found. If a mitigation file matching the expected naming convention (<code>&lt;package_tarball_name&gt;.mitigation.txt</code> or <code>package_3.1.0.mitigation.txt</code> in the above example) is found in <code>results_dir</code>, the section <em>will</em> be included.</p>
+<p>Packages with low scores that fall short of initial expectations may include a mitigation text file. The presence of a mitigation section indicates that we are aware the score is low but are proceeding with adding the package to MPN. The rationale for doing so is included in the mitigation file itself. Inclusion of this section works the same as a traceability matrix. If a mitigation file matching the expected naming convention (<code>&lt;package_tarball_name&gt;.mitigation.txt</code> or <code>package_3.1.0.mitigation.txt</code> in the above example) is found in <code>results_dir</code>, the section will be automatically be included.</p>
 </div>
 <div class="section level2">
 <h2 id="summary-report">Summary Report<a class="anchor" aria-label="anchor" href="#summary-report"></a>

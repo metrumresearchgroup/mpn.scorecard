@@ -53,13 +53,18 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_for_traceability</span><span class="op">(</span><span class="va">results_dir</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_for_traceability</span><span class="op">(</span><span class="va">results_dir</span>, <span class="va">add_traceability</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>results_dir</dt>
 <dd><p>directory containing json file and individual results. Output file path from <code><a href="score_pkg.html">score_pkg()</a></code></p></dd>
+
+
+<dt>add_traceability</dt>
+<dd><p>Logical (T/F). If <code>TRUE</code>, append a table that links package functionality to the documentation and test files.
+Defaults to "auto", which will include the matrix if found.</p></dd>
 
 </dl></div>
 

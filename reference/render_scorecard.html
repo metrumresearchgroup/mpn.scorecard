@@ -57,7 +57,7 @@
 <span>  <span class="va">results_dir</span>,</span>
 <span>  risk_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.7</span><span class="op">)</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  add_traceability <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  add_traceability <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,13 +80,16 @@ is "Medium Risk", and <code>0.7 &lt;= score &lt; 1</code> is "High Risk".</p></d
 
 
 <dt>add_traceability</dt>
-<dd><p>Logical (T/F). If <code>TRUE</code>, append a table that links package functionality to the documentation and test files.</p></dd>
+<dd><p>Logical (T/F). If <code>TRUE</code>, append a table that links package functionality to the documentation and test files.
+Defaults to "auto", which will include the matrix if found.</p></dd>
 
 </dl></div>
     <div id="details">
     <h2>Details</h2>
     <p>If a plain text mitigation file is found in <code>results_dir</code>, it will automatically be included.
 <strong>Note</strong> that it must follow the naming convention of <code>&lt;pkg_name&gt;_&lt;pkg_version&gt;.mitigation.txt</code></p>
+<p>If a traceability matrix is found in <code>results_dir</code>, it will automatically be included unless overridden via <code>add_traceability</code>.
+<strong>Note</strong> that it must follow the naming convention of <code>&lt;pkg_name&gt;_&lt;pkg_version&gt;.export_doc.rds</code></p>
 <p>A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.</p>
     </div>
 
