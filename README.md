@@ -38,8 +38,7 @@ appendix of the report.
 ``` r
 pdf_path <- render_scorecard(
   results_dir = results_dir,
-  risk_breaks = c(0.3, 0.7),
-  add_traceability = TRUE
+  risk_breaks = c(0.3, 0.7)
 )
 
 browseURL(pdf_path)
@@ -73,23 +72,64 @@ the appendix.
 
 <br>
 
-#### Traceability Matrix (optional)
+## Traceability Matrix (optional)
 
-The optional argument, `add_traceability`, will append a table that
-links package exports to function documentation and test files:
+Our version of a traceability matrix maps R package exports to the
+following parameters:
+
+-   R script the export is defined in
+-   Any relevant documentation (`man/` files)
+-   Test files that call the export
+
+You can generate a traceability matrix as a standalone object by not
+passing a `results_dir`:
+
+``` r
+trac_matrix <- make_traceability_matrix("package_3.1.0.tar.gz")
+```
+
+To add a traceability matrix to the **scorecard**, you must follow the
+steps below:
+
+-   Score the package via `score_pkg`
+-   Call `make_traceability_matrix` using the `results_dir` returned
+    from `score_pkg`
+
+If an `RDS` file matching the expected naming convention
+(`<package_tarball_name>.export_doc.rds` or
+`package_3.1.0.export_doc.rds` in the above example) is found in
+`results_dir`, the traceability matrix will be picked up and
+automatically included. Users can override this by setting
+`add_traceability` to `FALSE`.
+
+``` r
+results_dir <- score_pkg(
+  pkg = "package_3.1.0.tar.gz",
+  out_dir = file.path(tempdir(), "results")
+)
+
+make_traceability_matrix("package_3.1.0.tar.gz", results_dir)
+
+pdf_path <- render_scorecard(
+  results_dir = results_dir,
+  risk_breaks = c(0.3, 0.7),
+  add_traceability = TRUE
+)
+```
 
 <img src="man/figures/trac_matrix.png" align="center" style = "width:900px;" />
 
-## Mitigation
+## Mitigation (optional)
 
 Packages with low scores that fall short of initial expectations may
 include a mitigation text file. The presence of a mitigation section
 indicates that we are aware the score is low but are proceeding with
 adding the package to MPN. The rationale for doing so is included in the
-mitigation file itself. If a mitigation file matching the expected
-naming convention (`<package_tarball_name>.mitigation.txt` or
+mitigation file itself. Inclusion of this section works the same as a
+traceability matrix. If a mitigation file matching the expected naming
+convention (`<package_tarball_name>.mitigation.txt` or
 `package_3.1.0.mitigation.txt` in the above example) is found in
-`results_dir`, this section will automatically be included.
+`results_dir`, the section will be automatically be included.
 
 ## Summary Report
 
