@@ -4,6 +4,7 @@
 First official release
 
 Exported functions:
+
  - `score_pkg`: Generate scorecard metrics for package
  - `render_scorecard`: Take a JSON from `score_pkg()` and render a pdf
  - `make_traceability_matrix`: Create a Traceability Matrix for the purpose of appending to a scorecard
