@@ -8,7 +8,7 @@ render_scorecard(
   results_dir,
   risk_breaks = c(0.3, 0.7),
   overwrite = FALSE,
-  add_traceability = FALSE
+  add_traceability = "auto"
 )
 }
 \arguments{
@@ -22,7 +22,8 @@ is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 
 \item{overwrite}{Logical (T/F). If \code{TRUE}, will overwrite an existing file path if it exists}
 
-\item{add_traceability}{Logical (T/F). If \code{TRUE}, append a table that links package functionality to the documentation and test files.}
+\item{add_traceability}{Logical (T/F). If \code{TRUE}, append a table that links package functionality to the documentation and test files.
+Defaults to "auto", which will include the matrix if found.}
 }
 \description{
 Take a JSON from score_pkg() and render a pdf
@@ -30,6 +31,9 @@ Take a JSON from score_pkg() and render a pdf
 \details{
 If a plain text mitigation file is found in \code{results_dir}, it will automatically be included.
 \strong{Note} that it must follow the naming convention of \verb{<pkg_name>_<pkg_version>.mitigation.txt}
+
+If a traceability matrix is found in \code{results_dir}, it will automatically be included unless overridden via \code{add_traceability}.
+\strong{Note} that it must follow the naming convention of \verb{<pkg_name>_<pkg_version>.export_doc.rds}
 
 A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
 }

@@ -94,13 +94,13 @@ steps below:
 -   Score the package via `score_pkg`
 -   Call `make_traceability_matrix` using the `results_dir` returned
     from `score_pkg`
--   Set `add_traceability = TRUE` in `render_scorecard`
-    -   If an `RDS` file matching the expected naming convention
-        (`<package_tarball_name>.export_doc.rds` or
-        `package_3.1.0.export_doc.rds` in the above example) is found in
-        `results_dir`, the traceability matrix can be picked up. However
-        `add_traceability` must be set to `TRUE` to include this section
-        in the scorecard.
+
+If an `RDS` file matching the expected naming convention
+(`<package_tarball_name>.export_doc.rds` or
+`package_3.1.0.export_doc.rds` in the above example) is found in
+`results_dir`, the traceability matrix will be picked up and
+automatically included. Users can override this by setting
+`add_traceability` to `FALSE`.
 
 ``` r
 results_dir <- score_pkg(
@@ -126,11 +126,10 @@ include a mitigation text file. The presence of a mitigation section
 indicates that we are aware the score is low but are proceeding with
 adding the package to MPN. The rationale for doing so is included in the
 mitigation file itself. Inclusion of this section works the same as a
-traceability matrix, but will automatically be included if found. If a
-mitigation file matching the expected naming convention
-(`<package_tarball_name>.mitigation.txt` or
+traceability matrix. If a mitigation file matching the expected naming
+convention (`<package_tarball_name>.mitigation.txt` or
 `package_3.1.0.mitigation.txt` in the above example) is found in
-`results_dir`, the section *will* be included.
+`results_dir`, the section will be automatically be included.
 
 ## Summary Report
 
