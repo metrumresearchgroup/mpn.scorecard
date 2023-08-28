@@ -438,11 +438,13 @@ source_pkg_code <- function(files, file_encoding = "unknown", envir){
                              isFile = TRUE)
       exprs <- parse(text = lines, n = -1, srcfile = srcfile)
       n <- length(exprs)
-      if (n == 0L) return(invisible())
+      if (n == 0L){
+        return(tibble::tibble(func = character(), code_file = character()))
+      }
 
       current_funcs <- ls(envir = envir)
       for (i in seq_len(n)) {
-        eval(exprs[i], envir)
+        tryCatch(eval(exprs[i], envir), error = function(e) e)
       }
       path <- file.path(basename(dirname(file)), basename(file))
       funcs_per_script <- setdiff(ls(envir = envir), current_funcs)
