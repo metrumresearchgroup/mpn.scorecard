@@ -359,9 +359,14 @@ filter_symbol_functions <- function(funcs){
   return(funcs_return)
 }
 
+
+
 #' list all functions defined in the package code
 #'
-#' @inheritParams make_traceability_matrix
+#' @inheritParams map_tests_to_functions
+#'
+#' @details
+#' Inspired from pkgload::load_code
 #'
 #' @return A data.frame with the columns `func` and `code_file` with a row for
 #'   every function defined in the package.
@@ -369,41 +374,91 @@ filter_symbol_functions <- function(funcs){
 #' @keywords internal
 get_all_functions <- function(pkg_source_path){
 
-  # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
-  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
-  pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
-    file_text <- readLines(r_file_i) %>% suppressWarnings()
-    # TODO: these patterns may still be missing some patterns
+  # Set up paths and encoding
+  path <- pkgload::pkg_path(pkg_source_path)
+  package <- pkgload::pkg_name(path)
+  file_encoding <- pkgload::pkg_desc(path)$get("Encoding")
+  path_r <- pkgload::package_file("R", path = path)
+  r_files <- list.files(path_r, full.names = TRUE)
 
-    # Single line function declaration
-    pattern_oneline <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
-                              "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
-    function_calls <- file_text[grepl(pattern_oneline, file_text)]
-    function_names <- gsub(pattern_oneline, "\\1\\3", function_calls)
+  # Set encoding to ASCII if it is not explicitly defined
+  if (is.na(file_encoding)) {
+    file_encoding <- "ASCII"
+  }
 
-    # Multi-line function declaration (only one pattern type)
-    pattern_multi <- c("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*", "^\\s*function\\s*.*")
-    function_names_multi <- character()
-    for(i in seq_along(file_text)) {
-      if(grepl(pattern_multi[1], file_text[i]) && grepl(pattern_multi[2], file_text[i+1])){
-        function_multi <- gsub(pattern_multi[1], "\\1", file_text[i])
-        function_names_multi <- c(function_names_multi, function_multi)
+  # Set up environment
+  env <- create_pkg_env(pkg_source_path)
+  on.exit(rm(list = ls(envir = env), envir = env))
+
+  # Source functions in `env` and map to R script
+  mapped_functions <- withr::with_dir(path, source_pkg_code(r_files, file_encoding, env))
+
+  return(mapped_functions)
+}
+
+
+#' Create environment for sourcing package functions
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @details
+#' Inpsired from pkload:::create_ns_env
+#'
+#' @returns an environment
+#' @keywords internal
+create_pkg_env <- function(pkg_source_path){
+  path <- pkgload::pkg_path(pkg_source_path)
+  package <- pkgload::pkg_name(pkg_source_path)
+  version <- pkgload::pkg_version(pkg_source_path)
+  name <- paste(package,  version, "MPN_SCORECARD", sep = "_")
+
+  env <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
+  methods::setPackageName(name, env)
+  return(env)
+}
+
+#' Source R files into environment with encoding
+#'
+#' @param files vector of files to source
+#' @param file_encoding encoding to be assumed for input strings.
+#' @param envir an environment to store the sourced functions
+#'
+#' @details
+#' Inspired from pkgload internal functions: source_one, source_many and read_lines_enc
+#'
+#' @keywords internal
+source_pkg_code <- function(files, file_encoding = "unknown", envir){
+  stopifnot(is.environment(envir))
+
+  purrr::map_dfr(files, function(file){
+    stopifnot(file.exists(file))
+    rlang::try_fetch({
+      lines <- readLines(file, warn = FALSE, encoding = file_encoding)
+      srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
+                             isFile = TRUE)
+      exprs <- parse(text = lines, n = -1, srcfile = srcfile)
+      n <- length(exprs)
+      if (n == 0L) return(invisible())
+
+      current_funcs <- ls(envir = envir)
+      for (i in seq_len(n)) {
+        eval(exprs[i], envir)
       }
-    }
-    if(!rlang::is_empty(function_names_multi)){
-      function_names <- c(function_names, function_names_multi)
-    }
+      path <- file.path(basename(dirname(file)), basename(file))
+      funcs_per_script <- setdiff(ls(envir = envir), current_funcs)
 
-    if(length(function_names) == 0){
-      return(tibble::tibble(func = character(), code_file = character()))
-    }
-    return(tibble::tibble(
-      func = function_names,
-      code_file = rep(paste0("R/", basename(r_file_i)), length(function_names))
-    ))
+      if(length(funcs_per_script) == 0){
+        return(tibble::tibble(func = character(), code_file = character()))
+      }
+
+      tibble::tibble(func = funcs_per_script, code_file = path)
+    },
+    error = function(cnd) {
+      path <- file.path(basename(dirname(file)), basename(file))
+      msg <- paste0("Failed to load {.file {path}}")
+      cli::cli_abort(msg, parent = cnd)
+    })
   })
-  # TODO: do we need to check if there are any funcs defined in multiple files?
 
-  return(pkg_functions)
 }
 

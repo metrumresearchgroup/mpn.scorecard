@@ -6,11 +6,17 @@
 \usage{
 get_all_functions(pkg_source_path)
 }
+\arguments{
+\item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
+}
 \value{
 A data.frame with the columns \code{func} and \code{code_file} with a row for
 every function defined in the package.
 }
 \description{
 list all functions defined in the package code
+}
+\details{
+Inspired from pkgload::load_code
 }
 \keyword{internal}
