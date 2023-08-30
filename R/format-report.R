@@ -614,7 +614,10 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
         flextable::set_caption("Test Coverage") %>%
         flextable::align(align = "right", part = "all", j=2) %>%
         flextable::add_footer_row(
-          values = flextable::as_paragraph("Test coverage is calculated per script, rather than per function"),
+          values = flextable::as_paragraph(paste(
+            "Test coverage is calculated per script, rather than per function.",
+            "See Traceability Matrix for function-to-test-file mapping."
+            )),
           colwidths = c(2)
         )
     } else {
