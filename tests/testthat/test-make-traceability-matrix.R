@@ -22,6 +22,29 @@ describe("Traceability Matrix", {
 
 
   it("make_traceability_matrix - missing documentation integration test", {
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_docs")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    expect_message(
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE),
+      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
+    )
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
+    expect_true(is.na(unique(trac_mat$documentation)))
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      "test-myscript.R"
+    )
+  })
+
+  it("make_traceability_matrix - cant link exports integration test", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -146,7 +169,7 @@ describe("Traceability Matrix", {
     )
 
     # Not documented, but still exported
-    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_docs")
     exports_df <- get_exports(pkg_setup_select$pkg_dir)
     expect_equal(
       template_df,

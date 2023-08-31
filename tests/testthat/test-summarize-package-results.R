@@ -24,21 +24,21 @@ describe("summarize_package_results", {
     expect_equal(
       pkg_results$check_status,
       order_cases(c(
-        pass_success = 0, pass_warning = 0, pass_no_functions = 0,
+        pass_success = 0, pass_no_docs = 0, pass_no_functions = 0,
         fail_func_syntax = 1, fail_test = 1
       ))
     )
     expect_equal(
       pkg_results$covr_success,
       order_cases(c(
-        pass_success = TRUE, pass_warning = TRUE, pass_no_functions = TRUE,
+        pass_success = TRUE, pass_no_docs = TRUE, pass_no_functions = TRUE,
         fail_func_syntax = FALSE, fail_test = FALSE
       ))
     )
     expect_equal(
       pkg_results$overall_score,
       order_cases(c(
-        pass_success = 0.5, pass_warning = 0.4, pass_no_functions = 0.3,
+        pass_success = 0.5, pass_no_docs = 0.45, pass_no_functions = 0.3,
         fail_func_syntax = 0.1, fail_test = 0.1
       ))
     )
