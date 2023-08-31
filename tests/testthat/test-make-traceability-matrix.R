@@ -138,9 +138,9 @@ describe("Traceability Matrix", {
       function(x) {x + 1}" # multi-line declaration
     )
     func_lines2 <- c(
-      "setGeneric(\"myfunc5\")", # setGeneric
-      "setGeneric('myfunc6')", # different quotes
-      "setGeneric ( 'myfunc7' )" # spacing
+      "setGeneric(\"myfunc5\", function(x) attributes(x))", # setGeneric
+      "setGeneric('myfunc6', plot)", # different quotes, existing function
+      "setGeneric ( 'myfunc7', function(x) mtcars)" # spacing
     )
     func_names <- paste0("myfunc", 1:7)
 
