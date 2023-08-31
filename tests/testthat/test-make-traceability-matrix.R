@@ -1,5 +1,5 @@
 
-describe("creating extra notes", {
+describe("Traceability Matrix", {
 
   it("make_traceability_matrix - success integration test", {
 
@@ -21,7 +21,7 @@ describe("creating extra notes", {
   })
 
 
-  it("make_traceability_matrix - missing documentation", {
+  it("make_traceability_matrix - missing documentation integration test", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -49,7 +49,7 @@ describe("creating extra notes", {
   })
 
 
-  it("make_traceability_matrix - no test suite", {
+  it("make_traceability_matrix - no test suite integration test", {
     # No test suite
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_test_suite")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -75,7 +75,7 @@ describe("creating extra notes", {
   })
 
 
-  it("identify functions and the script they're coded in", {
+  it("get_all_functions: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
