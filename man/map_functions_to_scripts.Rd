@@ -7,7 +7,13 @@
 map_functions_to_scripts(exports_df, pkg_source_path, verbose)
 }
 \arguments{
+\item{exports_df}{data.frame with a column, named \code{exported_function},
+containing the names of all exported functions. Can also have other columns
+(which will be returned unmodified).}
+
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
+
+\item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
 }
 \value{
 A data.frame with the columns \code{exported_function} and \code{code_file}.

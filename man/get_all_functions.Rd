@@ -4,10 +4,12 @@
 \alias{get_all_functions}
 \title{list all functions defined in the package code}
 \usage{
-get_all_functions(pkg_source_path)
+get_all_functions(pkg_source_path, verbose = FALSE)
 }
 \arguments{
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
+
+\item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
 }
 \value{
 A data.frame with the columns \code{func} and \code{code_file} with a row for

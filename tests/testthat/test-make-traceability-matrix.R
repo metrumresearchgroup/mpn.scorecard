@@ -2,7 +2,6 @@
 describe("Traceability Matrix", {
 
   it("make_traceability_matrix - success integration test", {
-
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
@@ -13,6 +12,8 @@ describe("Traceability Matrix", {
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
     # Confirm values - documentation
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
     expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
@@ -22,25 +23,96 @@ describe("Traceability Matrix", {
 
 
   it("make_traceability_matrix - missing documentation integration test", {
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_docs")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    expect_message(
+      trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE),
+      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
+    )
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
+    expect_true(is.na(unique(trac_mat$documentation)))
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      "test-myscript.R"
+    )
+  })
+
+
+  it("make_traceability_matrix - export patterns integration test", {
+    # Normal behavior
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_export_patterns")
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+
+    trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE)
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    expect_true(fs::file_exists(export_doc_path))
+    on.exit(fs::file_delete(export_doc_path), add = TRUE)
+
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
+    expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
+    expect_equal(
+      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
+      "test-myscript.R"
+    )
+
+    # Syntax error (cant find R script)
+    # Add syntax error to new script
+    r_script <- file.path(pkg_setup_select$pkg_dir, "R", "myscript_error.R")
+    on.exit(fs::file_delete(r_script), add = TRUE)
+    func_lines <- "myfunction2 <- function(x { x + 1"
+    writeLines(func_lines, r_script)
+
+    exports_df <- get_exports(pkg_setup_select$pkg_dir)
+
+    expect_warning(
+      exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir, verbose = TRUE),
+      "Error in parse"
+    )
+    expect_equal(unique(exports_df$exported_function), "myfunction")
+    expect_equal(unique(exports_df$code_file), "R/myscript.R")
+
+  })
+
+
+  it("make_traceability_matrix - cant link exports integration test", {
     # Bad package - no documentation (at all)
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
 
-    # Check for two separate notes
+    # Check for two separate notes due to parsing error
+    # - missing documentation
+    # - cant find R script
     res <- testthat::evaluate_promise(
       trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE)
     )
     expect_equal(
       res$messages,
-      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
+      c(
+        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n"),
+        glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
+      )
     )
+    expect_true(grepl("Error in parse", res$warnings))
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    # Confirm values - documentation
+    # Confirm values
+    expect_equal(unique(trac_mat$exported_function), "myfunction")
+    expect_true(is.na(unique(trac_mat$code_file)))
     expect_true(is.na(unique(trac_mat$documentation)))
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
@@ -74,8 +146,8 @@ describe("Traceability Matrix", {
     )
   })
 
-  it("make_traceability_matrix - no R directory or exported functions integration test", {
 
+  it("make_traceability_matrix - no R directory or exported functions integration test", {
     # No R directory
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_R_dir")
     result_dir_x <- pkg_setup_select$pkg_result_dir
@@ -97,6 +169,7 @@ describe("Traceability Matrix", {
     )
   })
 
+
   it("get_exports", {
     # Test individual exports
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
@@ -108,6 +181,7 @@ describe("Traceability Matrix", {
     exports_df <- get_exports(pkg_setup_select$pkg_dir)
     expect_equal(exports_df$exported_function, "myfunction")
   })
+
 
   it("get_all_functions: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
@@ -121,9 +195,9 @@ describe("Traceability Matrix", {
       function(x) {x + 1}" # multi-line declaration
     )
     func_lines2 <- c(
-      "setGeneric(\"myfunc5\")", # setGeneric
-      "setGeneric('myfunc6')", # different quotes
-      "setGeneric ( 'myfunc7' )" # spacing
+      "setGeneric(\"myfunc5\", \\(x) attributes(x))", # setGeneric & shorthand form
+      "setGeneric('myfunc6', plot)", # different quotes, existing function
+      "setGeneric ( 'myfunc7', \\(x) mtcars)" # spacing
     )
     func_names <- paste0("myfunc", 1:7)
 
@@ -160,7 +234,7 @@ describe("Traceability Matrix", {
     )
 
     # Not documented, but still exported
-    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "fail_func_syntax")
+    pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_no_docs")
     exports_df <- get_exports(pkg_setup_select$pkg_dir)
     expect_equal(
       template_df,
@@ -217,7 +291,6 @@ describe("Traceability Matrix", {
     expect_equal(map_tests_df$exported_function, rep("myfunction", 2))
     expect_equal(map_tests_df$test_files, c("test-myscript.R", "test-new_tests.R"))
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
-
   })
 
 

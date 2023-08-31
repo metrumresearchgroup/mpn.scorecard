@@ -54,9 +54,46 @@ check_trac_is_possible <- function(pkg_source_path){
 }
 
 
+#' list all package exports
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @return data.frame, with one column `exported_function`, that can be passed
+#'   to all downstream map_* helpers
+#'
+#' @keywords internal
+get_exports <- function(pkg_source_path){
+  # Get exports
+  nsInfo <- pkgload::parse_ns_file(pkg_source_path)
+  exports <- unname(unlist(nsInfo[c("exports","exportMethods")]))
+
+  # Look for export patterns
+  if(!rlang::is_empty(nsInfo$exportPatterns)){
+    all_functions <- get_all_functions(pkg_source_path)$func
+    for (p in nsInfo$exportPatterns) {
+      exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
+    }
+  }
+
+  # Remove specific symbols from exports
+  exports <- unique(exports)
+  exports <- filter_symbol_functions(exports)
+
+  if(rlang::is_empty(exports)){
+    stop(glue::glue("No exports found in package {basename(pkg_source_path)}"))
+  }
+
+  return(tibble::tibble(exported_function = exports))
+}
+
+
 #' Get all exported functions and map them to R script where they are defined
 #'
+#' @param exports_df data.frame with a column, named `exported_function`,
+#'   containing the names of all exported functions. Can also have other columns
+#'   (which will be returned unmodified).
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams make_traceability_matrix
 #'
 #' @return A data.frame with the columns `exported_function` and `code_file`.
 #'
@@ -64,7 +101,7 @@ check_trac_is_possible <- function(pkg_source_path){
 map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   # Search for scripts functions are defined in
-  funcs_df <- get_all_functions(pkg_source_path)
+  funcs_df <- get_all_functions(pkg_source_path, verbose)
 
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
@@ -80,11 +117,7 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
 #' Map all Rd files to the functions they describe
 #'
-#' @param exports_df data.frame with a column, named `exported_function`,
-#'   containing the names of all exported functions. Can also have other columns
-#'   (which will be returned unmodified).
 #' @inheritParams map_functions_to_scripts
-#' @inheritParams make_traceability_matrix
 #'
 #' @return Returns the data.frame passed to `exports_df`, with a `documentation`
 #'   column appended. This column will contain the path to the `.Rd` files in
@@ -139,9 +172,203 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 }
 
 
+#' Map test files and directories to all functions
+#'
+#' @inheritParams map_functions_to_scripts
+#' @return Returns the data.frame passed to `exports_df`, with `test_files` and
+#'   `test_dirs` columns appended. These columns will contain the paths to the
+#'   test files that call the associated exported functions.
+#'
+#' @keywords internal
+map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
+
+  # collect test directories and test files
+  test_dirs <- get_testing_dir(pkg_source_path)
+  if (is.null(test_dirs)) {
+    # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
+    #   (instead just check if passed dirs exist and error if not?)
+    if (isTRUE(verbose)) {
+      message(glue::glue("No testing directories found in {pkg_source_path}"))
+    }
+    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
+  }
+
+  test_files <- fs::dir_ls(test_dirs, glob = "*.R")
+  if (length(test_files) == 0) {
+    if (isTRUE(verbose)) {
+      message(glue::glue("No test files found in {paste(test_dirs, collapse = ', ')} for {pkg_source_path}"))
+    }
+    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
+  }
+
+  # map over test files and parse all functions called in those files
+  func_test_df <- purrr::map_dfr(test_files, function(test_file.i) {
+    parsed_df <- test_file.i %>%
+      parse(keep.source = TRUE) %>%
+      utils::getParseData() %>%
+      tibble::as_tibble()
+
+    # NOTE: this filters to "SYMBOL_FUNCTION_CALL", but also to "SYMBOL" to
+    #   account for non-standard function calls (e.g. purrr, do.call, etc.).
+    #   Unrelated symbols (and functions) are filtered out by the left_join below.
+    uniq_funcs <- parsed_df %>%
+      dplyr::filter(.data$token %in% c("SYMBOL_FUNCTION_CALL", "SYMBOL")) %>%
+      dplyr::pull("text") %>%
+      unique()
+
+    if (length(uniq_funcs) == 0) {
+      # probably only possible if the file is basically empty
+      return(data.frame(func = character(), test_file = character(), test_dir = character()))
+    }
+
+    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
+    return(data.frame(
+      func = uniq_funcs,
+      test_file = rep(basename(test_file.i), length(uniq_funcs)),
+      test_dir = rep(test_dir.i, length(uniq_funcs))
+    ))
+  })
+
+  # collapse to one row per unique function
+  func_test_df <- func_test_df %>% dplyr::group_by(.data$func) %>%
+    dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
+    dplyr::ungroup()
+
+  # left_join to exports_df to filter back to only this package's exported functions
+  exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
+
+  # message if any exported functions aren't documented
+  if (any(is.na(exports_df$test_files)) && isTRUE(verbose)) {
+    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$test_files))
+    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
+    message(glue::glue("In package `{basename(pkg_source_path)}`, the following exported functions were not found in any tests in {paste(test_dirs, collapse = ', ')}: \n{exports_missing}"))
+  }
+
+  return(exports_df)
+
+}
+
+
+#' list all functions defined in the package code
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @details
+#' Inspired from pkgload::load_code
+#'
+#' @return A data.frame with the columns `func` and `code_file` with a row for
+#'   every function defined in the package.
+#'
+#' @keywords internal
+get_all_functions <- function(pkg_source_path, verbose = FALSE){
+
+  # Set up paths and encoding
+  path <- pkgload::pkg_path(pkg_source_path)
+  package <- pkgload::pkg_name(path)
+  file_encoding <- pkgload::pkg_desc(path)$get("Encoding")
+  path_r <- pkgload::package_file("R", path = path)
+  r_files <- list.files(path_r, full.names = TRUE)
+
+  # Set encoding to ASCII if it is not explicitly defined
+  if (is.na(file_encoding)) {
+    file_encoding <- "ASCII"
+  }
+
+  # Set up environment
+  env <- create_pkg_env(path)
+  on.exit(rm(list = ls(envir = env), envir = env))
+
+  # Source functions in `env` and map to R script
+  mapped_functions <- withr::with_dir(path, source_pkg_code(r_files, file_encoding, env, verbose))
+
+  return(mapped_functions)
+}
+
+
+#' Create environment for sourcing package functions
+#'
+#' @inheritParams map_tests_to_functions
+#'
+#' @details
+#' Inpsired from pkload:::create_ns_env
+#'
+#' @returns an environment
+#' @keywords internal
+create_pkg_env <- function(pkg_source_path){
+  path <- pkgload::pkg_path(pkg_source_path)
+  package <- pkgload::pkg_name(pkg_source_path)
+  version <- pkgload::pkg_version(pkg_source_path)
+  name <- paste(package,  version, "MPN_SCORECARD", sep = "_")
+
+  env <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
+  methods::setPackageName(name, env)
+  return(env)
+}
+
+#' Source R files into environment with encoding
+#'
+#' @param files vector of files to source
+#' @param file_encoding encoding to be assumed for input strings.
+#' @param envir an environment to store the sourced functions
+#' @inheritParams map_functions_to_scripts
+#'
+#' @details
+#' Inspired from pkgload internal functions: source_one, source_many and read_lines_enc
+#'
+#' @keywords internal
+source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = FALSE){
+  stopifnot(is.environment(envir))
+
+  purrr::map_dfr(files, function(file){
+    stopifnot(file.exists(file))
+    rlang::try_fetch({
+      code_file <- file.path(basename(dirname(file)), basename(file))
+
+      # Read file lines
+      lines <- readLines(file, warn = FALSE, encoding = file_encoding)
+      srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
+                             isFile = TRUE)
+      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE))
+      # Return parsing errors if verbose, otherwise skip file (use NA to signify parsing error)
+      if(inherits(exprs, "error")){
+        if(isTRUE(verbose)) warning(simpleWarning(exprs))
+        return(tibble::tibble(func = NA_character_, code_file = code_file))
+      }
+      n <- length(exprs)
+      if (n == 0L){
+        return(tibble::tibble(func = character(), code_file = code_file))
+      }
+
+      # Capture starting environment to map functions to script
+      current_funcs <- ls(envir = envir)
+
+      # Evaluate each line in the file
+      for (i in seq_len(n)) {
+        safe_expr(eval(exprs[i], envir))
+      }
+
+      # Determine functions in current script
+      funcs_per_script <- setdiff(ls(envir = envir), current_funcs)
+      if(length(funcs_per_script) == 0){
+        return(tibble::tibble(func = character(), code_file = code_file))
+      }
+
+      tibble::tibble(func = funcs_per_script, code_file = code_file)
+    },
+    error = function(cnd) {
+      code_file <- file.path(basename(dirname(file)), basename(file))
+      msg <- paste0("Failed to load {.file {code_file}}")
+      abort(msg, parent = cnd)
+    })
+  })
+
+}
+
+
+
 #' Get tests/testthat directory from package directory
 #'
-#' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams map_functions_to_scripts
 #'
 #' @keywords internal
 get_testing_dir <- function(pkg_source_path){
@@ -238,115 +465,6 @@ get_tests <- function(
 }
 
 
-#' Map test files and directories to all functions
-#'
-#' @inheritParams map_functions_to_docs
-#' @return Returns the data.frame passed to `exports_df`, with `test_files` and
-#'   `test_dirs` columns appended. These columns will contain the paths to the
-#'   test files that call the associated exported functions.
-#'
-#' @keywords internal
-map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
-
-  # collect test directories and test files
-  test_dirs <- get_testing_dir(pkg_source_path)
-  if (is.null(test_dirs)) {
-    # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
-    #   (instead just check if passed dirs exist and error if not?)
-    if (isTRUE(verbose)) {
-      message(glue::glue("No testing directories found in {pkg_source_path}"))
-    }
-    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
-  }
-
-  test_files <- fs::dir_ls(test_dirs, glob = "*.R")
-  if (length(test_files) == 0) {
-    if (isTRUE(verbose)) {
-      message(glue::glue("No test files found in {paste(test_dirs, collapse = ', ')} for {pkg_source_path}"))
-    }
-    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
-  }
-
-  # map over test files and parse all functions called in those files
-  func_test_df <- purrr::map_dfr(test_files, function(test_file.i) {
-    parsed_df <- test_file.i %>%
-      parse(keep.source = TRUE) %>%
-      utils::getParseData() %>%
-      tibble::as_tibble()
-
-    # NOTE: this filters to "SYMBOL_FUNCTION_CALL", but also to "SYMBOL" to
-    #   account for non-standard function calls (e.g. purrr, do.call, etc.).
-    #   Unrelated symbols (and functions) are filtered out by the left_join below.
-    uniq_funcs <- parsed_df %>%
-      dplyr::filter(.data$token %in% c("SYMBOL_FUNCTION_CALL", "SYMBOL")) %>%
-      dplyr::pull("text") %>%
-      unique()
-
-    if (length(uniq_funcs) == 0) {
-      # probably only possible if the file is basically empty
-      return(data.frame(func = character(), test_file = character(), test_dir = character()))
-    }
-
-    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
-    return(data.frame(
-      func = uniq_funcs,
-      test_file = rep(basename(test_file.i), length(uniq_funcs)),
-      test_dir = rep(test_dir.i, length(uniq_funcs))
-    ))
-  })
-
-  # collapse to one row per unique function
-  func_test_df <- func_test_df %>% dplyr::group_by(.data$func) %>%
-    dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
-    dplyr::ungroup()
-
-  # left_join to exports_df to filter back to only this package's exported functions
-  exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
-
-  # message if any exported functions aren't documented
-  if (any(is.na(exports_df$test_files)) && isTRUE(verbose)) {
-    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$test_files))
-    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
-    message(glue::glue("In package `{basename(pkg_source_path)}`, the following exported functions were not found in any tests in {paste(test_dirs, collapse = ', ')}: \n{exports_missing}"))
-  }
-
-  return(exports_df)
-
-}
-
-#' list all package exports
-#'
-#' @inheritParams map_tests_to_functions
-#'
-#' @return data.frame, with one column `exported_function`, that can be passed
-#'   to all downstream map_* helpers
-#'
-#' @keywords internal
-get_exports <- function(pkg_source_path){
-  # Get exports
-  nsInfo <- pkgload::parse_ns_file(pkg_source_path)
-  exports <- unname(unlist(nsInfo[c("exports","exportMethods")]))
-
-  # Look for export patterns
-  if(!rlang::is_empty(nsInfo$exportPatterns)){
-    all_functions <- get_all_functions(pkg_source_path)$func
-    for (p in nsInfo$exportPatterns) {
-      exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
-    }
-  }
-
-  # Remove specific symbols from exports
-  exports <- unique(exports)
-  exports <- filter_symbol_functions(exports)
-
-  if(rlang::is_empty(exports)){
-    stop(glue::glue("No exports found in package {basename(pkg_source_path)}"))
-  }
-
-  return(tibble::tibble(exported_function = exports))
-}
-
-
 #' Remove specific symbols from vector of functions
 #'
 #' @param funcs vector of functions to filter
@@ -360,107 +478,8 @@ filter_symbol_functions <- function(funcs){
 }
 
 
-
-#' list all functions defined in the package code
-#'
-#' @inheritParams map_tests_to_functions
-#'
-#' @details
-#' Inspired from pkgload::load_code
-#'
-#' @return A data.frame with the columns `func` and `code_file` with a row for
-#'   every function defined in the package.
-#'
-#' @keywords internal
-get_all_functions <- function(pkg_source_path){
-
-  # Set up paths and encoding
-  path <- pkgload::pkg_path(pkg_source_path)
-  package <- pkgload::pkg_name(path)
-  file_encoding <- pkgload::pkg_desc(path)$get("Encoding")
-  path_r <- pkgload::package_file("R", path = path)
-  r_files <- list.files(path_r, full.names = TRUE)
-
-  # Set encoding to ASCII if it is not explicitly defined
-  if (is.na(file_encoding)) {
-    file_encoding <- "ASCII"
-  }
-
-  # Set up environment
-  env <- create_pkg_env(pkg_source_path)
-  on.exit(rm(list = ls(envir = env), envir = env))
-
-  # Source functions in `env` and map to R script
-  mapped_functions <- withr::with_dir(path, source_pkg_code(r_files, file_encoding, env))
-
-  return(mapped_functions)
+safe_expr <- function(expr){
+  tryCatch({
+    expr
+  }, error = function(e) e)
 }
-
-
-#' Create environment for sourcing package functions
-#'
-#' @inheritParams map_tests_to_functions
-#'
-#' @details
-#' Inpsired from pkload:::create_ns_env
-#'
-#' @returns an environment
-#' @keywords internal
-create_pkg_env <- function(pkg_source_path){
-  path <- pkgload::pkg_path(pkg_source_path)
-  package <- pkgload::pkg_name(pkg_source_path)
-  version <- pkgload::pkg_version(pkg_source_path)
-  name <- paste(package,  version, "MPN_SCORECARD", sep = "_")
-
-  env <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
-  methods::setPackageName(name, env)
-  return(env)
-}
-
-#' Source R files into environment with encoding
-#'
-#' @param files vector of files to source
-#' @param file_encoding encoding to be assumed for input strings.
-#' @param envir an environment to store the sourced functions
-#'
-#' @details
-#' Inspired from pkgload internal functions: source_one, source_many and read_lines_enc
-#'
-#' @keywords internal
-source_pkg_code <- function(files, file_encoding = "unknown", envir){
-  stopifnot(is.environment(envir))
-
-  purrr::map_dfr(files, function(file){
-    stopifnot(file.exists(file))
-    rlang::try_fetch({
-      lines <- readLines(file, warn = FALSE, encoding = file_encoding)
-      srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
-                             isFile = TRUE)
-      exprs <- parse(text = lines, n = -1, srcfile = srcfile)
-      n <- length(exprs)
-      if (n == 0L){
-        return(tibble::tibble(func = character(), code_file = character()))
-      }
-
-      current_funcs <- ls(envir = envir)
-      for (i in seq_len(n)) {
-        tryCatch(eval(exprs[i], envir), error = function(e) e)
-      }
-      path <- file.path(basename(dirname(file)), basename(file))
-      funcs_per_script <- setdiff(ls(envir = envir), current_funcs)
-
-      if(length(funcs_per_script) == 0){
-        return(tibble::tibble(func = character(), code_file = character()))
-      }
-
-      tibble::tibble(func = funcs_per_script, code_file = path)
-    },
-    error = function(cnd) {
-      path <- file.path(basename(dirname(file)), basename(file))
-      msg <- paste0("Failed to load {.file {path}}")
-      cli::cli_abort(msg, parent = cnd)
-    })
-  })
-
-}
-

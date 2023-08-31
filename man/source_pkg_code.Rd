@@ -4,7 +4,7 @@
 \alias{source_pkg_code}
 \title{Source R files into environment with encoding}
 \usage{
-source_pkg_code(files, file_encoding = "unknown", envir)
+source_pkg_code(files, file_encoding = "unknown", envir, verbose = FALSE)
 }
 \arguments{
 \item{files}{vector of files to source}
@@ -12,6 +12,8 @@ source_pkg_code(files, file_encoding = "unknown", envir)
 \item{file_encoding}{encoding to be assumed for input strings.}
 
 \item{envir}{an environment to store the sourced functions}
+
+\item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
 }
 \description{
 Source R files into environment with encoding
