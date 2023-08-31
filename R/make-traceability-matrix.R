@@ -45,7 +45,11 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 
 #' Get all exported functions and map them to R script where they are defined
 #'
+#' @param exports_df data.frame with a column, named `exported_function`,
+#'   containing the names of all exported functions. Can also have other columns
+#'   (which will be returned unmodified).
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams make_traceability_matrix
 #'
 #' @return A data.frame with the columns `exported_function` and `code_file`.
 #'
@@ -69,11 +73,7 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
 #' Map all Rd files to the functions they describe
 #'
-#' @param exports_df data.frame with a column, named `exported_function`,
-#'   containing the names of all exported functions. Can also have other columns
-#'   (which will be returned unmodified).
 #' @inheritParams map_functions_to_scripts
-#' @inheritParams make_traceability_matrix
 #'
 #' @return Returns the data.frame passed to `exports_df`, with a `documentation`
 #'   column appended. This column will contain the path to the `.Rd` files in
@@ -229,7 +229,7 @@ get_tests <- function(
 
 #' Map test files and directories to all functions
 #'
-#' @inheritParams map_functions_to_docs
+#' @inheritParams map_functions_to_scripts
 #' @return Returns the data.frame passed to `exports_df`, with `test_files` and
 #'   `test_dirs` columns appended. These columns will contain the paths to the
 #'   test files that call the associated exported functions.
