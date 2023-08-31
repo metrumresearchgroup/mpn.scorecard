@@ -290,7 +290,7 @@ get_all_functions <- function(pkg_source_path, verbose = FALSE){
 #' @inheritParams map_tests_to_functions
 #'
 #' @details
-#' Inpsired from pkload:::create_ns_env
+#' Inpsired from pkload:::create_ns_env and methods::setPackageName
 #'
 #' @returns an environment
 #' @keywords internal
@@ -301,7 +301,7 @@ create_pkg_env <- function(pkg_source_path){
   name <- paste(package,  version, "MPN_SCORECARD", sep = "_")
 
   env <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
-  methods::setPackageName(name, env)
+  assign(".packageName", name, envir = env)
   return(env)
 }
 
