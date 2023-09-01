@@ -136,7 +136,7 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 get_testing_dir <- function(pkg_source_path){
   checkmate::assert_directory_exists(pkg_source_path)
 
-  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE) #fs::dir_ls(pkg_source_path)
+  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE)
   test_dir_outer <- pkg_dir_ls[grep("^(/[^/]+)+/tests$", pkg_dir_ls)]
   if(length(test_dir_outer) == 0){
     warning(glue::glue("no testing directory found at {pkg_source_path}"))
