@@ -130,10 +130,10 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 
 #' Get tests/testthat directory from package directory
 #'
-#' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams map_functions_to_scripts
 #'
 #' @keywords internal
-get_testing_dir <- function(pkg_source_path){
+get_testing_dir <- function(pkg_source_path, verbose){
   checkmate::assert_directory_exists(pkg_source_path)
 
   pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE)
@@ -145,7 +145,7 @@ get_testing_dir <- function(pkg_source_path){
 
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
   test_dirs <- test_dir_ls[grep("^(/[^/]+)+/testthat$", test_dir_ls)]
-  if(length(test_dirs) == 0){
+  if(length(test_dirs) == 0 && isTRUE(verbose)){
     message(glue::glue("no `testthat` directory found at {test_dir_outer}"))
   }
 
@@ -238,7 +238,7 @@ get_tests <- function(
 map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # collect test directories and test files
-  test_dirs <- get_testing_dir(pkg_source_path)
+  test_dirs <- get_testing_dir(pkg_source_path, verbose)
   if (is.null(test_dirs)) {
     # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
     #   (instead just check if passed dirs exist and error if not?)
