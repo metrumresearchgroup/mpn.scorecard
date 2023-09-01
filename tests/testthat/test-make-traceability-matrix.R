@@ -59,7 +59,7 @@ describe("Traceability Matrix", {
     expect_equal(
       res$messages,
       c(
-        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n"),
+        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n\n"),
         glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
       )
     )

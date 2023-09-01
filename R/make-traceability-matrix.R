@@ -74,8 +74,9 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   if (any(is.na(exports_df$code_file))) {
     if(isTRUE(verbose)) {
-      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)]
-      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{paste(missing_from_files, collapse = '\n')}"))
+      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)] %>%
+        paste(collapse = "\n")
+      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{missing_from_files}\n\n"))
     }
   }
 
