@@ -328,27 +328,32 @@ source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = F
       lines <- readLines(file, warn = FALSE, encoding = file_encoding)
       srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
                              isFile = TRUE)
-      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE))
+      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE), verbose)
+
       # Return parsing errors if verbose, otherwise skip file (use NA to signify parsing error)
       if(inherits(exprs, "error")){
-        if(isTRUE(verbose)) warning(simpleWarning(exprs))
+        if(isTRUE(verbose)){
+          warning("Failed to parse ", code_file, ": ", conditionMessage(exprs))
+        }
         return(tibble::tibble(func = NA_character_, code_file = code_file))
       }
+
+      # Return empty row if nothing to evaluate
       n <- length(exprs)
       if (n == 0L){
         return(tibble::tibble(func = character(), code_file = code_file))
       }
 
       # Capture starting environment to map functions to script
-      current_funcs <- ls(envir = envir)
+      current_funcs <- ls(envir = envir, all.names = TRUE)
 
       # Evaluate each line in the file
       for (i in seq_len(n)) {
-        safe_expr(eval(exprs[i], envir))
+        safe_expr(eval(exprs[i], envir), verbose)
       }
 
-      # Determine functions in current script
-      funcs_per_script <- setdiff(ls(envir = envir), current_funcs)
+      # Determine functions in current script - return empty row if none found
+      funcs_per_script <- setdiff(ls(envir = envir, all.names = TRUE), current_funcs)
       if(length(funcs_per_script) == 0){
         return(tibble::tibble(func = character(), code_file = code_file))
       }
@@ -478,8 +483,17 @@ filter_symbol_functions <- function(funcs){
 }
 
 
-safe_expr <- function(expr){
-  tryCatch({
-    expr
-  }, error = function(e) e)
+safe_expr <- function(expr, verbose = FALSE){
+  tryCatch(
+    expr,
+    error = function(e){
+      if(isTRUE(verbose)) warning(warningCondition(e))
+      e
+    },
+    warning = function(w){
+      if(isTRUE(verbose)) warning(warningCondition(w))
+      w
+    },
+    message = function(m) m
+  )
 }
