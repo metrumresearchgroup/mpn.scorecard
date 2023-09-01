@@ -77,7 +77,7 @@ describe("Traceability Matrix", {
 
     expect_warning(
       exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir, verbose = TRUE),
-      "Error in parse"
+      "Failed to parse"
     )
     expect_equal(unique(exports_df$exported_function), "myfunction")
     expect_equal(unique(exports_df$code_file), "R/myscript.R")
@@ -100,11 +100,11 @@ describe("Traceability Matrix", {
     expect_equal(
       res$messages,
       c(
-        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n"),
+        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n\n"),
         glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
       )
     )
-    expect_true(grepl("Error in parse", res$warnings))
+    expect_true(grepl("Failed to parse", res$warnings))
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))

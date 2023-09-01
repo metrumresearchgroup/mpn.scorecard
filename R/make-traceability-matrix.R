@@ -107,8 +107,9 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   if (any(is.na(exports_df$code_file))) {
     if(isTRUE(verbose)) {
-      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)]
-      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{paste(missing_from_files, collapse = '\n')}"))
+      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)] %>%
+        paste(collapse = "\n")
+      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{missing_from_files}\n\n"))
     }
   }
 
@@ -328,7 +329,7 @@ source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = F
       lines <- readLines(file, warn = FALSE, encoding = file_encoding)
       srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
                              isFile = TRUE)
-      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE), verbose)
+      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE))
 
       # Return parsing errors if verbose, otherwise skip file (use NA to signify parsing error)
       if(inherits(exprs, "error")){
@@ -490,11 +491,11 @@ safe_expr <- function(expr, verbose = FALSE){
   tryCatch(
     expr,
     error = function(e){
-      if(isTRUE(verbose)) warning(warningCondition(e))
+      if(isTRUE(verbose)) message(simpleCondition(e))
       e
     },
     warning = function(w){
-      if(isTRUE(verbose)) warning(warningCondition(w))
+      if(isTRUE(verbose)) message(simpleCondition(w))
       w
     },
     message = function(m) m
