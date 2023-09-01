@@ -19,6 +19,6 @@ source_pkg_code(files, file_encoding = "unknown", envir, verbose = FALSE)
 Source R files into environment with encoding
 }
 \details{
-Inspired from pkgload internal functions: source_one, source_many and read_lines_enc
+Inspired from \code{pkgload} internal functions: \code{source_one}, \code{source_many} and \code{read_lines_enc}
 }
 \keyword{internal}

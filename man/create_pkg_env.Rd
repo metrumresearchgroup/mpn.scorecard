@@ -16,6 +16,6 @@ an environment
 Create environment for sourcing package functions
 }
 \details{
-Inpsired from pkload:::create_ns_env
+Inpsired from \code{pkload:::create_ns_env} and \code{methods::setPackageName}
 }
 \keyword{internal}

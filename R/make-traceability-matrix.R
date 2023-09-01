@@ -183,7 +183,7 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # collect test directories and test files
-  test_dirs <- get_testing_dir(pkg_source_path)
+  test_dirs <- get_testing_dir(pkg_source_path, verbose)
   if (is.null(test_dirs)) {
     # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
     #   (instead just check if passed dirs exist and error if not?)
@@ -254,7 +254,7 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 #' @inheritParams map_tests_to_functions
 #'
 #' @details
-#' Inspired from pkgload::load_code
+#' Inspired from `pkgload::load_code`
 #'
 #' @return A data.frame with the columns `func` and `code_file` with a row for
 #'   every function defined in the package.
@@ -290,7 +290,7 @@ get_all_functions <- function(pkg_source_path, verbose = FALSE){
 #' @inheritParams map_tests_to_functions
 #'
 #' @details
-#' Inpsired from pkload:::create_ns_env and methods::setPackageName
+#' Inpsired from `pkload:::create_ns_env` and `methods::setPackageName`
 #'
 #' @returns an environment
 #' @keywords internal
@@ -313,7 +313,7 @@ create_pkg_env <- function(pkg_source_path){
 #' @inheritParams map_functions_to_scripts
 #'
 #' @details
-#' Inspired from pkgload internal functions: source_one, source_many and read_lines_enc
+#' Inspired from `pkgload` internal functions: `source_one`, `source_many` and `read_lines_enc`
 #'
 #' @keywords internal
 source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = FALSE){
@@ -352,8 +352,11 @@ source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = F
         safe_expr(eval(exprs[i], envir), verbose)
       }
 
-      # Determine functions in current script - return empty row if none found
+      # Determine functions in current script
       funcs_per_script <- setdiff(ls(envir = envir, all.names = TRUE), current_funcs)
+      # Remove internal R objects
+      funcs_per_script <- grep(".__", funcs_per_script, fixed = TRUE, value = TRUE, invert = TRUE)
+      # Return empty row if no functions found
       if(length(funcs_per_script) == 0){
         return(tibble::tibble(func = character(), code_file = code_file))
       }
@@ -376,10 +379,10 @@ source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = F
 #' @inheritParams map_functions_to_scripts
 #'
 #' @keywords internal
-get_testing_dir <- function(pkg_source_path){
+get_testing_dir <- function(pkg_source_path, verbose){
   checkmate::assert_directory_exists(pkg_source_path)
 
-  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE) #fs::dir_ls(pkg_source_path)
+  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE)
   test_dir_outer <- pkg_dir_ls[grep("^(/[^/]+)+/tests$", pkg_dir_ls)]
   if(length(test_dir_outer) == 0){
     warning(glue::glue("no testing directory found at {pkg_source_path}"))
@@ -388,7 +391,7 @@ get_testing_dir <- function(pkg_source_path){
 
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
   test_dirs <- test_dir_ls[grep("^(/[^/]+)+/testthat$", test_dir_ls)]
-  if(length(test_dirs) == 0){
+  if(length(test_dirs) == 0 && isTRUE(verbose)){
     message(glue::glue("no `testthat` directory found at {test_dir_outer}"))
   }
 

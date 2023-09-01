@@ -19,6 +19,6 @@ every function defined in the package.
 list all functions defined in the package code
 }
 \details{
-Inspired from pkgload::load_code
+Inspired from \code{pkgload::load_code}
 }
 \keyword{internal}
