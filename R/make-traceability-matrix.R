@@ -370,7 +370,7 @@ filter_symbol_functions <- function(funcs){
 get_toplevel_assignments <- function(pkg_source_path){
   r_files <- list.files(
     file.path(pkg_source_path, "R"),
-    full.names = TRUE, pattern = "\\.[Rr]$"
+    full.names = TRUE, pattern = "\\.[Rr]$", recursive = TRUE
   )
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     exprs <- tryCatch(parse(r_file_i), error = identity)
