@@ -399,7 +399,7 @@ get_toplevel_assignments <- function(pkg_source_path){
     }
     return(tibble::tibble(
       func = function_names,
-      code_file = rep(paste0("R/", basename(r_file_i)), length(function_names))
+      code_file = rep(fs::path_rel(r_file_i, pkg_source_path), length(function_names))
     ))
   })
   # TODO: do we need to check if there are any funcs defined in multiple files?
