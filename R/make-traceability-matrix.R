@@ -68,7 +68,7 @@ check_trac_is_possible <- function(pkg_source_path){
 map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   # Search for scripts functions are defined in
-  funcs_df <- get_all_functions(pkg_source_path)
+  funcs_df <- get_toplevel_assignments(pkg_source_path)
 
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
@@ -354,29 +354,46 @@ filter_symbol_functions <- function(funcs){
   return(funcs_return)
 }
 
-#' list all functions defined in the package code
+#' list all top-level objects defined in the package code
 #'
-#' @inheritParams make_traceability_matrix
+#' This is primarily for getting all _functions_, but it also returns top-level
+#' declarations, regardless of type. This is intentional, because we also want
+#' to capture any global variables or anything else that could be potentially
+#' exported by the package.
+#'
+#' @inheritParams map_functions_to_scripts
 #'
 #' @return A data.frame with the columns `func` and `code_file` with a row for
-#'   every function defined in the package.
+#'   every top-level object defined in the package.
 #'
 #' @keywords internal
-get_all_functions <- function(pkg_source_path){
-
-  # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
+get_toplevel_assignments <- function(pkg_source_path){
   r_files <- list.files(
     file.path(pkg_source_path, "R"),
     full.names = TRUE, pattern = "\\.[Rr]$"
   )
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
-    file_text <- readLines(r_file_i) %>% suppressWarnings()
-    pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
-                      "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
-    function_calls <- file_text[grepl(pattern, file_text)]
-    function_names <- gsub(pattern, "\\1\\3", function_calls)
-    # TODO: these patterns ^ are still missing some things... need to address in future commit
+    exprs <- tryCatch(parse(r_file_i), error = identity)
+    if (inherits(exprs, "error")) {
+      warning("Failed to parse ", r_file_i, ": ", conditionMessage(exprs))
+      return(tibble::tibble(func = character(), code_file = character()))
+    }
 
+    calls <- purrr::keep(as.list(exprs), function(e) {
+      if (is.call(e)) {
+        op <- as.character(e[[1]])
+        return(length(op) == 1 && op %in% c("<-", "=", "setGeneric"))
+      }
+      return(FALSE)
+    })
+    lhs <- purrr::map(calls, function(e) {
+      name <- as.character(e[[2]])
+      if (length(name) == 1) {
+        return(name)
+      }
+    })
+
+    function_names <- unlist(lhs) %||% character()
     if (length(function_names) == 0 ) {
       return(tibble::tibble(func = character(), code_file = character()))
     }

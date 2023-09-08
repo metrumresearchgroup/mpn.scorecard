@@ -50,14 +50,20 @@ describe("Traceability Matrix", {
     result_dir_x <- pkg_setup_select$pkg_result_dir
     pkg_tar_x <- pkg_setup_select$tar_file
 
-    # Check for two separate notes
+    # Check for two separate notes due to parsing error
+    # - missing documentation
+    # - can't find R script
     res <- testthat::evaluate_promise(
       trac_mat <- make_traceability_matrix(pkg_tar_path = pkg_tar_x, result_dir_x, verbose = TRUE)
     )
     expect_equal(
       res$messages,
-      as.character(glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n"))
+      c(
+        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n"),
+        glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
+      )
     )
+    expect_true(grepl("Failed to parse", res$warnings))
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))
@@ -120,7 +126,7 @@ describe("Traceability Matrix", {
     )
   })
 
-  it("get_all_functions: identify functions and the script they're coded in", {
+  it("get_toplevel_assignments: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
@@ -144,8 +150,8 @@ describe("Traceability Matrix", {
     fs::file_create(temp_file2); on.exit(fs::file_delete(temp_file2), add = TRUE)
     writeLines(func_lines2, temp_file2)
 
-    # Test get_all_functions - also contains the original `myfunction`
-    funcs_found <- get_all_functions(pkg_setup_select$pkg_dir)
+    # Test get_toplevel_assignments - also contains the original `myfunction`
+    funcs_found <- get_toplevel_assignments(pkg_setup_select$pkg_dir)
     expect_equal(
       funcs_found$func,
       c("myfunction", func_names)
