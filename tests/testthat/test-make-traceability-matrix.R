@@ -140,9 +140,10 @@ describe("Traceability Matrix", {
     func_lines2 <- c(
       "setGeneric(\"myfunc5\", function(x) attributes(x))", # setGeneric
       "setGeneric('myfunc6', plot)", # different quotes, existing function
-      "setGeneric ( 'myfunc7', function(x) mtcars)" # spacing
+      "setGeneric ( 'myfunc7', function(x) mtcars)", # spacing
+      "myfunc8 <- 'This is not a function, but should still be captured'" # non-function top-level assignment
     )
-    func_names <- paste0("myfunc", 1:7)
+    func_names <- paste0("myfunc", 1:8)
 
     temp_file1 <- file.path(r_dir, "myscript1.R")
     fs::file_create(temp_file1); on.exit(fs::file_delete(temp_file1), add = TRUE)
