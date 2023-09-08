@@ -69,7 +69,7 @@ get_exports <- function(pkg_source_path){
 
   # Look for export patterns
   if(!rlang::is_empty(nsInfo$exportPatterns)){
-    all_functions <- get_all_functions(pkg_source_path)$func
+    all_functions <- get_toplevel_assignments(pkg_source_path)$func
     for (p in nsInfo$exportPatterns) {
       exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
     }
@@ -101,7 +101,7 @@ get_exports <- function(pkg_source_path){
 map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   # Search for scripts functions are defined in
-  funcs_df <- get_all_functions(pkg_source_path, verbose)
+  funcs_df <- get_toplevel_assignments(pkg_source_path, verbose)
 
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
@@ -249,130 +249,53 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
 }
 
-
-#' list all functions defined in the package code
+#' list all top-level objects defined in the package code
 #'
-#' @inheritParams map_tests_to_functions
+#' This is primarily for getting all _functions_, but it also returns top-level
+#' declarations, regardless of type. This is intentional, because we also want
+#' to capture any global variables or anything else that could be potentially
+#' exported by the package.
 #'
-#' @details
-#' Inspired from `pkgload::load_code`
+#' @inheritParams make_traceability_matrix
 #'
 #' @return A data.frame with the columns `func` and `code_file` with a row for
-#'   every function defined in the package.
+#'   every top-level object defined in the package.
 #'
 #' @keywords internal
-get_all_functions <- function(pkg_source_path, verbose = FALSE){
+get_toplevel_assignments <- function(pkg_source_path, verbose = FALSE){
+  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE, recursive = TRUE)
 
-  # Set up paths and encoding
-  path <- pkgload::pkg_path(pkg_source_path)
-  package <- pkgload::pkg_name(path)
-  file_encoding <- pkgload::pkg_desc(path)$get("Encoding")
-  path_r <- pkgload::package_file("R", path = path)
-  r_files <- list.files(path_r, full.names = TRUE)
+  purrr::map_dfr(r_files, function(r_file_i) {
+    exprs <- tryCatch(parse(r_file_i), error = identity)
+    if (inherits(exprs, "error")) {
+      warning("Failed to parse ", r_file_i, ": ", conditionMessage(exprs))
+      return(tibble::tibble(func = character(), code_file = character()))
+    }
 
-  # Set encoding to ASCII if it is not explicitly defined
-  if (is.na(file_encoding)) {
-    file_encoding <- "ASCII"
-  }
-
-  # Set up environment
-  env <- create_pkg_env(path)
-  on.exit(rm(list = ls(envir = env), envir = env))
-
-  # Source functions in `env` and map to R script
-  mapped_functions <- withr::with_dir(path, source_pkg_code(r_files, file_encoding, env, verbose))
-
-  return(mapped_functions)
-}
-
-
-#' Create environment for sourcing package functions
-#'
-#' @inheritParams map_tests_to_functions
-#'
-#' @details
-#' Inpsired from `pkload:::create_ns_env` and `methods::setPackageName`
-#'
-#' @returns an environment
-#' @keywords internal
-create_pkg_env <- function(pkg_source_path){
-  path <- pkgload::pkg_path(pkg_source_path)
-  package <- pkgload::pkg_name(pkg_source_path)
-  version <- pkgload::pkg_version(pkg_source_path)
-  name <- paste(package,  version, "MPN_SCORECARD", sep = "_")
-
-  env <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
-  assign(".packageName", name, envir = env)
-  return(env)
-}
-
-#' Source R files into environment with encoding
-#'
-#' @param files vector of files to source
-#' @param file_encoding encoding to be assumed for input strings.
-#' @param envir an environment to store the sourced functions
-#' @inheritParams map_functions_to_scripts
-#'
-#' @details
-#' Inspired from `pkgload` internal functions: `source_one`, `source_many` and `read_lines_enc`
-#'
-#' @keywords internal
-source_pkg_code <- function(files, file_encoding = "unknown", envir, verbose = FALSE){
-  stopifnot(is.environment(envir))
-
-  purrr::map_dfr(files, function(file){
-    stopifnot(file.exists(file))
-    rlang::try_fetch({
-      code_file <- file.path(basename(dirname(file)), basename(file))
-
-      # Read file lines
-      lines <- readLines(file, warn = FALSE, encoding = file_encoding)
-      srcfile <- srcfilecopy(file, lines, file.info(file)[1, "mtime"],
-                             isFile = TRUE)
-      exprs <- safe_expr(parse(text = lines, n = -1, srcfile = srcfile, keep.source = TRUE))
-
-      # Return parsing errors if verbose, otherwise skip file (use NA to signify parsing error)
-      if(inherits(exprs, "error")){
-        if(isTRUE(verbose)){
-          warning("Failed to parse ", code_file, ": ", conditionMessage(exprs))
-        }
-        return(tibble::tibble(func = NA_character_, code_file = code_file))
+    calls <- purrr::keep(as.list(exprs), function(e) {
+      if (is.call(e)) {
+        op <- as.character(e[[1]])
+        return(length(op) == 1 && op %in% c("<-", "=", "setGeneric"))
       }
-
-      # Return empty row if nothing to evaluate
-      n <- length(exprs)
-      if (n == 0L){
-        return(tibble::tibble(func = character(), code_file = code_file))
-      }
-
-      # Capture starting environment to map functions to script
-      current_funcs <- ls(envir = envir, all.names = TRUE)
-
-      # Evaluate each line in the file
-      for (i in seq_len(n)) {
-        safe_expr(eval(exprs[i], envir), verbose)
-      }
-
-      # Determine functions in current script
-      funcs_per_script <- setdiff(ls(envir = envir, all.names = TRUE), current_funcs)
-      # Remove internal R objects
-      funcs_per_script <- grep(".__", funcs_per_script, fixed = TRUE, value = TRUE, invert = TRUE)
-      # Return empty row if no functions found
-      if(length(funcs_per_script) == 0){
-        return(tibble::tibble(func = character(), code_file = code_file))
-      }
-
-      tibble::tibble(func = funcs_per_script, code_file = code_file)
-    },
-    error = function(cnd) {
-      code_file <- file.path(basename(dirname(file)), basename(file))
-      msg <- paste0("Failed to load {.file {code_file}}")
-      abort(msg, parent = cnd)
+      return(FALSE)
     })
+    lhs <- purrr::map(calls, function(e) {
+      name <- as.character(e[[2]])
+      if (length(name) == 1) {
+        return(name)
+      }
+    })
+
+    function_names <- unlist(lhs) %||% character()
+    if (length(function_names) == 0 ) {
+      return(tibble::tibble(func = character(), code_file = character()))
+    }
+    return(tibble::tibble(
+      func = function_names,
+      code_file = rep(fs::path_rel(r_file_i, pkg_source_path), length(function_names))
+    ))
   })
-
 }
-
 
 
 #' Get tests/testthat directory from package directory
@@ -484,20 +407,4 @@ filter_symbol_functions <- function(funcs){
   pattern <- paste0("(", paste(ignore_patterns, collapse = "|"), ")")
   funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
   return(funcs_return)
-}
-
-
-safe_expr <- function(expr, verbose = FALSE){
-  tryCatch(
-    expr,
-    error = function(e){
-      if(isTRUE(verbose)) message(simpleCondition(e))
-      e
-    },
-    warning = function(w){
-      if(isTRUE(verbose)) message(simpleCondition(w))
-      w
-    },
-    message = function(m) m
-  )
 }

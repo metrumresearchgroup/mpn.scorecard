@@ -73,12 +73,15 @@ describe("Traceability Matrix", {
     func_lines <- "myfunction2 <- function(x { x + 1"
     writeLines(func_lines, r_script)
 
-    exports_df <- get_exports(pkg_setup_select$pkg_dir)
-
-    expect_warning(
-      exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir, verbose = TRUE),
+    # these both generate this warning because this test hits the exportPattern
+    # path in get_exports, which calls get_toplevel_assignments() (the source of this warning)
+    expect_warning({
+        exports_df <- get_exports(pkg_setup_select$pkg_dir)
+        exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
+      },
       "Failed to parse"
     )
+
     expect_equal(unique(exports_df$exported_function), "myfunction")
     expect_equal(unique(exports_df$code_file), "R/myscript.R")
 
@@ -183,7 +186,7 @@ describe("Traceability Matrix", {
   })
 
 
-  it("get_all_functions: identify functions and the script they're coded in", {
+  it("get_toplevel_assignments: identify functions and the script they're coded in", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     r_dir <- file.path(pkg_setup_select$pkg_dir, "R")
 
@@ -197,9 +200,10 @@ describe("Traceability Matrix", {
     func_lines2 <- c(
       "setGeneric(\"myfunc5\", function(x) attributes(x))", # setGeneric
       "setGeneric('myfunc6', plot)", # different quotes, existing function
-      "setGeneric ( 'myfunc7', function(x) mtcars)" # spacing
+      "setGeneric ( 'myfunc7', function(x) mtcars)", # spacing
+      "myfunc8 <- 'This is not a function, but should still be captured'" # non-function top-level assignment
     )
-    func_names <- paste0("myfunc", 1:7)
+    func_names <- paste0("myfunc", 1:8)
 
     temp_file1 <- file.path(r_dir, "myscript1.R")
     fs::file_create(temp_file1); on.exit(fs::file_delete(temp_file1), add = TRUE)
@@ -209,8 +213,8 @@ describe("Traceability Matrix", {
     fs::file_create(temp_file2); on.exit(fs::file_delete(temp_file2), add = TRUE)
     writeLines(func_lines2, temp_file2)
 
-    # Test get_all_functions - also contains the original `myfunction`
-    funcs_found <- get_all_functions(pkg_setup_select$pkg_dir)
+    # Test get_toplevel_assignments - also contains the original `myfunction`
+    funcs_found <- get_toplevel_assignments(pkg_setup_select$pkg_dir)
     expect_equal(
       funcs_found$func,
       c("myfunction", func_names)
