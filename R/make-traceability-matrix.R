@@ -365,7 +365,10 @@ filter_symbol_functions <- function(funcs){
 get_all_functions <- function(pkg_source_path){
 
   # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
-  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
+  r_files <- list.files(
+    file.path(pkg_source_path, "R"),
+    full.names = TRUE, pattern = "\\.[Rr]$"
+  )
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     file_text <- readLines(r_file_i) %>% suppressWarnings()
     pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
