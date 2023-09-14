@@ -31,11 +31,9 @@ Imports:
     flextable (>= 0.8.4),
     fs,
     glue,
-    here,
     jsonlite,
     knitr,
     magrittr,
-    markdown,
     officer,
     pkgload,
     purrr,
@@ -45,13 +43,13 @@ Imports:
     rmarkdown,
     stringr,
     tibble,
-    tidyr,
     tidyselect
 Suggests:
     devtools,
     pdftools,
     roxygen2,
     testthat (>= 2.1.0),
+    tidyr,
     withr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
