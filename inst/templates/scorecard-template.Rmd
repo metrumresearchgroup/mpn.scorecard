@@ -25,6 +25,7 @@ params:
   mitigation_block: "r NULL"
   extra_notes_data: "r NULL"
   exports_df: "r NULL"
+  dep_versions_df: "`r NA`"
 title: >
   `r params$set_title`
 subtitle: 'MPN Scorecard'
@@ -90,6 +91,13 @@ format_traceability_matrix(params$exports_df)
 ## System Info
 ```{r}
 format_metadata(formatted_pkg_scores$metadata)
+```
+
+```{r, results = "asis"}
+if (identical(params$dep_versions_df, NA)) {
+  stop("Required versions_df parameter not specified.")
+}
+format_dependency_versions(params$dep_versions_df)
 ```
 
 ```{r, results = "asis"}

@@ -155,6 +155,37 @@ describe("formatting functions", {
     )
   })
 
+  it("dependency versions", {
+    setups <- pkg_dirs$pkg_setups_df
+
+    value_to_render <- function(type) {
+      setup <- setups[setups$pkg_type == type, ]
+      stopifnot(nrow(setup) == 1)
+
+      dv <- get_dependency_versions(setup$pkg_result_dir, setup$pkg_name)
+      prepare_dependency_versions(dv)
+    }
+
+    val <- value_to_render("pass_success")
+    flexdf <- val$body$dataset
+    expect_identical(names(flexdf), c("package", "version"))
+    expect_true("checkmate" %in% flexdf$package)
+    # Scored package is filtered out.
+    expect_false(any(grepl("^package[0-9]+", flexdf$package)))
+
+    val_rendered <- knitr::knit_print(val)
+    expect_match(val_rendered, "Package", fixed = TRUE)
+    expect_match(val_rendered, "Version", fixed = TRUE)
+
+    val <- value_to_render("pass_no_functions")
+    expect_identical(val, "Package has no required dependencies.")
+
+    val <- value_to_render("fail_func_syntax")
+    expect_identical(
+      val,
+      "Unable to calculate R dependency table due to failing `R CMD check`."
+    )
+  })
 })
 
 describe("cat_verbatim", {

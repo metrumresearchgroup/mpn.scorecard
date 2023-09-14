@@ -56,6 +56,8 @@ render_scorecard <- function(
   # Traceability Matrix
   exports_df <- check_for_traceability(results_dir, add_traceability)
 
+  dep_versions_df <- get_dependency_versions(results_dir, pkg_scores$pkg_name)
+
   # mpn.scorecard version
   mpn_scorecard_ver <- format_scorecard_version(
     pkg_scores$mpn_scorecard_version,
@@ -74,7 +76,8 @@ render_scorecard <- function(
       pkg_scores = formatted_pkg_scores,
       mitigation_block = mitigation_block,
       extra_notes_data = extra_notes_data,
-      exports_df = exports_df
+      exports_df = exports_df,
+      dep_versions_df = dep_versions_df
     )
   )
 
@@ -239,6 +242,50 @@ check_for_traceability <- function(results_dir, add_traceability){
     trac_mat <- NULL
   }
   return(trac_mat)
+}
+
+#' Extract dependency versions from rcmdcheck result
+#'
+#' @param pkg_name Name of package being scored.
+#' @return A data frame with two columns, "package" and "version". This data
+#'   frame may be empty if the package has no hard dependencies. If the session
+#'   info `$packages` data frame is unpopulated due to a failure, return `NULL`.
+#' @noRd
+get_dependency_versions <- function(results_dir, pkg_name) {
+  res <- readRDS(get_result_path(results_dir, "check.rds"))
+  si <- res$session_info
+  if (is.null(si)) {
+    stop("rcmdcheck result unexpectedly missing session info.")
+  }
+  pkgs <- si$packages
+  if (is.null(pkgs)) {
+    stop("Session info unexpectedly missing $packages data frame.")
+  }
+
+  if (!pkg_name %in% rownames(pkgs)) {
+    stop("packages_info object unexpectedly missing row for scored package.")
+  }
+  # If 'R CMD check' failed before installing the package being scored (e.g.,
+  # with a "Package suggested but not available" failure),
+  # $session_info$packages is data frame with one row for the package and NA for
+  # all columns aside from "package".
+  if (nrow(pkgs) == 1 && is.na(pkgs[pkg_name, "ondiskversion"])) {
+    return(NULL)
+  }
+
+  na_vers <- is.na(pkgs$ondiskversion)
+  if (any(na_vers)) {
+    stop(
+      "Some packages unexpectedly have an NA version: ",
+      paste(pkgs$package[na_vers], collapse = ", ")
+    )
+  }
+
+  rownames(pkgs) <- NULL
+  # The sessioninfo$package_info() result includes the query package, but we
+  # just want the dependencies.
+  dplyr::select(pkgs, c("package", version = "ondiskversion")) %>%
+    dplyr::filter(.data$package != pkg_name)
 }
 
 #' Format mpn.scorecard version as a footer note
