@@ -10,7 +10,6 @@ flextable_formatted(
   pg_width = 5,
   column_width = NULL,
   doc_type = "PDF",
-  as_flextable = TRUE,
   digits = NULL,
   font_size = 10,
   ...
@@ -28,13 +27,15 @@ If specified, set these column widths before fitting to word document}
 
 \item{doc_type}{Word, PDF, or HTML. Controls font size}
 
-\item{as_flextable}{logical (T/F). if \code{TRUE}, use \code{as_flextable} instead of \code{flextable}, which has different args and is necessary for grouped data}
-
 \item{digits}{numeric. Number of digits to round to. If \code{NULL}, and \code{as_flextable = TRUE}, flextable will round to one digit.}
 
 \item{font_size}{font size of the table.}
 
-\item{...}{additional args to be passed to \code{as_flextable} or \code{flextable}}
+\item{...}{additional args to be passed to \code{as_flextable()} or \code{flextable()}.
+Which function, if any, is called depends on the type of \code{tab}. If \code{tab} is
+already a flextable, neither is called. If \code{tab} inherits from
+"grouped_data", \code{as_flextable()} is called. Otherwise \code{flextable()} is
+called.}
 }
 \value{
 a formatted flextable
