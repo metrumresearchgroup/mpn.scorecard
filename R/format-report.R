@@ -7,10 +7,13 @@
 #' @param column_width named vector, where the column names are assigned to the desired _relative_ width.
 #'        If specified, set these column widths before fitting to word document
 #' @param doc_type Word, PDF, or HTML. Controls font size
-#' @param as_flextable logical (T/F). if `TRUE`, use `as_flextable` instead of `flextable`, which has different args and is necessary for grouped data
 #' @param digits numeric. Number of digits to round to. If `NULL`, and `as_flextable = TRUE`, flextable will round to one digit.
 #' @param font_size font size of the table.
-#' @param ... additional args to be passed to `as_flextable` or `flextable`
+#' @param ... additional args to be passed to `as_flextable()` or `flextable()`.
+#'   Which function, if any, is called depends on the type of `tab`. If `tab` is
+#'   already a flextable, neither is called. If `tab` inherits from
+#'   "grouped_data", `as_flextable()` is called. Otherwise `flextable()` is
+#'   called.
 #'
 #' @details
 #' column_width is specified using the following convention:
@@ -34,19 +37,18 @@ flextable_formatted <- function(tab,
                                 pg_width = 5,
                                 column_width = NULL,
                                 doc_type = "PDF",
-                                as_flextable = TRUE,
                                 digits = NULL,
                                 font_size = 10,
                                 ...){
 
   # If flextable object already, just apply formatting
   if(!inherits(tab, "flextable")){
-    if(isTRUE(as_flextable)){
-      tab_out <- tab %>% flextable::as_flextable(...) #%>%
-      # flextable::theme_vanilla()
-    }else{
-      tab_out <- tab %>% flextable::flextable(...)
+    fn <- if (inherits(tab, "grouped_data")) {
+      flextable::as_flextable
+    } else {
+      flextable::flextable
     }
+    tab_out <- fn(tab, ...)
   }else{
     tab_out <- tab
   }
@@ -106,7 +108,7 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
 
 
   # Base table
-  overall_flextable <- flextable_formatted(overall_tbl, show_coltype = FALSE, digits = digits)
+  overall_flextable <- flextable_formatted(overall_tbl, digits = digits)
 
   # Add colors and styling
   overall_flextable <- overall_flextable %>%
@@ -249,7 +251,6 @@ format_testing_scores <- function(formatted_pkg_scores){
   testing_scores_flextable <-
     flextable_formatted(
       testing_df,
-      as_flextable = FALSE,
       col_keys = c("Criteria", "Result", "Risk")
     ) %>%
     flextable::bg(bg = "#ffffff", part = "all") %>%
@@ -301,10 +302,7 @@ format_metadata <- function(metadata_list){
 
   # Create flextable
   system_info_flextable <-
-    flextable_formatted(
-      all_info_tbl,
-      show_coltype = FALSE
-    ) %>%
+    flextable_formatted(all_info_tbl) %>%
     flextable::bg(bg = "#ffffff", part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body") %>%
@@ -362,7 +360,7 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
   risk_summary_df <- risk_summary_df %>% format_colnames_to_title()
   # Base table
   risk_summary_flex <- flextable_formatted(
-    risk_summary_df, as_flextable = FALSE, digits = digits,
+    risk_summary_df, digits = digits,
     col_keys = c("Package", "Version", "Overall Score", "Overall Risk", "Mitigation"),
     pg_width = 6.5
   )
@@ -567,7 +565,7 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
-    exported_func_flex <- flextable_formatted(exported_func_df, as_flextable = FALSE, pg_width = 7, font_size = 9) %>%
+    exported_func_flex <- flextable_formatted(exported_func_df, pg_width = 7, font_size = 9) %>%
       flextable::set_caption("Traceability Matrix") %>%
       flextable::add_footer_row(
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
@@ -610,7 +608,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
         format_colnames_to_title()
 
       # Create flextable
-      covr_results_flex <- flextable_formatted(covr_results_df, as_flextable = FALSE, pg_width = 4) %>%
+      covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
         flextable::set_caption("Test Coverage") %>%
         flextable::align(align = "right", part = "all", j=2) %>%
         flextable::add_footer_row(
