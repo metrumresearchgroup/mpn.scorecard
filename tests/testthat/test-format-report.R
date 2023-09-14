@@ -83,8 +83,8 @@ describe("formatting functions", {
     expect_equal(flex_df$body$dataset$Score, c(1, 1))
     expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100%"))
 
-    ## Medium rcmdcheck score ##
-    result_dir <- result_dirs_select[["pass_warning"]]
+    ## High rcmdcheck score ##
+    result_dir <- result_dirs_select[["pass_no_docs"]]
     json_path <- get_result_path(result_dir, "scorecard.json")
     pkg_scores <- jsonlite::fromJSON(json_path)
 
@@ -92,8 +92,8 @@ describe("formatting functions", {
     formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks = c(0.3, 0.7))
     flex_df <- format_testing_scores(formatted_pkg_scores)
 
-    expect_equal(flex_df$body$dataset$Score, c(0.5, 1))
-    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.5)", "100%"))
+    expect_equal(flex_df$body$dataset$Score, c(0.75, 1))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.75)", "100%"))
 
 
     ## Failing rcmdcheck score ##

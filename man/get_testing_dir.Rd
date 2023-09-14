@@ -4,10 +4,12 @@
 \alias{get_testing_dir}
 \title{Get tests/testthat directory from package directory}
 \usage{
-get_testing_dir(pkg_source_path)
+get_testing_dir(pkg_source_path, verbose)
 }
 \arguments{
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}
+
+\item{verbose}{Logical (\code{TRUE}/\code{FALSE}). If \code{TRUE}, show any warnings/messages per function.}
 }
 \description{
 Get tests/testthat directory from package directory

@@ -17,6 +17,9 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
   pkg_source_path <- unpack_tarball(pkg_tar_path)
   on.exit(unlink(dirname(pkg_source_path), recursive = TRUE), add = TRUE)
 
+  # Check that package is valid
+  check_trac_is_possible(pkg_source_path)
+
   # Get data.frame of exported functions
   exports_df <- get_exports(pkg_source_path)
 
@@ -43,9 +46,21 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 }
 
 
+check_trac_is_possible <- function(pkg_source_path){
+  r_dir <- file.path(pkg_source_path, "R")
+  if(!fs::dir_exists(r_dir)){
+    stop("an R directory is needed to create a traceability matrix")
+  }
+}
+
+
 #' Get all exported functions and map them to R script where they are defined
 #'
+#' @param exports_df data.frame with a column, named `exported_function`,
+#'   containing the names of all exported functions. Can also have other columns
+#'   (which will be returned unmodified).
 #' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams make_traceability_matrix
 #'
 #' @return A data.frame with the columns `exported_function` and `code_file`.
 #'
@@ -53,14 +68,15 @@ make_traceability_matrix <- function(pkg_tar_path, results_dir = NULL, verbose =
 map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
   # Search for scripts functions are defined in
-  funcs_df <- get_all_functions(pkg_source_path)
+  funcs_df <- get_toplevel_assignments(pkg_source_path)
 
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
   if (any(is.na(exports_df$code_file))) {
     if(isTRUE(verbose)) {
-      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)]
-      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{paste(missing_from_files, collapse = '\n')}"))
+      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)] %>%
+        paste(collapse = "\n")
+      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{missing_from_files}\n\n"))
     }
   }
 
@@ -69,11 +85,7 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
 
 #' Map all Rd files to the functions they describe
 #'
-#' @param exports_df data.frame with a column, named `exported_function`,
-#'   containing the names of all exported functions. Can also have other columns
-#'   (which will be returned unmodified).
 #' @inheritParams map_functions_to_scripts
-#' @inheritParams make_traceability_matrix
 #'
 #' @return Returns the data.frame passed to `exports_df`, with a `documentation`
 #'   column appended. This column will contain the path to the `.Rd` files in
@@ -130,13 +142,13 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 
 #' Get tests/testthat directory from package directory
 #'
-#' @param pkg_source_path a file path pointing to an unpacked/untarred package directory
+#' @inheritParams map_functions_to_scripts
 #'
 #' @keywords internal
-get_testing_dir <- function(pkg_source_path){
+get_testing_dir <- function(pkg_source_path, verbose){
   checkmate::assert_directory_exists(pkg_source_path)
 
-  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE) #fs::dir_ls(pkg_source_path)
+  pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE)
   test_dir_outer <- pkg_dir_ls[grep("^(/[^/]+)+/tests$", pkg_dir_ls)]
   if(length(test_dir_outer) == 0){
     warning(glue::glue("no testing directory found at {pkg_source_path}"))
@@ -145,7 +157,7 @@ get_testing_dir <- function(pkg_source_path){
 
   test_dir_ls <- fs::dir_ls(test_dir_outer) %>% as.character()
   test_dirs <- test_dir_ls[grep("^(/[^/]+)+/testthat$", test_dir_ls)]
-  if(length(test_dirs) == 0){
+  if(length(test_dirs) == 0 && isTRUE(verbose)){
     message(glue::glue("no `testthat` directory found at {test_dir_outer}"))
   }
 
@@ -229,7 +241,7 @@ get_tests <- function(
 
 #' Map test files and directories to all functions
 #'
-#' @inheritParams map_functions_to_docs
+#' @inheritParams map_functions_to_scripts
 #' @return Returns the data.frame passed to `exports_df`, with `test_files` and
 #'   `test_dirs` columns appended. These columns will contain the paths to the
 #'   test files that call the associated exported functions.
@@ -238,7 +250,7 @@ get_tests <- function(
 map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # collect test directories and test files
-  test_dirs <- get_testing_dir(pkg_source_path)
+  test_dirs <- get_testing_dir(pkg_source_path, verbose)
   if (is.null(test_dirs)) {
     # TODO: could skip this whole check if we refactor to pass in test_dirs instead of using get_testing_dir(),
     #   (instead just check if passed dirs exist and error if not?)
@@ -313,14 +325,24 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 #' @keywords internal
 get_exports <- function(pkg_source_path){
   # Get exports
-  exports <- unname(unlist(pkgload::parse_ns_file(pkg_source_path)[c("exports","exportMethods")]))
+  nsInfo <- pkgload::parse_ns_file(pkg_source_path)
+  exports <- unname(unlist(nsInfo[c("exports","exportMethods")]))
 
-  # TODO: need to refactor to add support for exportPattern
-  #   could potentially use get_all_functions here, but also might look
-  #   into other approaches (parse() tree, or other pkgload helpers?)
+  # Look for export patterns
+  if(!rlang::is_empty(nsInfo$exportPatterns)){
+    all_functions <- get_toplevel_assignments(pkg_source_path)$func
+    for (p in nsInfo$exportPatterns) {
+      exports <- c(all_functions[grep(pattern = p, all_functions)], exports)
+    }
+  }
 
   # Remove specific symbols from exports
+  exports <- unique(exports)
   exports <- filter_symbol_functions(exports)
+
+  if(rlang::is_empty(exports)){
+    stop(glue::glue("No exports found in package {basename(pkg_source_path)}"))
+  }
 
   return(tibble::tibble(exported_function = exports))
 }
@@ -332,38 +354,58 @@ get_exports <- function(pkg_source_path){
 #'
 #' @keywords internal
 filter_symbol_functions <- function(funcs){
-  ignore_functions <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+")
-  pattern <- paste0("^(", paste(ignore_functions, collapse = "|"), ")$")
+  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+", "\\%", "<-")
+  pattern <- paste0("(", paste(ignore_patterns, collapse = "|"), ")")
   funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
   return(funcs_return)
 }
 
-#' list all functions defined in the package code
+#' list all top-level objects defined in the package code
 #'
-#' @inheritParams make_traceability_matrix
+#' This is primarily for getting all _functions_, but it also returns top-level
+#' declarations, regardless of type. This is intentional, because we also want
+#' to capture any global variables or anything else that could be potentially
+#' exported by the package.
+#'
+#' @inheritParams map_functions_to_scripts
 #'
 #' @return A data.frame with the columns `func` and `code_file` with a row for
-#'   every function defined in the package.
+#'   every top-level object defined in the package.
 #'
 #' @keywords internal
-get_all_functions <- function(pkg_source_path){
-
-  # Get all defined functions (following syntax: func <- function(arg), or setGeneric("func"))
-  r_files <- list.files(file.path(pkg_source_path, "R"), full.names = TRUE)
+get_toplevel_assignments <- function(pkg_source_path){
+  r_files <- list.files(
+    file.path(pkg_source_path, "R"),
+    full.names = TRUE, pattern = "\\.[Rr]$", recursive = TRUE
+  )
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
-    file_text <- readLines(r_file_i) %>% suppressWarnings()
-    pattern <- paste0("^\\s*([[:alnum:]_\\.]+)\\s*(<\\-|=)\\s*function\\s*.*", "|",
-                      "^\\s*setGeneric\\s*\\(\\s*[\"|']([[:alnum:]_\\.]+)[\"|'].*")
-    function_calls <- file_text[grepl(pattern, file_text)]
-    function_names <- gsub(pattern, "\\1\\3", function_calls)
-    # TODO: these patterns ^ are still missing some things... need to address in future commit
+    exprs <- tryCatch(parse(r_file_i), error = identity)
+    if (inherits(exprs, "error")) {
+      warning("Failed to parse ", r_file_i, ": ", conditionMessage(exprs))
+      return(tibble::tibble(func = character(), code_file = character()))
+    }
 
+    calls <- purrr::keep(as.list(exprs), function(e) {
+      if (is.call(e)) {
+        op <- as.character(e[[1]])
+        return(length(op) == 1 && op %in% c("<-", "=", "setGeneric"))
+      }
+      return(FALSE)
+    })
+    lhs <- purrr::map(calls, function(e) {
+      name <- as.character(e[[2]])
+      if (length(name) == 1) {
+        return(name)
+      }
+    })
+
+    function_names <- unlist(lhs) %||% character()
     if (length(function_names) == 0 ) {
       return(tibble::tibble(func = character(), code_file = character()))
     }
     return(tibble::tibble(
       func = function_names,
-      code_file = rep(paste0("R/", basename(r_file_i)), length(function_names))
+      code_file = rep(fs::path_rel(r_file_i, pkg_source_path), length(function_names))
     ))
   })
   # TODO: do we need to check if there are any funcs defined in multiple files?

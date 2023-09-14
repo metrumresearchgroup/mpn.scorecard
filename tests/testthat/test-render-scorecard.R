@@ -35,13 +35,17 @@ describe("render scorecard and scorecard summary reports", {
     result_dir_x <- pkg_select$pkg_result_dir[1]
     result_tar_x <- pkg_select$tar_file[1]
 
+    expect_error(
+      render_scorecard(
+        results_dir = result_dir_x, overwrite = TRUE, add_traceability = TRUE
+      ),
+      "No traceability matrix found at"
+    )
+
     # Create traceability matrix
     make_traceability_matrix(result_tar_x, result_dir_x)
 
-    pdf_path <- render_scorecard(
-      results_dir = result_dir_x,
-      overwrite = TRUE, add_traceability = TRUE
-    )
+    pdf_path <- render_scorecard(results_dir = result_dir_x, overwrite = TRUE)
 
     on.exit(fs::file_delete(pdf_path), add = TRUE)
     on.exit(fs::file_delete(get_result_path(result_dir_x, "export_doc.rds")), add = TRUE)
