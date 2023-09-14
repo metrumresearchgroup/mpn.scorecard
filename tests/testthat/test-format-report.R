@@ -148,7 +148,10 @@ describe("formatting functions", {
     )
     expect_equal(
       unique(unname(unlist(extra_notes_frmt$covr_results_flex$footer$dataset))),
-      "Test coverage is calculated per script, rather than per function"
+      paste(
+        "Test coverage is calculated per script, rather than per function.",
+        "See Traceability Matrix for function-to-test-file mapping."
+      )
     )
   })
 

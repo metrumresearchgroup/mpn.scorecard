@@ -52,7 +52,7 @@ formatted_pkg_scores <- params$pkg_scores
 
 # Overview
 
-This document contains evidence and proof points for `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` in support of Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community. Information about the system on which this assessment was performed is included in the System Info section, near the bottom of this document. 
+This document contains evidence and proof points for `r formatted_pkg_scores$pkg_name` `r formatted_pkg_scores$pkg_version` in support of Principles of Good Practice in Documentation, Testing, Maintenance & Stability, and Transparency & Community. Information about the system on which this assessment was performed is included in the System Info section near the bottom of this document. 
 
 ```{r}
 format_overall_scores(formatted_pkg_scores)
