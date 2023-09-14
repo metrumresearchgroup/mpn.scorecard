@@ -4,6 +4,7 @@ Descriptions:
 
 Packages:
   - devtools
+  - here
   - pkgdown
   - styler
 
