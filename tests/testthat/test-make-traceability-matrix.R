@@ -77,10 +77,10 @@ describe("Traceability Matrix", {
     # these both generate this warning because this test hits the exportPattern
     # path in get_exports, which calls get_toplevel_assignments() (the source of this warning)
     expect_warning({
-        exports_df <- get_exports(pkg_setup_select$pkg_dir)
-        exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
-      },
-      "Failed to parse"
+      exports_df <- get_exports(pkg_setup_select$pkg_dir)
+      exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
+    },
+    "Failed to parse"
     )
 
     expect_equal(unique(exports_df$exported_function), "myfunction")
@@ -223,6 +223,39 @@ describe("Traceability Matrix", {
 
     # Confirm correct location
     expect_equal(basename(unique(funcs_found$code_file)), c("myscript.R","myscript1.R", "myscript2.R"))
+  })
+
+
+  it("get_toplevel_assignments works with different file extensions", {
+
+    new_pkg_source_dir <- tempfile(pattern = "get_toplevel_assignments-")
+    r_dir <- file.path(new_pkg_source_dir, "R")
+    fs::dir_create(r_dir, recurse = TRUE)
+    on.exit(fs::dir_delete(new_pkg_source_dir), add = TRUE)
+
+    funcs <- c(
+      "myfunc1 <- function(x) {x + 1}",
+      "myfunc2 <- function(x) {x + 1}",
+      "myfunc3 <- function(x) {x + 1}",
+      "myfunc4 <- function(x) {x + 1}"
+    )
+    func_names <- paste0("myfunc", 1:4)
+
+    files <- c(
+      "temp_file1.R",
+      "temp_file2.r",
+      "temp_file3.q",
+      "temp_file4.s"
+    )
+    files <- file.path(r_dir, files)
+
+    purrr::walk2(funcs, files, function(func, file){
+      writeLines(func, file)
+    })
+
+    funcs_df <- get_toplevel_assignments(new_pkg_source_dir)
+
+    expect_true(all(func_names %in% funcs_df$func))
   })
 
 

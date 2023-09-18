@@ -70,6 +70,12 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
   # Search for scripts functions are defined in
   funcs_df <- get_toplevel_assignments(pkg_source_path)
 
+  if(nrow(funcs_df) == 0){
+    # This shouldn't be triggered, and either indicates a bug in `get_toplevel_assignments`,
+    # or an unexpected package setup that we may want to support.
+    warning("No top level assignments were found in the R/ directory. Make sure this was expected.")
+  }
+
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
   if (any(is.na(exports_df$code_file))) {
@@ -376,7 +382,7 @@ filter_symbol_functions <- function(funcs){
 get_toplevel_assignments <- function(pkg_source_path){
   r_files <- list.files(
     file.path(pkg_source_path, "R"),
-    full.names = TRUE, pattern = "\\.[Rr]$", recursive = TRUE
+    full.names = TRUE, pattern = "\\.(?i)[rsq]$", recursive = TRUE
   )
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     exprs <- tryCatch(parse(r_file_i), error = identity)
