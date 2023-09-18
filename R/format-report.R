@@ -548,9 +548,8 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
     # Unnest tests and testing directories
     exported_func_df <- exports_df %>%
       mutate(
-        test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n")),
-        test_dirs = purrr::map_chr(.data$test_dirs, ~paste(.x, collapse = "\n")),
-      )
+        test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n"))
+      ) %>% tidyr::unnest(test_dirs)
 
     # Get testing directories for caption
     test_dirs <- exported_func_df %>% dplyr::pull(test_dirs) %>% unique()
