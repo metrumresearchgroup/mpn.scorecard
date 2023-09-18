@@ -283,8 +283,6 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
     if (inherits(exprs, "error")) {
       warning("Failed to parse ", test_file.i, ": ", conditionMessage(exprs))
       # assign NA to ensure the test_file still gets captured at this stage
-      # TODO: do we want specific handling for NA cases? (besides the warning)
-      # Maybe append a separate list of un-mapped test files? Figure out a different way
       return(tibble::tibble(func = NA_character_, test_file = basename(test_file.i), test_dir = test_dir.i))
     }
 
@@ -319,7 +317,6 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
     dplyr::ungroup()
 
   # left_join to exports_df to filter back to only this package's exported functions
-  # TODO: NA rows (test files that couldnt be parsed) will get filtered out here. Address this.
   exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
 
   # message if any exported functions aren't documented
