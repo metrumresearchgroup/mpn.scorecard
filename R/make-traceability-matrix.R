@@ -276,8 +276,19 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # map over test files and parse all functions called in those files
   func_test_df <- purrr::map_dfr(test_files, function(test_file.i) {
-    parsed_df <- test_file.i %>%
-      parse(keep.source = TRUE) %>%
+
+    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
+
+    exprs <- tryCatch(parse(test_file.i, keep.source = TRUE), error = identity)
+    if (inherits(exprs, "error")) {
+      warning("Failed to parse ", test_file.i, ": ", conditionMessage(exprs))
+      # assign NA to ensure the test_file still gets captured at this stage
+      # TODO: do we want specific handling for NA cases? (besides the warning)
+      # Maybe append a separate list of un-mapped test files? Figure out a different way
+      return(tibble::tibble(func = NA_character_, test_file = basename(test_file.i), test_dir = test_dir.i))
+    }
+
+    parsed_df <- exprs %>%
       utils::getParseData() %>%
       tibble::as_tibble()
 
@@ -291,11 +302,11 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
     if (length(uniq_funcs) == 0) {
       # probably only possible if the file is basically empty
-      return(data.frame(func = character(), test_file = character(), test_dir = character()))
+      return(tibble::tibble(func = character(), test_file = character(), test_dir = character()))
     }
 
-    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
-    return(data.frame(
+
+    return(tibble::tibble(
       func = uniq_funcs,
       test_file = rep(basename(test_file.i), length(uniq_funcs)),
       test_dir = rep(test_dir.i, length(uniq_funcs))
@@ -308,6 +319,7 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
     dplyr::ungroup()
 
   # left_join to exports_df to filter back to only this package's exported functions
+  # TODO: NA rows (test files that couldnt be parsed) will get filtered out here. Address this.
   exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
 
   # message if any exported functions aren't documented
