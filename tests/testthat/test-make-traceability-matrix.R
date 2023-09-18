@@ -108,7 +108,8 @@ describe("Traceability Matrix", {
         glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
       )
     )
-    expect_true(grepl("Failed to parse", res$warnings))
+    expect_true(any(grepl("Failed to parse", res$warnings)))
+    expect_true(any(grepl("No top level assignments were found", res$warnings)))
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))
