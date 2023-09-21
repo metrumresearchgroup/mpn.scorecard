@@ -307,11 +307,43 @@ format_metadata <- function(metadata_list){
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body") %>%
     flextable::set_header_labels(Category = "Category", Value = "Value") %>%
-    flextable::set_caption("System Information")
+    flextable::set_caption("Execution and Machine Information")
 
   return(system_info_flextable)
 }
 
+# `cat_dependency_versions` would be a more fitting name (given cat() and
+# format()), but "format_" is used for consistency with other functions in this
+# file.
+format_dependency_versions <- function(df) {
+  out <- prepare_dependency_versions(df)
+  if (inherits(out, "flextable")) {
+    # Note: knit_print.flextable() does _not_ print to stdout.
+    out <- knitr::knit_print(out)
+  }
+  cat("\n\n", out, "\n\n")
+}
+
+prepare_dependency_versions <- function(df) {
+  if (is.null(df)) {
+    return("Unable to calculate R dependency table due to failing `R CMD check`.")
+  }
+
+  checkmate::assert_data_frame(df)
+  checkmate::assert_subset(c("package", "version"), names(df))
+
+  if (nrow(df) == 0) {
+    return("Package has no required dependencies.")
+  }
+
+  flextable_formatted(df) %>%
+    flextable::set_caption("R Dependency Versions") %>%
+    flextable::set_header_labels(package = "Package", version = "Version") %>%
+    # TODO: Create helper to avoid repeating these next lines in several spots.
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body")
+}
 
 #' Format vector of mitigation text
 #'

@@ -22,7 +22,8 @@ create_package_template <- function(
     pass_warning = FALSE,
     pass_note = FALSE,
     add_R_dir = TRUE,
-    add_tests = TRUE
+    add_tests = TRUE,
+    add_imports = TRUE
 ){
   template_dir <- system.file("test-data", "pkg-templates", package = "mpn.scorecard", mustWork = TRUE)
   testing_dir <- file.path(system.file("", package = "mpn.scorecard", mustWork = TRUE), "testing_dir") %>% fs::path_norm() %>%
@@ -46,7 +47,8 @@ create_package_template <- function(
   }
   # optional notes come from unused imports; additional warnings come from not importing dependencies
   make_pkg_file(pkg_name, description_file, file.path(pkg_dir, "DESCRIPTION"),
-                pass_note = pass_note, pass_warning = pass_warning)
+                pass_note = pass_note, pass_warning = pass_warning,
+                add_imports = add_imports)
 
   # Create NAMESPACE file
   fs::file_copy(namespace_file, file.path(pkg_dir, "NAMESPACE"))
@@ -136,7 +138,8 @@ create_testing_package <- function(
     pass_warning = (type == "pass_warning"),
     pass_note = (type == "pass_notes"),
     add_R_dir = (type != "pass_no_R_dir"),
-    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions", "pass_no_R_dir"))
+    add_tests = !(type %in% c("pass_no_test_suite", "pass_no_functions", "pass_no_R_dir")),
+    add_imports = !(type %in% c("pass_no_functions", "pass_no_R_dir"))
   )
 
   # Add function to R/  (unless type = 'pass_no_functions')
@@ -148,7 +151,10 @@ create_testing_package <- function(
     #' Adds 1 to x
     #' @param x a number
     #' @export
-    myfunction <- function(x) { x + 1}
+    myfunction <- function(x) {
+      checkmate::assert_numeric(x)
+      x + 1
+    }
     ", .open = "{{", .close = "}}")
   }
 
@@ -256,10 +262,17 @@ make_pkg_file <- function(
     new_file,
     # below args are only used for description file
     pass_note = FALSE,
-    pass_warning = FALSE
+    pass_warning = FALSE,
+    add_imports = TRUE
 ){
   template_text <- readLines(template_file) %>% paste(collapse = "\n")
-  imports <- if(isTRUE(pass_note)) "dplyr" else ""
+  imports <- if (isFALSE(add_imports)) {
+    ""
+  } else if (isTRUE(pass_note)) {
+     "checkmate, dplyr"
+  } else {
+    "checkmate"
+  }
   suggests <- if(isFALSE(pass_warning)) "testthat" else ""
   template_text_new <- glue::glue(template_text) # references {pkg_name}
   writeLines(template_text_new, new_file)
