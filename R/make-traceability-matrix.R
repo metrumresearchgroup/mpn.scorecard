@@ -389,10 +389,7 @@ filter_symbol_functions <- function(funcs){
 #'
 #' @keywords internal
 get_toplevel_assignments <- function(pkg_source_path){
-  r_files <- list.files(
-    file.path(pkg_source_path, "R"),
-    full.names = TRUE, pattern = "\\.(?i)[rsq]$", recursive = TRUE
-  )
+  r_files <- tools::list_files_with_type(file.path(pkg_source_path, "R"), "code")
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     exprs <- tryCatch(parse(r_file_i), error = identity)
     if (inherits(exprs, "error")) {
