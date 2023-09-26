@@ -123,6 +123,30 @@ describe("Traceability Matrix", {
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
       "test-myscript.R"
     )
+
+    # Test faulty R/ directory
+    new_pkg_source_dir <- tempfile(pattern = "get_toplevel_assignments-")
+    fs::dir_create(new_pkg_source_dir)
+    on.exit(fs::dir_delete(new_pkg_source_dir), add = TRUE)
+
+    # Copy package over, but delete R scripts
+    fs::dir_copy(pkg_setup_select$pkg_dir, new_pkg_source_dir)
+    new_pkg_dir <- fs::dir_ls(new_pkg_source_dir, recurse = FALSE)
+
+    # Confirm initial expectations
+    r_dir <- file.path(new_pkg_dir, "R")
+    r_script <- tools::list_files_with_type(r_dir, "code")
+    expect_equal(basename(r_script), "myscript.R")
+
+    # Delete R script
+    fs::file_delete(r_script)
+
+    # Build the package tarball (this will filter out empty directories)
+    tar_file <- devtools::build(new_pkg_dir, quiet = TRUE)
+    expect_error(
+      make_traceability_matrix(pkg_tar_path = tar_file),
+      "an R directory is needed"
+    )
   })
 
 

@@ -71,9 +71,13 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
   funcs_df <- get_toplevel_assignments(pkg_source_path)
 
   if(nrow(funcs_df) == 0){
-    # This shouldn't be triggered, and either indicates a bug in `get_toplevel_assignments`,
-    # or an unexpected package setup that we may want to support.
-    warning("No top level assignments were found in the R/ directory. Make sure this was expected.")
+    # Triggering this means an R/ directory exists, but no assignments were found.
+    msg <- paste(
+      "No top level assignments were found in the R/ directory for package",
+      glue::glue("`{basename(pkg_source_path)}`."),
+      "Exports cannot be linked to their defining script."
+    )
+    warning(msg)
   }
 
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
@@ -390,6 +394,19 @@ filter_symbol_functions <- function(funcs){
 #' @keywords internal
 get_toplevel_assignments <- function(pkg_source_path){
   r_files <- tools::list_files_with_type(file.path(pkg_source_path, "R"), "code")
+
+  # Triggering this means an R/ directory exists, but no R/Q/S files were found.
+  if(rlang::is_empty(r_files)){
+    # This shouldn't be triggered, and either indicates a bug in `get_toplevel_assignments`,
+    # or an unexpected package setup that we may want to support.
+    msg <- paste(
+      "No sourceable R scripts were found in the R/ directory for package",
+      glue::glue("`{basename(pkg_source_path)}`. Make sure this was expected.")
+    )
+    warning(msg)
+    return(tibble::tibble(func = character(), code_file = character()))
+  }
+
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     exprs <- tryCatch(parse(r_file_i), error = identity)
     if (inherits(exprs, "error")) {
