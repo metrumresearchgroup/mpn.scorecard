@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0.9000</span>
       </span>
     </div>
 
@@ -59,7 +59,6 @@
 <span>  pg_width <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  column_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  doc_type <span class="op">=</span> <span class="st">"PDF"</span>,</span>
-<span>  as_flextable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  digits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  font_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -89,10 +88,6 @@ If specified, set these column widths before fitting to word document</p></dd>
 <dd><p>Word, PDF, or HTML. Controls font size</p></dd>
 
 
-<dt>as_flextable</dt>
-<dd><p>logical (T/F). if <code>TRUE</code>, use <code>as_flextable</code> instead of <code>flextable</code>, which has different args and is necessary for grouped data</p></dd>
-
-
 <dt>digits</dt>
 <dd><p>numeric. Number of digits to round to. If <code>NULL</code>, and <code>as_flextable = TRUE</code>, flextable will round to one digit.</p></dd>
 
@@ -102,7 +97,11 @@ If specified, set these column widths before fitting to word document</p></dd>
 
 
 <dt>...</dt>
-<dd><p>additional args to be passed to <code>as_flextable</code> or <code>flextable</code></p></dd>
+<dd><p>additional args to be passed to <code>as_flextable()</code> or <code>flextable()</code>.
+Which function, if any, is called depends on the type of <code>tab</code>. If <code>tab</code> is
+already a flextable, neither is called. If <code>tab</code> inherits from
+"grouped_data", <code>as_flextable()</code> is called. Otherwise <code>flextable()</code> is
+called.</p></dd>
 
 </dl></div>
     <div id="value">

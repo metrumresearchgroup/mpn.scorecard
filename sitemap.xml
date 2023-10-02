@@ -91,9 +91,6 @@
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_traceability_matrix.html</loc>
   </url>
   <url>
-    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/get_all_functions.html</loc>
-  </url>
-  <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/get_exports.html</loc>
   </url>
   <url>
@@ -113,6 +110,9 @@
   </url>
   <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/get_tests.html</loc>
+  </url>
+  <url>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/get_toplevel_assignments.html</loc>
   </url>
   <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/index.html</loc>

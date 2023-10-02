@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0.9000</span>
       </span>
     </div>
 
@@ -58,8 +58,18 @@
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>pkg_source_path</dt>
+    <dl><dt>exports_df</dt>
+<dd><p>data.frame with a column, named <code>exported_function</code>,
+containing the names of all exported functions. Can also have other columns
+(which will be returned unmodified).</p></dd>
+
+
+<dt>pkg_source_path</dt>
 <dd><p>a file path pointing to an unpacked/untarred package directory</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>Logical (<code>TRUE</code>/<code>FALSE</code>). If <code>TRUE</code>, show any warnings/messages per function.</p></dd>
 
 </dl></div>
     <div id="value">

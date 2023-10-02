@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0.9000</span>
       </span>
     </div>
 
@@ -53,13 +53,17 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_testing_dir</span><span class="op">(</span><span class="va">pkg_source_path</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_testing_dir</span><span class="op">(</span><span class="va">pkg_source_path</span>, <span class="va">verbose</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>pkg_source_path</dt>
 <dd><p>a file path pointing to an unpacked/untarred package directory</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>Logical (<code>TRUE</code>/<code>FALSE</code>). If <code>TRUE</code>, show any warnings/messages per function.</p></dd>
 
 </dl></div>
 
