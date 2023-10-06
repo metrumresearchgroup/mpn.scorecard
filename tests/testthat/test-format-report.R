@@ -145,14 +145,14 @@ describe("formatting functions", {
 
     # No tests found for some functions
     exports_df2$test_files[[2]] <- ""
-    exports_df2$test_dirs[[2]] <- NULL
+    exports_df2$test_dirs[2] <- list(NULL)
     exported_func_flex <- format_traceability_matrix(exports_df2, return_vals = TRUE)
     exported_func_df <- exported_func_flex$body$dataset
-    # make sure rows were not dropped
+    # make sure rows were not dropped (main test)
     expect_equal(nrow(exported_func_df), nrow(exports_df2))
     # check test files
     test_files <- exported_func_df$`Test Files`
-    expect_equal(unique(test_files[test_files != ""]), "test-myscript.R")
+    expect_equal(unique(test_files), c("test-myscript.R", ""))
   })
 
   it("format_appendix", {
