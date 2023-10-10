@@ -70,6 +70,16 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
   # Search for scripts functions are defined in
   funcs_df <- get_toplevel_assignments(pkg_source_path)
 
+  if(nrow(funcs_df) == 0){
+    # Triggering this means an R/ directory exists, but no assignments were found.
+    msg <- paste(
+      "No top level assignments were found in the R/ directory for package",
+      glue::glue("`{basename(pkg_source_path)}`."),
+      "Exports cannot be linked to their defining script."
+    )
+    warning(msg)
+  }
+
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
   if (any(is.na(exports_df$code_file))) {
@@ -270,8 +280,17 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # map over test files and parse all functions called in those files
   func_test_df <- purrr::map_dfr(test_files, function(test_file.i) {
-    parsed_df <- test_file.i %>%
-      parse(keep.source = TRUE) %>%
+
+    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
+
+    exprs <- tryCatch(parse(test_file.i, keep.source = TRUE), error = identity)
+    if (inherits(exprs, "error")) {
+      warning("Failed to parse ", test_file.i, ": ", conditionMessage(exprs))
+      # assign NA to ensure the test_file still gets captured at this stage
+      return(tibble::tibble(func = NA_character_, test_file = basename(test_file.i), test_dir = test_dir.i))
+    }
+
+    parsed_df <- exprs %>%
       utils::getParseData() %>%
       tibble::as_tibble()
 
@@ -285,11 +304,11 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
     if (length(uniq_funcs) == 0) {
       # probably only possible if the file is basically empty
-      return(data.frame(func = character(), test_file = character(), test_dir = character()))
+      return(tibble::tibble(func = character(), test_file = character(), test_dir = character()))
     }
 
-    test_dir.i <- fs::path_rel(dirname(test_file.i), pkg_source_path)
-    return(data.frame(
+
+    return(tibble::tibble(
       func = uniq_funcs,
       test_file = rep(basename(test_file.i), length(uniq_funcs)),
       test_dir = rep(test_dir.i, length(uniq_funcs))
@@ -374,10 +393,20 @@ filter_symbol_functions <- function(funcs){
 #'
 #' @keywords internal
 get_toplevel_assignments <- function(pkg_source_path){
-  r_files <- list.files(
-    file.path(pkg_source_path, "R"),
-    full.names = TRUE, pattern = "\\.[Rr]$", recursive = TRUE
-  )
+  r_files <- tools::list_files_with_type(file.path(pkg_source_path, "R"), "code")
+
+  # Triggering this means an R/ directory exists, but no R/Q/S files were found.
+  if(rlang::is_empty(r_files)){
+    # This shouldn't be triggered, and either indicates a bug in `get_toplevel_assignments`,
+    # or an unexpected package setup that we may want to support.
+    msg <- paste(
+      "No sourceable R scripts were found in the R/ directory for package",
+      glue::glue("`{basename(pkg_source_path)}`. Make sure this was expected.")
+    )
+    warning(msg)
+    return(tibble::tibble(func = character(), code_file = character()))
+  }
+
   pkg_functions <- purrr::map_dfr(r_files, function(r_file_i) {
     exprs <- tryCatch(parse(r_file_i), error = identity)
     if (inherits(exprs, "error")) {

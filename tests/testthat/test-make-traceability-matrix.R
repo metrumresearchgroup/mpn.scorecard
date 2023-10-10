@@ -77,10 +77,10 @@ describe("Traceability Matrix", {
     # these both generate this warning because this test hits the exportPattern
     # path in get_exports, which calls get_toplevel_assignments() (the source of this warning)
     expect_warning({
-        exports_df <- get_exports(pkg_setup_select$pkg_dir)
-        exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
-      },
-      "Failed to parse"
+      exports_df <- get_exports(pkg_setup_select$pkg_dir)
+      exports_df <- map_functions_to_scripts(exports_df, pkg_setup_select$pkg_dir)
+    },
+    "Failed to parse"
     )
 
     expect_equal(unique(exports_df$exported_function), "myfunction")
@@ -108,7 +108,8 @@ describe("Traceability Matrix", {
         glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
       )
     )
-    expect_true(grepl("Failed to parse", res$warnings))
+    expect_true(any(grepl("Failed to parse", res$warnings)))
+    expect_true(any(grepl("No top level assignments were found", res$warnings)))
 
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     expect_true(fs::file_exists(export_doc_path))
@@ -121,6 +122,30 @@ describe("Traceability Matrix", {
     expect_equal(
       trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
       "test-myscript.R"
+    )
+
+    # Test faulty R/ directory
+    new_pkg_source_dir <- tempfile(pattern = "get_toplevel_assignments-")
+    fs::dir_create(new_pkg_source_dir)
+    on.exit(fs::dir_delete(new_pkg_source_dir), add = TRUE)
+
+    # Copy package over, but delete R scripts
+    fs::dir_copy(pkg_setup_select$pkg_dir, new_pkg_source_dir)
+    new_pkg_dir <- fs::dir_ls(new_pkg_source_dir, recurse = FALSE)
+
+    # Confirm initial expectations
+    r_dir <- file.path(new_pkg_dir, "R")
+    r_script <- tools::list_files_with_type(r_dir, "code")
+    expect_equal(basename(r_script), "myscript.R")
+
+    # Delete R script
+    fs::file_delete(r_script)
+
+    # Build the package tarball (this will filter out empty directories)
+    tar_file <- devtools::build(new_pkg_dir, quiet = TRUE)
+    expect_error(
+      make_traceability_matrix(pkg_tar_path = tar_file),
+      "an R directory is needed"
     )
   })
 
@@ -223,6 +248,39 @@ describe("Traceability Matrix", {
 
     # Confirm correct location
     expect_equal(basename(unique(funcs_found$code_file)), c("myscript.R","myscript1.R", "myscript2.R"))
+  })
+
+
+  it("get_toplevel_assignments works with different file extensions", {
+
+    new_pkg_source_dir <- tempfile(pattern = "get_toplevel_assignments-")
+    r_dir <- file.path(new_pkg_source_dir, "R")
+    fs::dir_create(r_dir, recurse = TRUE)
+    on.exit(fs::dir_delete(new_pkg_source_dir), add = TRUE)
+
+    funcs <- c(
+      "myfunc1 <- function(x) {x + 1}",
+      "myfunc2 <- function(x) {x + 1}",
+      "myfunc3 <- function(x) {x + 1}",
+      "myfunc4 <- function(x) {x + 1}"
+    )
+    func_names <- paste0("myfunc", 1:4)
+
+    files <- c(
+      "temp_file1.R",
+      "temp_file2.r",
+      "temp_file3.q",
+      "temp_file4.s"
+    )
+    files <- file.path(r_dir, files)
+
+    purrr::walk2(funcs, files, function(func, file){
+      writeLines(func, file)
+    })
+
+    funcs_df <- get_toplevel_assignments(new_pkg_source_dir)
+
+    expect_true(all(func_names %in% funcs_df$func))
   })
 
 
