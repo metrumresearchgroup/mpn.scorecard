@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.0</span>
       </span>
     </div>
 
@@ -47,6 +47,22 @@
       <small>Source: <a href="https://github.com/metrumresearchgroup/mpn.scorecard/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.2.0" id="mpnscorecard-020">mpn.scorecard 0.2.0<a class="anchor" aria-label="anchor" href="#mpnscorecard-020"></a></h2>
+<div class="section level3">
+<h3 id="new-features-and-changes-0-2-0">New features and changes<a class="anchor" aria-label="anchor" href="#new-features-and-changes-0-2-0"></a></h3>
+<ul><li>Added new table to the appendix, displaying package dependency versions (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/45" class="external-link">#45</a>).</li>
+<li>
+<code>add_traceability</code> defaults to <code>'auto'</code> instead of <code>FALSE</code> in <code><a href="../reference/render_scorecard.html">render_scorecard()</a></code>. (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/33" class="external-link">#33</a>)</li>
+<li>New hex sticker (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/48" class="external-link">#48</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
+<ul><li>Various traceability matrix fixes for capturing R exports and mapping to relevant tests and documentation. (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/36" class="external-link">#36</a>, <a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/42" class="external-link">#42</a>, <a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/47" class="external-link">#47</a>)</li>
+<li>Fixed a bug in <code><a href="../reference/flextable_formatted.html">flextable_formatted()</a></code> where the number of rows was being appended to the overall scores and metadata tables. This was due to a change in <code>flextable</code>, and was introduced in version <code>0.9.3</code>: <code>as_flextable.data.frame()</code> always shows the number of rows even if less than 10. (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/43" class="external-link">#43</a>)</li>
+<li>Removed unused imports that were used during early development. (<a href="https://github.com/metrumresearchgroup/mpn.scorecard/issues/44" class="external-link">#44</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.0" id="mpnscorecard-010">mpn.scorecard 0.1.0<a class="anchor" aria-label="anchor" href="#mpnscorecard-010"></a></h2>
 <p>First official release</p>
