@@ -6,6 +6,12 @@
 
 # mpn.scorecard <a href='https://metrumresearchgroup.github.io/mpn.scorecard'><img align="right" src = "man/figures/logo.png" height="172" style="float:right; height:172px;"/></a>
 
+<!-- badges: start -->
+
+[![Build
+Status](https://github-drone.metrumrg.com/api/badges/metrumresearchgroup/mpn.scorecard/status.svg)](https://github-drone.metrumrg.com/metrumresearchgroup/mpn.scorecard)
+<!-- badges: end -->
+
 `mpn.scorecard` is an R package designed to score other R packages on
 key attributes that help evaluate the risk of adding them to
 [MPN](https://mpn.metworx.com/docs/). `mpn.scorecard` is essentially a
