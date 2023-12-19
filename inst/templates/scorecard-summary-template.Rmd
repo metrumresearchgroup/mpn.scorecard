@@ -10,7 +10,6 @@ output:
     citation_package: biblatex
 bibliography: ["sum_links.bib"]
 biblio-style: "apalike"
-link-citations: true
 # needed to make footnotes point to full bibliography
 csl: https://www.zotero.org/styles/chicago-fullnote-bibliography
 # needed to prevent additional bibliography section
