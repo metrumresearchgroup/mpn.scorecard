@@ -1,4 +1,10 @@
 
+# mpn.scorecard 0.2.1
+
+## Bug Fixes
+
+- The template used by `render_scorecard_summary()` was incompatible with a Pandoc change in behavior introduced in version 3.1.7 and reverted in 3.1.10. (#51)
+
 # mpn.scorecard 0.2.0
 
 ## New features and changes
