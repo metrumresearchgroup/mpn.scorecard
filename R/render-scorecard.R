@@ -208,10 +208,6 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
 
 #' Look for comment file and return contents if is found
 #'
-#' The presence of a comment section indicates that we are aware the score is
-#' low, but we are proceeding with adding the package to MPN or otherwise
-#' approving it. This is not the same as a deviation from expected results.
-#'
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal

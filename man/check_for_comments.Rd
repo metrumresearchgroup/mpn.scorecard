@@ -10,8 +10,6 @@ check_for_comments(results_dir)
 \item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
 }
 \description{
-The presence of a comment section indicates that we are aware the score is
-low, but we are proceeding with adding the package to MPN or otherwise
-approving it. This is not the same as a deviation from expected results.
+Look for comment file and return contents if is found
 }
 \keyword{internal}
