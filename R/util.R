@@ -27,7 +27,7 @@ check_exists_and_overwrite <- function(path, overwrite) {
 #' @keywords internal
 get_result_path <- function(
     out_dir,
-    ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "mitigation.txt", "summary.pdf", "export_doc.rds")
+    ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt", "summary.pdf", "export_doc.rds")
 ){
 
   ext <- match.arg(ext)

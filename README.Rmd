@@ -112,8 +112,8 @@ pdf_path <- render_scorecard(
 
 <img src="man/figures/trac_matrix.png" align="center" style = "width:900px;" />
 
-## Mitigation (optional)
-Packages with low scores that fall short of initial expectations may include a mitigation text file. The presence of a mitigation section indicates that we are aware the score is low but are proceeding with adding the package to MPN. The rationale for doing so is included in the mitigation file itself. Inclusion of this section works the same as a traceability matrix. If a mitigation file matching the expected naming convention (`<package_tarball_name>.mitigation.txt` or `package_3.1.0.mitigation.txt` in the above example) is found in `results_dir`, the section will be automatically be included.
+## Comments (optional)
+Packages with low scores that fall short of initial expectations may include a comment text file. The presence of a comment section indicates that we are aware the score is low, but are proceeding with adding the package to MPN or otherwise approving it. The rationale for doing so is included in the comment file itself. Note that this is not intended to be used to denote a deviation from expected results. Inclusion of this section works the same as a traceability matrix. If a comment file matching the expected naming convention (`<package_tarball_name>.comments.txt` or `package_3.1.0.comments.txt` in the above example) is found in `results_dir`, the section will be automatically be included.
 
 
 ## Summary Report

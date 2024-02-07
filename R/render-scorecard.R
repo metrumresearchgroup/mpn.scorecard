@@ -12,13 +12,13 @@
 #'
 #' @details
 #'
-#' If a plain text mitigation file is found in `results_dir`, it will automatically be included.
-#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.mitigation.txt`
+#' If a plain text comments file is found in `results_dir`, it will automatically be included.
+#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.comments.txt`
 #'
 #' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
 #'
-#' A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
+#' A comments file includes any explanation necessary for justifying use of a potentially "high risk" package.
 #'
 #' @export
 render_scorecard <- function(
@@ -42,7 +42,7 @@ render_scorecard <- function(
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
-  mitigation_block <- check_for_mitigation(results_dir)
+  comments_block <- check_for_comments(results_dir)
 
   # Output file
   checkmate::assert_string(results_dir, null.ok = TRUE)
@@ -74,7 +74,7 @@ render_scorecard <- function(
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
       scorecard_footer = mpn_scorecard_ver,
       pkg_scores = formatted_pkg_scores,
-      mitigation_block = mitigation_block,
+      comments_block = comments_block,
       extra_notes_data = extra_notes_data,
       exports_df = exports_df,
       dep_versions_df = dep_versions_df
@@ -206,21 +206,25 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
 }
 
 
-#' Look for mitigation file and return contents if is found
+#' Look for comment file and return contents if is found
+#'
+#' The presence of a comment section indicates that we are aware the score is
+#' low, but we are proceeding with adding the package to MPN or otherwise
+#' approving it. This is not the same as a deviation from expected results.
 #'
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
-check_for_mitigation <- function(results_dir){
-  # mitigation (if any)
-  # infer mitigation path from `results_dir`
-  mitigation_path <- get_result_path(results_dir, "mitigation.txt")
-  if(fs::file_exists(mitigation_path)){
-    mitigation_block <- readLines(mitigation_path)
+check_for_comments <- function(results_dir){
+  # comments (if any)
+  # infer comments path from `results_dir`
+  comments_path <- get_result_path(results_dir, "comments.txt")
+  if(fs::file_exists(comments_path)){
+    comments_block <- readLines(comments_path)
   }else{
-    mitigation_block <- NULL
+    comments_block <- NULL
   }
-  return(mitigation_block)
+  return(comments_block)
 }
 
 
