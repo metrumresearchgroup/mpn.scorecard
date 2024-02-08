@@ -89,7 +89,7 @@ describe("comments file is properly included", {
     rlang::local_options(lifecycle_verbosity = "warning")
     expect_warning(
       render_scorecard(results_dir = result_dir, overwrite = TRUE),
-      "mitigation.txt as of mpn.scorecard"
+      "deprecated as of mpn.scorecard"
     )
 
     # Rename comments file
@@ -120,6 +120,4 @@ describe("comments file is properly included", {
     # spot check first line of text (bullet formatting wont matter)
     expect_true(grepl(paste(expected_comments_text, collapse = "\n|"), comments_section))
   })
-
-
 })
