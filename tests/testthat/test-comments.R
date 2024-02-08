@@ -89,7 +89,7 @@ describe("comments file is properly included", {
     rlang::local_options(lifecycle_verbosity = "warning")
     expect_warning(
       render_scorecard(results_dir = result_dir, overwrite = TRUE),
-      "mitigation.txt as of mpn.scorecard 0.3.0"
+      "mitigation.txt as of mpn.scorecard"
     )
 
     # Rename comments file
