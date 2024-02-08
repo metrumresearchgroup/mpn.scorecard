@@ -43,7 +43,8 @@ Imports:
     rmarkdown,
     stringr,
     tibble,
-    tidyselect
+    tidyselect,
+    tidyr
 Suggests:
     devtools,
     pdftools,
