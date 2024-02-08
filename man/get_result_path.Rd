@@ -7,13 +7,14 @@
 get_result_path(
   out_dir,
   ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt",
-    "summary.pdf", "export_doc.rds")
+    "summary.pdf", "export_doc.rds", "mitigation.txt")
 )
 }
 \arguments{
 \item{out_dir}{output directory for saving results and json}
 
-\item{ext}{file name and extension}
+\item{ext}{file name and extension. \code{"mitigation.txt"} is deprecated, but
+still supported.}
 }
 \description{
 Assign output file path for various outputs during scorecard rendering

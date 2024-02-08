@@ -212,15 +212,46 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
 #'
 #' @keywords internal
 check_for_comments <- function(results_dir){
-  # comments (if any)
-  # infer comments path from `results_dir`
-  comments_path <- get_result_path(results_dir, "comments.txt")
-  if(fs::file_exists(comments_path)){
-    comments_block <- readLines(comments_path)
-  }else{
-    comments_block <- NULL
+
+  # Implementation function for looking for comment file
+  check_for_comments_imlp <- function(r_dir, ext){
+    # infer comments path from `results_dir`
+    comments_path <- get_result_path(r_dir, ext)
+    if(fs::file_exists(comments_path)){
+      comments_block <- readLines(comments_path)
+    }else{
+      comments_block <- NULL
+    }
+    return(comments_block)
   }
-  return(comments_block)
+
+  exts <- c("comments.txt", "mitigation.txt")
+  comment_block <- check_for_comments_imlp(results_dir, "comments.txt")
+
+  # deprecated, but still supported
+  mitigation_block <- check_for_comments_imlp(results_dir, "mitigation.txt")
+  if(!is.null(mitigation_block)){
+    lifecycle::deprecate_warn(
+      when = "0.3.0",
+      what = "get_result_path(ext = 'mitigation.txt')",
+      details = c(
+        i = paste(
+          "Found", glue("`{basename(results_dir)}.mitigation.txt`."),
+          "Please use", glue("`{basename(results_dir)}.comments.txt`.")
+        )
+      ),
+      env = rlang::caller_env(0),
+      user_env = rlang::caller_env(2)
+    )
+  }
+
+  # Return comments (if any)
+  if(is.null(comment_block) && !is.null(mitigation_block)){
+    return(mitigation_block)
+  }else{
+    return(comment_block)
+  }
+
 }
 
 

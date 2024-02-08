@@ -19,15 +19,20 @@ check_exists_and_overwrite <- function(path, overwrite) {
 #' Assign output file path for various outputs during scorecard rendering
 #'
 #' @param out_dir output directory for saving results and json
-#' @param ext file name and extension
+#' @param ext file name and extension. `"mitigation.txt"` is deprecated, but
+#'   still supported.
 #'
 #' @details
 #' The basename of `out_dir` should be the package name and version pasted together
 #'
+#'
 #' @keywords internal
 get_result_path <- function(
     out_dir,
-    ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt", "summary.pdf", "export_doc.rds")
+    ext = c(
+      "scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt",
+      "summary.pdf", "export_doc.rds", "mitigation.txt"
+    )
 ){
 
   ext <- match.arg(ext)

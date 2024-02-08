@@ -3,7 +3,9 @@ library(pdftools)
 library(dplyr)
 library(roxygen2)
 
-
+# Template file for comments
+comments_template <- system.file("test-data", "comments-example.txt",
+                                 package = "mpn.scorecard", mustWork = TRUE)
 
 # Base rcmdcheck args. Set the `path` element to the file path of the tarball before using
 rcmdcheck_args = list(

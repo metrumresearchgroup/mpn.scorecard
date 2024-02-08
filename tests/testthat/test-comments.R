@@ -3,8 +3,6 @@ describe("comments file is properly included", {
 
   it("check_for_comments", {
 
-    comments_template <- system.file("test-data", "comments-example.txt", package = "mpn.scorecard")
-
     result_dir <- result_dirs_select[["fail_func_syntax"]]
 
     # For inspecting
@@ -17,7 +15,7 @@ describe("comments file is properly included", {
     # Should be NULL if not named properly
     expect_true(is.null(check_for_comments(result_dir)))
 
-    # rename to expected name and check validity
+    # Rename to expected name and check validity
     new_comments_name <- get_result_path(result_dir, "comments.txt")
     fs::file_move(comments_file, new_comments_name)
     on.exit(fs::file_delete(new_comments_name), add = TRUE)
@@ -26,11 +24,9 @@ describe("comments file is properly included", {
     expect_false(is.null(comments_block))
     expect_true(is.character(comments_block))
     expect_true(length(comments_block) > 1)
-
   })
 
   it("build_risk_summary correctly formats comments column",{
-    comments_template <- system.file("test-data", "comments-example.txt", package = "mpn.scorecard")
 
     # Add comments to non-high-risk package
     pass_idx <- match("pass_success", names(result_dirs_select))
@@ -74,7 +70,6 @@ describe("comments file is properly included", {
 
   it("confirm presence in rendered report", {
     skip_if_render_pdf()
-    comments_template <- system.file("test-data", "comments-example.txt", package = "mpn.scorecard")
 
     result_dir <- result_dirs_select[["fail_func_syntax"]]
 
@@ -84,14 +79,22 @@ describe("comments file is properly included", {
     # Render once without comments (confirm section doesnt exist)
     pdf_path <- render_scorecard(results_dir = result_dir, overwrite = TRUE)
 
-
     rendered_pdf_text <- pdftools::pdf_text(pdf = pdf_path)
     expect_false(any(grepl("Comments", rendered_pdf_text)))
 
-    # copy and rename comments file
+    # Warn if named mitigation
     comments_file <- fs::file_copy(comments_template, result_dir)
+    comments_name_mit <- get_result_path(result_dir, "mitigation.txt")
+    fs::file_move(comments_file, comments_name_mit)
+    rlang::local_options(lifecycle_verbosity = "warning")
+    expect_warning(
+      render_scorecard(results_dir = result_dir, overwrite = TRUE),
+      "mitigation.txt as of mpn.scorecard 0.3.0"
+    )
+
+    # Rename comments file
     new_comments_name <- get_result_path(result_dir, "comments.txt")
-    fs::file_move(comments_file, new_comments_name)
+    fs::file_move(comments_name_mit, new_comments_name)
     on.exit(fs::file_delete(new_comments_name), add = TRUE)
 
     # Render with comments section
@@ -104,7 +107,6 @@ describe("comments file is properly included", {
 
     expect_equal(length(title_sub_sections), 3)
     expect_equal(title_sub_sections, c("Documentation, Maintenance & Transparency", "Testing", "Comments"))
-
 
     # Check content
     rendered_pdf_text <- pdftools::pdf_text(pdf = pdf_path)
