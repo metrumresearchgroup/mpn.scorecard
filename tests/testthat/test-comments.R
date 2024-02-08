@@ -86,7 +86,6 @@ describe("comments file is properly included", {
     comments_file <- fs::file_copy(comments_template, result_dir)
     comments_name_mit <- get_result_path(result_dir, "mitigation.txt")
     fs::file_move(comments_file, comments_name_mit)
-    rlang::local_options(lifecycle_verbosity = "warning")
     expect_warning(
       render_scorecard(results_dir = result_dir, overwrite = TRUE),
       "deprecated as of mpn.scorecard"
