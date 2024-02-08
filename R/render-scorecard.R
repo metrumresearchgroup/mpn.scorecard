@@ -18,8 +18,6 @@
 #' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
 #'
-#' A comments file includes any explanation necessary for justifying use of a potentially "high risk" package.
-#'
 #' @export
 render_scorecard <- function(
     results_dir,
@@ -214,7 +212,7 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
 check_for_comments <- function(results_dir){
 
   # Implementation function for looking for comment file
-  check_for_comments_imlp <- function(r_dir, ext){
+  check_for_comments_impl <- function(r_dir, ext){
     # infer comments path from `results_dir`
     comments_path <- get_result_path(r_dir, ext)
     if(fs::file_exists(comments_path)){
@@ -225,19 +223,28 @@ check_for_comments <- function(results_dir){
     return(comments_block)
   }
 
-  exts <- c("comments.txt", "mitigation.txt")
-  comment_block <- check_for_comments_imlp(results_dir, "comments.txt")
+  comment_block <- check_for_comments_impl(results_dir, "comments.txt")
 
-  # deprecated, but still supported
-  mitigation_block <- check_for_comments_imlp(results_dir, "mitigation.txt")
+  # deprecated as of 0.3.0, but still supported
+  mitigation_block <- check_for_comments_impl(results_dir, "mitigation.txt")
   if(!is.null(mitigation_block)){
+
+    if(is.null(comment_block)) {
+      details_msg <- paste(
+        "Including contents of", glue("`{basename(results_dir)}.mitigation.txt`."),
+        "Please rename to", glue("`{basename(results_dir)}.comments.txt` for future usage.")
+      )
+    } else {
+      details_msg <- paste(
+        "Including contents of", glue("`{basename(results_dir)}.comments.txt`"),
+        "and ignoring", glue("`{basename(results_dir)}.mitigation.txt`.")
+      )
+    }
+
     deprecate_warning(
       version = "0.3.0",
       what = "Using `mitigation.txt` extensions for including comments",
-      details = paste(
-        "Found", glue("`{basename(results_dir)}.mitigation.txt`."),
-        "Please use", glue("`{basename(results_dir)}.comments.txt`.")
-      )
+      details = details_msg
     )
   }
 
