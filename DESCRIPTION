@@ -50,7 +50,6 @@ Suggests:
     pdftools,
     roxygen2,
     testthat (>= 2.1.0),
-    tidyr,
     withr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
