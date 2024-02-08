@@ -100,8 +100,9 @@ unpack_tarball <- function(pkg_tar, temp_file_name = "SCORECARD_"){
 #'
 #' @noRd
 deprecate_warning <- function(version, what, details = NULL){
-  # mpn.scorecard version
-  mpn_scorecard_ver <- as.character(utils::packageVersion("mpn.scorecard"))
+  # Format package versions
+  mpn_scorecard_ver <- package_version(utils::packageVersion("mpn.scorecard"))
+  version <- package_version(version)
 
   if(mpn_scorecard_ver >= version){
     ver_text <- paste("mpn.scorecard", version)
