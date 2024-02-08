@@ -231,17 +231,13 @@ check_for_comments <- function(results_dir){
   # deprecated, but still supported
   mitigation_block <- check_for_comments_imlp(results_dir, "mitigation.txt")
   if(!is.null(mitigation_block)){
-    lifecycle::deprecate_warn(
-      when = "0.3.0",
-      what = "get_result_path(ext = 'mitigation.txt')",
-      details = c(
-        i = paste(
-          "Found", glue("`{basename(results_dir)}.mitigation.txt`."),
-          "Please use", glue("`{basename(results_dir)}.comments.txt`.")
-        )
-      ),
-      env = rlang::caller_env(0),
-      user_env = rlang::caller_env(2)
+    deprecate_warning(
+      version = "0.3.0",
+      what = "Using `mitigation.txt` extensions for including comments",
+      details = paste(
+        "Found", glue("`{basename(results_dir)}.mitigation.txt`."),
+        "Please use", glue("`{basename(results_dir)}.comments.txt`.")
+      )
     )
   }
 

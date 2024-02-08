@@ -84,3 +84,30 @@ unpack_tarball <- function(pkg_tar, temp_file_name = "SCORECARD_"){
   return(pkg_source_path)
 }
 
+
+#' Warn that a feature is deprecated
+#'
+#' @param version mpn.scorecard version when something became deprecated
+#' @param what A string describing what is deprecated.
+#' @param details Can either be a single string or a character vector, which
+#'   will be converted to a bulleted list.
+#'
+#' @details
+#' This function is different from lifecycle::deprecate_warn, as it does not
+#' refer to the function that called it, nor care about the environment it was
+#' called in. It simply triggers an inforamtive warning if the current
+#' `mpn.scorecard` version is ahead of the `version` supplied.
+#'
+#' @noRd
+deprecate_warning <- function(version, what, details = NULL){
+  # mpn.scorecard version
+  mpn_scorecard_ver <- as.character(utils::packageVersion("mpn.scorecard"))
+
+  if(mpn_scorecard_ver >= version){
+    ver_text <- paste("mpn.scorecard", version)
+    what_txt <- c("!" = paste(what, glue::glue("is deprecated as of {ver_text}")))
+    details_txt <- if(!is.null(details)) c("i" = details) else ""
+
+    rlang::warn(c(what_txt, details_txt))
+  }
+}
