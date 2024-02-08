@@ -33,6 +33,7 @@ Imports:
     glue,
     jsonlite,
     knitr,
+    lifecycle,
     magrittr,
     officer,
     pkgload,
