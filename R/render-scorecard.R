@@ -12,13 +12,11 @@
 #'
 #' @details
 #'
-#' If a plain text mitigation file is found in `results_dir`, it will automatically be included.
-#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.mitigation.txt`
+#' If a plain text comments file is found in `results_dir`, it will automatically be included.
+#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.comments.txt`
 #'
 #' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
-#'
-#' A mitigation file includes any explanation necessary for justifying use of a potentially "high risk" package.
 #'
 #' @export
 render_scorecard <- function(
@@ -42,7 +40,7 @@ render_scorecard <- function(
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
-  mitigation_block <- check_for_mitigation(results_dir)
+  comments_block <- check_for_comments(results_dir)
 
   # Output file
   checkmate::assert_string(results_dir, null.ok = TRUE)
@@ -74,7 +72,7 @@ render_scorecard <- function(
       set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
       scorecard_footer = mpn_scorecard_ver,
       pkg_scores = formatted_pkg_scores,
-      mitigation_block = mitigation_block,
+      comments_block = comments_block,
       extra_notes_data = extra_notes_data,
       exports_df = exports_df,
       dep_versions_df = dep_versions_df
@@ -206,21 +204,57 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
 }
 
 
-#' Look for mitigation file and return contents if is found
+#' Look for comment file and return contents if is found
 #'
 #' @inheritParams render_scorecard
 #'
 #' @keywords internal
-check_for_mitigation <- function(results_dir){
-  # mitigation (if any)
-  # infer mitigation path from `results_dir`
-  mitigation_path <- get_result_path(results_dir, "mitigation.txt")
-  if(fs::file_exists(mitigation_path)){
-    mitigation_block <- readLines(mitigation_path)
-  }else{
-    mitigation_block <- NULL
+check_for_comments <- function(results_dir){
+
+  # Implementation function for looking for comment file
+  check_for_comments_impl <- function(r_dir, ext){
+    # infer comments path from `results_dir`
+    comments_path <- get_result_path(r_dir, ext)
+    if(fs::file_exists(comments_path)){
+      comments_block <- readLines(comments_path)
+    }else{
+      comments_block <- NULL
+    }
+    return(comments_block)
   }
-  return(mitigation_block)
+
+  comment_block <- check_for_comments_impl(results_dir, "comments.txt")
+
+  # deprecated as of 0.3.0, but still supported
+  mitigation_block <- check_for_comments_impl(results_dir, "mitigation.txt")
+  if(!is.null(mitigation_block)){
+
+    if(is.null(comment_block)) {
+      details_msg <- paste(
+        "Including contents of", glue("`{basename(results_dir)}.mitigation.txt`."),
+        "Please rename to", glue("`{basename(results_dir)}.comments.txt` for future usage.")
+      )
+    } else {
+      details_msg <- paste(
+        "Including contents of", glue("`{basename(results_dir)}.comments.txt`"),
+        "and ignoring", glue("`{basename(results_dir)}.mitigation.txt`.")
+      )
+    }
+
+    deprecate_warning(
+      version = "0.3.0",
+      what = "Using `mitigation.txt` extensions for including comments",
+      details = details_msg
+    )
+  }
+
+  # Return comments (if any)
+  if(is.null(comment_block) && !is.null(mitigation_block)){
+    return(mitigation_block)
+  }else{
+    return(comment_block)
+  }
+
 }
 
 

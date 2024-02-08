@@ -345,13 +345,13 @@ prepare_dependency_versions <- function(df) {
     flextable::color(color = "black", part = "body")
 }
 
-#' Format vector of mitigation text
+#' Format vector of comments text
 #'
-#' @param mitigation_block character vector of mitigation text. Can include bullets
+#' @param comments_block character vector of comments text. Can include bullets
 #'
 #' @keywords internal
-format_mitigation <- function(mitigation_block){
-  header_str <- "\n## Mitigation\n\n"
+format_comments <- function(comments_block){
+  header_str <- "\n## Comments\n\n"
 
   # If specified in bullet format, we need to make sure there is a new line after the header
   # to be formatted correctly
@@ -359,18 +359,18 @@ format_mitigation <- function(mitigation_block){
     grepl("^[[:space:]]*[-+*]", str)
   }
 
-  if(is.null(mitigation_block)){
+  if(is.null(comments_block)){
     cat(NULL)
   }else{
-    if(length(mitigation_block) > 0){
+    if(length(comments_block) > 0){
       cat(header_str)
-      for(i in seq_along(mitigation_block)){
+      for(i in seq_along(comments_block)){
         if(i > 1){
-          if(starts_with_bullet(mitigation_block[[i]]) && !starts_with_bullet(mitigation_block[[i-1]]) && nzchar(mitigation_block[[i-1]])){
+          if(starts_with_bullet(comments_block[[i]]) && !starts_with_bullet(comments_block[[i-1]]) && nzchar(comments_block[[i-1]])){
             cat("\n")
           }
         }
-        cat(mitigation_block[[i]])
+        cat(comments_block[[i]])
         cat("\n")
       }
     }
@@ -393,7 +393,7 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
   # Base table
   risk_summary_flex <- flextable_formatted(
     risk_summary_df, digits = digits,
-    col_keys = c("Package", "Version", "Overall Score", "Overall Risk", "Mitigation"),
+    col_keys = c("Package", "Version", "Overall Score", "Overall Risk", "Comments"),
     pg_width = 6.5
   )
 

@@ -14,8 +14,8 @@ describe("summarize_package_results", {
     # Make sure package names are parsed correctly - integration test
     expect_equal(pkg_results$package, pkg_select$pkg_name)
 
-    # confirm no mitigation file for any packages, and that the behavior is different from `build_risk_summary`
-    expect_true(all(pkg_results$has_mitigation == "no"))
+    # confirm no comments file for any packages, and that the behavior is different from `build_risk_summary`
+    expect_true(all(pkg_results$has_comments == "no"))
 
     # spot check additional expected column outputs
     cases <- names(result_dirs_select)
@@ -44,30 +44,30 @@ describe("summarize_package_results", {
     )
   })
 
-  it("with mitigation for some packages", {
+  it("with comments for some packages", {
 
-    mitigation_template <- system.file("test-data", "mitigation-example.txt", package = "mpn.scorecard")
+    comments_template <- system.file("test-data", "comments-example.txt", package = "mpn.scorecard")
 
-    # Add mitigation to non-high-risk package
+    # Add comments to non-high-risk package
     pass_idx <- match("pass_success", names(result_dirs_select))
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[[pass_idx]])
-    new_mitigation_name <- get_result_path(result_dirs_select[[pass_idx]], "mitigation.txt")
-    fs::file_move(mitigation_file, new_mitigation_name)
-    on.exit(fs::file_delete(new_mitigation_name), add = TRUE)
+    comments_file <- fs::file_copy(comments_template, result_dirs_select[[pass_idx]])
+    new_comments_name <- get_result_path(result_dirs_select[[pass_idx]], "comments.txt")
+    fs::file_move(comments_file, new_comments_name)
+    on.exit(fs::file_delete(new_comments_name), add = TRUE)
 
-    # Add mitigation to high-risk package
+    # Add comments to high-risk package
     fail_idx <- match("fail_func_syntax", names(result_dirs_select))
-    mitigation_file <- fs::file_copy(mitigation_template, result_dirs_select[[fail_idx]])
-    new_mitigation_name_high <- get_result_path(result_dirs_select[[fail_idx]], "mitigation.txt")
-    fs::file_move(mitigation_file, new_mitigation_name_high)
-    on.exit(fs::file_delete(new_mitigation_name_high), add = TRUE)
+    comments_file <- fs::file_copy(comments_template, result_dirs_select[[fail_idx]])
+    new_comments_name_high <- get_result_path(result_dirs_select[[fail_idx]], "comments.txt")
+    fs::file_move(comments_file, new_comments_name_high)
+    on.exit(fs::file_delete(new_comments_name_high), add = TRUE)
 
     pkg_results <- summarize_package_results(result_dirs_select)
 
-    expect_identical(pkg_results$has_mitigation[pass_idx], "yes")
-    expect_identical(pkg_results$has_mitigation[fail_idx], "yes")
+    expect_identical(pkg_results$has_comments[pass_idx], "yes")
+    expect_identical(pkg_results$has_comments[fail_idx], "yes")
     expect_identical(
-      unique(pkg_results$has_mitigation[-c(pass_idx, fail_idx)]),
+      unique(pkg_results$has_comments[-c(pass_idx, fail_idx)]),
       "no"
     )
   })

@@ -86,21 +86,21 @@ build_risk_summary <- function(result_dirs,
       dplyr::rename("overall_risk" = "risk", "overall_score" = "category_score")
 
 
-    # mitigation - we want empty mitigation cells by default
-    mitigation_txt <- if(is.null(check_for_mitigation(.x))) NA_character_ else "Yes"
+    # comments - we want empty comments cells by default
+    comments_txt <- if(is.null(check_for_comments(.x))) NA_character_ else "Yes"
     # Overwrite to 'No' for High Risk packages
-    if(is.na(mitigation_txt) && overall_risk$overall_risk == "High Risk"){
-      mitigation_txt <- "No"
+    if(is.na(comments_txt) && overall_risk$overall_risk == "High Risk"){
+      comments_txt <- "No"
     }
 
     pkg_info <- data.frame(
       package = formatted_pkg_scores$pkg_name,
       version = formatted_pkg_scores$pkg_version,
       out_dir = out_dir_stored,
-      mitigation = mitigation_txt
+      comments = comments_txt
     )
 
-    cbind(pkg_info, overall_risk) %>% dplyr::relocate(mitigation, .after = everything())
+    cbind(pkg_info, overall_risk) %>% dplyr::relocate(comments, .after = everything())
   }) %>% purrr::list_rbind()
 
 
@@ -152,7 +152,7 @@ summarize_package_results <- function(result_dirs){
     version = purrr::map_chr(.data$res_obj, "pkg_version"),
     pkg_name_ver = paste0(.data$package, "_", version),
     overall_score = purrr::map_dbl(.data$res_obj, c("category_scores", "overall")),
-    has_mitigation = purrr::map_chr(.data$result_dir, ~ (if(is.null(check_for_mitigation(.x))) "no" else "yes")),
+    has_comments = purrr::map_chr(.data$result_dir, ~ (if(is.null(check_for_comments(.x))) "no" else "yes")),
     check_obj = purrr::map(paste0(.data$result_dir, "/", .data$pkg_name_ver, ".check.rds"), readRDS),
     check_status = purrr::map_int(.data$check_obj, "status"),
     check_test_fail = purrr::map(.data$check_obj, "test_fail"),

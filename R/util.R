@@ -19,15 +19,20 @@ check_exists_and_overwrite <- function(path, overwrite) {
 #' Assign output file path for various outputs during scorecard rendering
 #'
 #' @param out_dir output directory for saving results and json
-#' @param ext file name and extension
+#' @param ext file name and extension. `"mitigation.txt"` is deprecated, but
+#'   still supported.
 #'
 #' @details
 #' The basename of `out_dir` should be the package name and version pasted together
 #'
+#'
 #' @keywords internal
 get_result_path <- function(
     out_dir,
-    ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "mitigation.txt", "summary.pdf", "export_doc.rds")
+    ext = c(
+      "scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt",
+      "summary.pdf", "export_doc.rds", "mitigation.txt"
+    )
 ){
 
   ext <- match.arg(ext)
@@ -79,3 +84,30 @@ unpack_tarball <- function(pkg_tar, temp_file_name = "SCORECARD_"){
   return(pkg_source_path)
 }
 
+
+#' Warn that a feature is deprecated
+#'
+#' @param version mpn.scorecard version when something became deprecated
+#' @param what A string describing what is deprecated.
+#' @param details Can either be a single string or a character vector, which
+#'   will be converted to a bulleted list.
+#'
+#' @details
+#' This function is different from lifecycle::deprecate_warn, as it does not
+#' refer to the function that called it, nor care about the environment it was
+#' called in. It simply triggers an inforamtive warning if the current
+#' `mpn.scorecard` version is ahead of the `version` supplied.
+#'
+#' @noRd
+deprecate_warning <- function(version, what, details = NULL){
+  # mpn.scorecard version
+  mpn_scorecard_ver <- as.character(utils::packageVersion("mpn.scorecard"))
+
+  if(mpn_scorecard_ver >= version){
+    ver_text <- paste("mpn.scorecard", version)
+    what_txt <- c("!" = paste(what, glue::glue("is deprecated as of {ver_text}")))
+    details_txt <- if(!is.null(details)) c("i" = details) else ""
+
+    rlang::warn(c(what_txt, details_txt))
+  }
+}
