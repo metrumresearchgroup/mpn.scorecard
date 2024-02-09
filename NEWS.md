@@ -1,3 +1,11 @@
+# mpn.scorecard 0.3.0
+
+## New features and changes
+
+ - Renamed "Mitigation" section to "Comments" for added clarity. The term 
+ "mitigation" may cause misinterpretations, suggesting that a package deviated
+ from expected results. This section can be used for any kind of additional 
+ explanatory notes. (#54)
 
 # mpn.scorecard 0.2.1
 
