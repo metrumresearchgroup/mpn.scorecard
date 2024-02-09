@@ -37,7 +37,7 @@
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/check_exists_and_overwrite.html</loc>
   </url>
   <url>
-    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/check_for_mitigation.html</loc>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/check_for_comments.html</loc>
   </url>
   <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/check_for_traceability.html</loc>
@@ -64,10 +64,10 @@
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_colnames_to_title.html</loc>
   </url>
   <url>
-    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_metadata.html</loc>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_comments.html</loc>
   </url>
   <url>
-    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_mitigation.html</loc>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_metadata.html</loc>
   </url>
   <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/format_overall_scores.html</loc>
