@@ -4,12 +4,12 @@
 \alias{format_traceability_matrix}
 \title{Format Traceability Matrix}
 \usage{
-format_traceability_matrix(exports_df, wrap_cols = TRUE)
+format_traceability_matrix(exports_df, return_vals = FALSE)
 }
 \arguments{
 \item{exports_df}{tibble. Output of \code{\link[=make_traceability_matrix]{make_traceability_matrix()}}}
 
-\item{wrap_cols}{logical (T/F). If \code{TRUE}, wrap columns}
+\item{return_vals}{Logical (T/F). If \code{TRUE}, return the objects instead of printing them out for \code{rmarkdown}. Used for testing.}
 }
 \description{
 Format Traceability Matrix
