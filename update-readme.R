@@ -29,7 +29,7 @@ update_readme <- function(png_dir = here::here("man", "figures")){
   testing_scores <- format_testing_scores(formatted_pkg_scores)
 
   # Traceability Matrix
-  trac_matrix <- format_traceability_matrix(exports_df, return_vals = TRUE)
+  trac_matrix <- format_traceability_matrix(exports_df)
 
   # Save out PNGs
   flextable::save_as_image(overall_scores, file.path(png_dir, "overall_scores.png"))

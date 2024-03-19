@@ -119,7 +119,7 @@ describe("formatting functions", {
     expect_true(fs::file_exists(export_doc_path))
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    exported_func_flex <- format_traceability_matrix(exports_df, return_vals = TRUE)
+    exported_func_flex <- format_traceability_matrix(exports_df)
 
     # Test exported functions dataframe
     exported_func_df <- exported_func_flex$body$dataset
@@ -137,7 +137,7 @@ describe("formatting functions", {
     # Test multiple testing directories
     exports_df2 <- bind_rows(exports_df, exports_df)
     exports_df2$test_dirs[[2]] <- "inst/unit-tests/tests"
-    exported_func_flex <- format_traceability_matrix(exports_df2, return_vals = TRUE)
+    exported_func_flex <- format_traceability_matrix(exports_df2)
     expect_equal(
       unique(unname(unlist(exported_func_flex$footer$dataset))),
       "Testing directories: tests/testthat, inst/unit-tests/tests"
@@ -146,7 +146,7 @@ describe("formatting functions", {
     # No tests found for some functions
     exports_df2$test_files[[2]] <- ""
     exports_df2$test_dirs[2] <- list(NULL)
-    exported_func_flex <- format_traceability_matrix(exports_df2, return_vals = TRUE)
+    exported_func_flex <- format_traceability_matrix(exports_df2)
     exported_func_df <- exported_func_flex$body$dataset
     # make sure rows were not dropped (main test)
     expect_equal(nrow(exported_func_df), nrow(exports_df2))
@@ -160,7 +160,7 @@ describe("formatting functions", {
     result_dir_x <- pkg_setup_select$pkg_result_dir
 
     extra_notes_data <- create_extra_notes(result_dir_x)
-    extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
+    extra_notes_frmt <- format_appendix(extra_notes_data)
 
     # Test covr dataframe
     covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
