@@ -79,8 +79,12 @@ format_testing_scores(formatted_pkg_scores)
 format_comments(params$comments_block)
 ```
 
-<!-- Extra notes (formats new page) -->
+<!-- Extra notes -->
 ```{r, results = "asis"}
+trace_matrix_notes(params$exports_df)
+```
+
+```{r}
 format_traceability_matrix(params$exports_df)
 ```
 

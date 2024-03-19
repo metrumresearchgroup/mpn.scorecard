@@ -61,11 +61,6 @@ flextable_formatted <- function(tab,
     tab_out <- tab_out %>% flextable::colformat_double(digits = digits)
   }
 
-
-  if(isTRUE(autofit)){
-    tab_out <- tab_out %>% flextable::autofit()
-  }
-
   if(!is.null(column_width)){
     checkmate::assert_character(names(column_width))
     checkmate::assert_true(all(names(column_width) %in% names(tab)))
@@ -78,6 +73,7 @@ flextable_formatted <- function(tab,
     flextable::fontsize(size = font_size, part = "body")
 
   if(isTRUE(autofit)){
+    tab_out <- tab_out %>% flextable::autofit()
     tab_out <- flextable::width(tab_out, width = dim(tab_out)$widths*pg_width /(flextable::flextable_dim(tab_out)$widths))
     # Word needs additional autofit formatting (HTML is ok with this, but PDF gets wacky)
     if(doc_type %in% c("Word", "HTML")){
@@ -86,6 +82,18 @@ flextable_formatted <- function(tab,
   }
 
   return(tab_out)
+}
+
+
+#' Helper to apply flextable styling
+#' @param tab a flextable
+#' @noRd
+basic_flex_styles <- function(tab){
+  checkmate::assert_true(inherits(tab, "flextable"))
+  tab %>%
+    flextable::bg(bg = "#ffffff", part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::color(color = "black", part = "body")
 }
 
 
@@ -112,8 +120,7 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
 
   # Add colors and styling
   overall_flextable <- overall_flextable %>%
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::color(color = "black", part = "body") %>%
+    basic_flex_styles() %>%
     # Risk Styling
     flextable::color(color = "darkgreen", j = 3, i = ~ `Risk` == 'Low Risk') %>%
     flextable::color(color = "orange", j = 3, i = ~ `Risk` == 'Medium Risk') %>%
@@ -209,9 +216,7 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
       scores_df_flex,
       hide_grouplabel = TRUE
     ) %>%
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::color(color = "black", part = "body") %>%
+    basic_flex_styles() %>%
     # Individual Risk Colors
     flextable::color(color = "darkgreen", j = 3, i = ~ Result == "Yes") %>%
     flextable::color(color = "darkred", j = 3, i = ~ Result == "No") %>%
@@ -253,9 +258,7 @@ format_testing_scores <- function(formatted_pkg_scores){
       testing_df,
       col_keys = c("Criteria", "Result", "Risk")
     ) %>%
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::color(color = "black", part = "body") %>%
+    basic_flex_styles() %>%
     # Individual Risk Colors
     flextable::color(color = "darkgreen", j = 3, i = ~ Risk == "Low Risk") %>%
     flextable::color(color = "orange", j = 3, i = ~ Risk == "Medium Risk") %>%
@@ -303,9 +306,7 @@ format_metadata <- function(metadata_list){
   # Create flextable
   system_info_flextable <-
     flextable_formatted(all_info_tbl) %>%
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::color(color = "black", part = "body") %>%
+    basic_flex_styles() %>%
     flextable::set_header_labels(Category = "Category", Value = "Value") %>%
     flextable::set_caption("Execution and Machine Information")
 
@@ -340,9 +341,7 @@ prepare_dependency_versions <- function(df) {
     flextable::set_caption("R Dependency Versions") %>%
     flextable::set_header_labels(package = "Package", version = "Version") %>%
     # TODO: Create helper to avoid repeating these next lines in several spots.
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::color(color = "black", part = "body")
+    basic_flex_styles()
 }
 
 #' Format vector of comments text
@@ -399,9 +398,7 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
 
   # Add colors and styling
   risk_summary_flex <- risk_summary_flex %>%
-    flextable::bg(bg = "#ffffff", part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::color(color = "black", part = "body") %>%
+    basic_flex_styles() %>%
     # Individual Risk Colors
     flextable::color(color = "darkgreen", j = 4, i = ~ `Overall Risk` == "Low Risk") %>%
     flextable::color(color = "orange", j = 4, i = ~ `Overall Risk` == "Medium Risk") %>%
@@ -564,17 +561,17 @@ format_colnames_to_title <- function(df){
 #' Format Traceability Matrix
 #'
 #' @param exports_df tibble. Output of [make_traceability_matrix()]
-#' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
+#' @param wrap_cols logical (T/F). If `TRUE`, wrap columns
 #'
 #' @keywords internal
-format_traceability_matrix <- function(exports_df, return_vals = FALSE){
-  sub_header_str <- "\n# Traceability Matrix\n\n"
+format_traceability_matrix <- function(
+    exports_df,
+    wrap_cols = TRUE
+){
+  checkmate::assert_logical(wrap_cols)
+
   if(is.null(exports_df)){
-    if(isTRUE(return_vals)){
-      return(NULL)
-    }else{
-      cat(NULL)
-    }
+    return(NULL)
   }else{
     ### Exported Functions ###
     # Unnest tests and testing directories
@@ -591,8 +588,17 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
     exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
 
     # Format Table
-    exported_func_df <- exported_func_df %>%
-      mutate(dplyr::across("exported_function":"code_file", ~ stringr::str_wrap(.x, width = 25, whitespace_only = FALSE)))
+    if(isTRUE(wrap_cols)){
+      exported_func_df <- exported_func_df %>%
+        dplyr::mutate(
+          dplyr::across("exported_function":"documentation", ~
+                          wrap_text(.x, width = 26, indent = TRUE, strict = TRUE)),
+          # Tests can be longer due to page width (pg_width) settings (we make it wider)
+          test_files = purrr::map_chr(.data$test_files, function(tests){
+            wrap_text(tests, width = 40, strict = TRUE, wrap_sym = NULL)
+          })
+        )
+    }
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
 
     # Create flextable
@@ -602,22 +608,27 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+  }
+  return(exported_func_flex)
+}
 
-    boiler_plate_txt <- paste("This table links all package functionality to the documentation
+#' Print boiler plate text about the traceability matrix
+#' @inheritParams format_traceability_matrix
+#' @noRd
+trace_matrix_notes <- function(exports_df){
+  sub_header_str <- "\n# Traceability Matrix\n\n"
+  boiler_plate_txt <- paste("This table links all package functionality to the documentation
     which describes that functionality, as well as the testing code which confirms the functionality
     works as described.") %>% strwrap(simplify = TRUE, width = 1000)
 
-    if(isTRUE(return_vals)){
-      return(exported_func_flex)
-    }else{
-      # Exported Function Documentation
-      cat(sub_header_str)
-      cat("\n")
-      cat(boiler_plate_txt)
-      cat("\n")
-      cat(knitr::knit_print(exported_func_flex))
-      cat("\n")
-    }
+  if(is.null(exports_df)){
+    # Exported Function Documentation
+    cat(sub_header_str)
+    cat("\n")
+    cat(boiler_plate_txt)
+    cat("\n")
+  }else{
+    cat(NULL)
   }
 }
 
@@ -630,68 +641,68 @@ format_traceability_matrix <- function(exports_df, return_vals = FALSE){
 format_appendix <- function(extra_notes_data, return_vals = FALSE){
   sub_header_strs <- c("\n## R CMD Check\n\n", "\n## Test coverage\n\n")
 
-    ### Covr Results ###
-    # Format Table
-    covr_results_df <- extra_notes_data$covr_results_df
-    if (is.numeric(covr_results_df$test_coverage)) {
-      covr_results_df <- covr_results_df %>%
-        dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
-        format_colnames_to_title()
+  ### Covr Results ###
+  # Format Table
+  covr_results_df <- extra_notes_data$covr_results_df
+  if (is.numeric(covr_results_df$test_coverage)) {
+    covr_results_df <- covr_results_df %>%
+      dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
+      format_colnames_to_title()
 
-      # Create flextable
-      covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
-        flextable::set_caption("Test Coverage") %>%
-        flextable::align(align = "right", part = "all", j=2) %>%
-        flextable::add_footer_row(
-          values = flextable::as_paragraph(paste(
-            "Test coverage is calculated per script, rather than per function.",
-            "See Traceability Matrix for function-to-test-file mapping."
-            )),
-          colwidths = c(2)
-        )
-    } else {
-      covr_results_flex <- NULL
-    }
-
-    ### R CMD Check Results ###
-    check_output <- extra_notes_data$check_output
-
-    if(isTRUE(return_vals)){
-      return(
-        list(
-          covr_results_flex = covr_results_flex,
-          check_output = check_output
-        )
+    # Create flextable
+    covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
+      flextable::set_caption("Test Coverage") %>%
+      flextable::align(align = "right", part = "all", j=2) %>%
+      flextable::add_footer_row(
+        values = flextable::as_paragraph(paste(
+          "Test coverage is calculated per script, rather than per function.",
+          "See Traceability Matrix for function-to-test-file mapping."
+        )),
+        colwidths = c(2)
       )
-    }else{
-      ### Print all Results ###
-      # R CMD Check
-      cat(sub_header_strs[1])
-      cat_verbatim(check_output)
-      cat("\\newpage")
-      # Coverage
-      cat(sub_header_strs[2])
-      cat("\n")
+  } else {
+    covr_results_flex <- NULL
+  }
 
-      if (is.null(covr_results_flex)) {
-        err_type <- covr_results_df$r_script
-        if (identical(err_type, "File coverage failed")) {
-          cat("\n\nCalculating code coverage failed with following error:\n\n")
-          cat_verbatim(covr_results_df$test_coverage)
-        } else if (identical(err_type, "No coverage results")) {
-          cat(
-            "\n\n", "Unable to calculate coverage: ",
-            covr_results_df$test_coverage, "\n\n"
-          )
-        } else {
-          stop("Unknown error type: ", err_type)
-        }
+  ### R CMD Check Results ###
+  check_output <- extra_notes_data$check_output
+
+  if(isTRUE(return_vals)){
+    return(
+      list(
+        covr_results_flex = covr_results_flex,
+        check_output = check_output
+      )
+    )
+  }else{
+    ### Print all Results ###
+    # R CMD Check
+    cat(sub_header_strs[1])
+    cat_verbatim(check_output)
+    cat("\\newpage")
+    # Coverage
+    cat(sub_header_strs[2])
+    cat("\n")
+
+    if (is.null(covr_results_flex)) {
+      err_type <- covr_results_df$r_script
+      if (identical(err_type, "File coverage failed")) {
+        cat("\n\nCalculating code coverage failed with following error:\n\n")
+        cat_verbatim(covr_results_df$test_coverage)
+      } else if (identical(err_type, "No coverage results")) {
+        cat(
+          "\n\n", "Unable to calculate coverage: ",
+          covr_results_df$test_coverage, "\n\n"
+        )
       } else {
-        cat(knitr::knit_print(covr_results_flex))
+        stop("Unknown error type: ", err_type)
       }
-
-      cat("\n")
+    } else {
+      cat(knitr::knit_print(covr_results_flex))
     }
+
+    cat("\n")
+  }
 }
 
 cat_verbatim <- function(s) {
@@ -719,3 +730,117 @@ cat_verbatim <- function(s) {
     sep = "\n"
   )
 }
+
+
+#' Wrap a vector of strings using specific characters
+#'
+#' @param str a string or vector of strings.
+#' @param width Positive integer giving the target line width (in number of
+#'  characters).
+#' @param wrap_sym Characters to loop through and attempt to make new lines with.
+#'  Note that the order you specify these values matters.
+#' @param strict logical (T/F). If `FALSE`, will soft wrap based on the
+#'  characters specified via `wrap_sym`. If `TRUE`, will first soft wrap, and then
+#'  enforce the specified `width`.
+#' @param intent logical (T/F). If `TRUE`, indent new lines by two spaces.
+#'
+#' @details
+#' `stringr::str_wrap` is not strict with the width for word characters, so
+#' a helper function was needed. Rather than being 100% strict at following the
+#' cutoff width, we attempt to split at whitespace specific symbols commonly
+#' used in function names and file paths. If this splitting is not sufficient,
+#' we then perform a strict operation, whereby we cut the line off at exactly
+#' that width.
+#'
+#' @keywords internal
+wrap_text <- function(
+    str,
+    width = 23,
+    wrap_sym = c("/", "_", "-"),
+    strict = FALSE,
+    indent = FALSE
+){
+  purrr::map_chr(
+    str, wrapi_text,
+    width = width, wrap_sym = wrap_sym, strict = strict, indent = indent
+  )
+}
+
+#' Wrap a character string using specific characters
+#' @inheritParams wrapi_text
+#' @noRd
+wrapi_text <- function(
+    str,
+    width = 23,
+    wrap_sym = c("/", "_", "-"),
+    strict = FALSE,
+    indent = FALSE
+){
+
+  checkmate::assert_character(str)
+  checkmate::assert_true(length(str) == 1)
+  str_new <- str
+
+  # Get max number of characters per line (splits on '\n')
+  max_line_char <- function(x){
+    lines <- unlist(strsplit(x, "\n"))
+    if(!length(lines)) return(0) else max(purrr::map_dbl(lines, nchar))
+  }
+
+  # Paste the max number of pieces together per line
+  paste_pieces <- function(pieces, wrap_chr, width){
+    newline_sep <- paste0(wrap_chr, "\n")
+
+    cat_start <- function(start, add, sep){
+      if(is.null(start)) add else paste(start, add, sep = sep)
+    }
+
+    start <- NULL; shift <- 0
+    for(i in 2:length(pieces)){
+      pieces_sep <- pieces[(1 + shift):i]
+      add <- paste0(pieces_sep, collapse = wrap_chr)
+      s <- cat_start(start = start, add = add, sep = wrap_chr)
+      if(max_line_char(s) <= width){
+        next
+      }else{
+        pieces_start <- pieces[(1 + shift):(i-1)]
+        add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
+        if(i == length(pieces)){
+          s <- cat_start(start = start, add = add, sep = newline_sep)
+        }else{
+          start <- cat_start(start = start, add = add, sep = newline_sep)
+          shift <- shift + i
+        }
+      }
+    }
+    return(s)
+  }
+
+  # Loop through specified symbols and attempt to create breaks at their
+  # occurrence. Will only happen if the line has more characters than the
+  # specified width. A line is represented as: '\n...str...\n'
+  if(!is.null(wrap_sym)){
+    for(wrap.i in wrap_sym){
+      if(grepl(wrap.i, str_new) && max_line_char(str_new) > width){
+        pieces <- unlist(strsplit(str_new, wrap.i))
+        str_new <- paste_pieces(pieces, wrap.i, width)
+      }
+    }
+  }
+
+  # Check if `wrap_sym` characters ensured required width
+  if(max_line_char(str_new) > width && isTRUE(strict)){
+    pieces <- unlist(strsplit(str_new, ""))
+    str_new <- paste_pieces(pieces, wrap_chr = "", width)
+  }
+
+  # Indent new lines if only one line -initially- existed
+  # This stops multi-lined strings (i.e. test scripts) from being intended
+  if(isTRUE(indent)){
+    str_new <- str_new %>% gsub("\n", "\n  ", .)
+  }
+
+  return(str_new)
+}
+
+
