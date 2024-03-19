@@ -592,7 +592,7 @@ format_traceability_matrix <- function(
       exported_func_df <- exported_func_df %>%
         dplyr::mutate(
           dplyr::across("exported_function":"documentation", ~
-                          wrap_text(.x, width = 26, indent = TRUE, strict = TRUE)),
+                          wrap_text(.x, width = 24, indent = TRUE, strict = TRUE)),
           # Tests can be longer due to page width (pg_width) settings (we make it wider)
           test_files = purrr::map_chr(.data$test_files, function(tests){
             wrap_text(tests, width = 40, strict = TRUE, wrap_sym = NULL)
