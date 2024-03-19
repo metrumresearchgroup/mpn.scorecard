@@ -160,7 +160,7 @@ describe("formatting functions", {
     result_dir_x <- pkg_setup_select$pkg_result_dir
 
     extra_notes_data <- create_extra_notes(result_dir_x)
-    extra_notes_frmt <- format_appendix(extra_notes_data)
+    extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
 
     # Test covr dataframe
     covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
