@@ -570,9 +570,7 @@ format_traceability_matrix <- function(
 ){
   checkmate::assert_logical(wrap_cols)
 
-  if(is.null(exports_df)){
-    return(NULL)
-  }else{
+  if(!is.null(exports_df)){
     ### Exported Functions ###
     # Unnest tests and testing directories
     exported_func_df <- exports_df %>%
@@ -608,8 +606,8 @@ format_traceability_matrix <- function(
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+    return(exported_func_flex)
   }
-  return(exported_func_flex)
 }
 
 #' Print boiler plate text about the traceability matrix
@@ -621,7 +619,7 @@ trace_matrix_notes <- function(exports_df){
     which describes that functionality, as well as the testing code which confirms the functionality
     works as described.") %>% strwrap(simplify = TRUE, width = 1000)
 
-  if(is.null(exports_df)){
+  if(!is.null(exports_df)){
     # Exported Function Documentation
     cat(sub_header_str)
     cat("\n")
