@@ -475,7 +475,8 @@ format_comments <- function(comments_block){
 
 #' Format summary of overall risks
 #'
-#' @param risk_summary_df summary dataframe containing overall scores, risks, and package info for each package
+#' @param risk_summary_df summary dataframe containing overall scores, risks,
+#'  and package info for each package
 #' @param digits number of digits to round scores to
 #'
 #' @returns a formatted flextable object
@@ -501,7 +502,14 @@ format_score_summaries <- function(risk_summary_df, digits = 2){
     flextable::color(color = "darkred", j = 4, i = ~ `Overall Risk` == "High Risk")
 
   # Add minibars
-  risk_summary_flex <- add_score_minibar(risk_summary_flex, risk_col = "Overall Risk", score_col = "Overall Score", digits = digits)
+  risk_summary_flex <- add_score_minibar(
+    risk_summary_flex, risk_col = "Overall Risk", score_col = "Overall Score",
+    digits = digits
+  )
+
+  # Add stripe and header
+  risk_summary_flex <- flex_header(risk_summary_flex) %>%
+    flex_stripe(border = FALSE)
 
   return(risk_summary_flex)
 }
