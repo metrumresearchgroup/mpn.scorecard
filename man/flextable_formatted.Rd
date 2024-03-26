@@ -25,7 +25,7 @@ flextable_formatted(
 \item{column_width}{named vector, where the column names are assigned to the desired \emph{relative} width.
 If specified, set these column widths before fitting to word document}
 
-\item{doc_type}{Word, PDF, or HTML. Controls font size}
+\item{doc_type}{Word, PDF, or HTML. Controls font size and autofit scaling.}
 
 \item{digits}{numeric. Number of digits to round to. If \code{NULL}, and \code{as_flextable = TRUE}, flextable will round to one digit.}
 

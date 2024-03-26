@@ -6,7 +6,7 @@
 #' @param pg_width width (in inches) of the table. Generally 1 inch less than the default word document (8 in.)
 #' @param column_width named vector, where the column names are assigned to the desired _relative_ width.
 #'        If specified, set these column widths before fitting to word document
-#' @param doc_type Word, PDF, or HTML. Controls font size
+#' @param doc_type Word, PDF, or HTML. Controls font size and autofit scaling.
 #' @param digits numeric. Number of digits to round to. If `NULL`, and `as_flextable = TRUE`, flextable will round to one digit.
 #' @param font_size font size of the table.
 #' @param ... additional args to be passed to `as_flextable()` or `flextable()`.
@@ -73,19 +73,29 @@ flextable_formatted <- function(tab,
     flextable::fontsize(size = font_size, part = "body")
 
   if(isTRUE(autofit)){
-    tab_out <- tab_out %>% flextable::autofit()
-    tab_out <- flextable::width(tab_out, width = dim(tab_out)$widths*pg_width /(flextable::flextable_dim(tab_out)$widths))
-    # Word needs additional autofit formatting (HTML is ok with this, but PDF gets wacky)
-    if(doc_type %in% c("Word", "HTML")){
-      tab_out <- tab_out %>% flextable::set_table_properties(width = 1, layout = "autofit")
-    }
+    tab_out <- autofit_flex(tab_out, pg_width, doc_type)
   }
 
   return(tab_out)
 }
 
 
-#' Helper to apply flextable styling
+#' Autofit flextable to dimensions of the document
+#' @inheritParams flextable_formatted
+#' @noRd
+autofit_flex <- function(tab, pg_width = 7, doc_type = "PDF"){
+  tab <- tab %>% flextable::autofit()
+  tab <- flextable::width(tab, width = dim(tab)$widths*pg_width /(flextable::flextable_dim(tab)$widths))
+
+  # Word needs additional autofit formatting (HTML is ok with this, but PDF gets wacky)
+  if(doc_type %in% c("Word", "HTML")){
+    tab <- tab %>% flextable::set_table_properties(width = 1, layout = "autofit")
+  }
+  return(tab)
+}
+
+
+#' Helper to apply basic flextable styling (center align and background coloring)
 #' @param tab a flextable
 #' @noRd
 basic_flex_styles <- function(tab){
@@ -94,6 +104,97 @@ basic_flex_styles <- function(tab){
     flextable::bg(bg = "#ffffff", part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::color(color = "black", part = "body")
+}
+
+
+#' Helper to apply basic flextable styling for the header
+#' @param tab a flextable
+#' @param header_bg,header_ft the background and font colors for the header.
+#' @param bold Logical (T/F). If `TRUE`, bold the header.
+#' @noRd
+flex_header <- function(
+    tab,
+    header_bg = "#666cb2",
+    header_ft = "white",
+    bold = TRUE
+){
+  checkmate::assert_true(inherits(tab, "flextable"))
+
+  h_nrow <- flextable::nrow_part(tab, "header")
+  if(h_nrow > 0){
+    tab <- flextable::bg(tab, bg = header_bg, part = "header") %>%
+      flextable::color(color = header_ft, part = "header")
+    if(isTRUE(bold)){
+      tab <- flextable::bold(tab, bold = TRUE, part = "header")
+    }
+  }
+  return(tab)
+}
+
+
+#' Helper to apply basic flextable styling for the header
+#' @param tab a flextable
+#' @param footer_bg,footer_ft the background and font colors for the footer.
+#' @param bold Logical (T/F). If `TRUE`, bold the footer.
+#' @noRd
+flex_footer <- function(
+    tab,
+    footer_bg = "#666cb2",
+    footer_ft = "white",
+    bold = FALSE
+){
+  checkmate::assert_true(inherits(tab, "flextable"))
+
+  f_nrow <- flextable::nrow_part(tab, "footer")
+  if(f_nrow > 0){
+    tab <- flextable::bg(tab, bg = footer_bg, part = "footer") %>%
+      flextable::color(color = footer_ft, part = "footer")
+    if(isTRUE(bold)){
+      tab <- flextable::bold(tab, bold = TRUE, part = "footer")
+    }
+  }
+  return(tab)
+}
+
+
+#' Helper to apply flextable styling for alternating row background color
+#'
+#' @param tab a flextable
+#' @param odd_body,even_body the background color of odd and even rows for the
+#'   main body of `tab`. Note that all font is black for the body.
+#' @param border Logical (T/F). If `TRUE`, add horizontal borders and a vertical
+#'   border after the first column.
+#' @keywords internal
+flex_stripe <- function(
+    tab,
+    odd_body_bg = "#EFEFEF",
+    even_body_bg = "transparent",
+    border = TRUE
+){
+  checkmate::assert_true(inherits(tab, "flextable"))
+  b_nrow <- flextable::nrow_part(tab, "body")
+
+  # Add stripe to the body of the table
+  if (b_nrow > 0) {
+    even <- seq_len(b_nrow) %% 2 == 0
+    odd <- !even
+    tab <- flextable::bg(tab, i = odd, bg = odd_body_bg, part = "body") %>%
+      flextable::bg(i = even, bg = even_body_bg, part = "body")
+  }
+
+  # Optionally add borders
+  if(isTRUE(border)){
+    std_border <- officer::fp_border(color = "black", style = "triple")
+    tab <- tab %>%
+      flextable::hline(part = "all", border = std_border) %>%
+      flextable::vline(part = "body", border = std_border, j = 1) %>%
+      flextable::vline(part = "header", border = std_border, j = 1)
+  }
+
+  # Add cell padding (needed when adding borders and not center aligned)
+  tab <- flextable::set_table_properties(tab, opts_pdf = list(tabcolsep = 4))
+
+  return(tab)
 }
 
 
@@ -139,7 +240,8 @@ format_overall_scores <- function(formatted_pkg_scores, digits = 2){
   # Add hline before overall section and bold it (should use dplyr::lag() I would think, but I guess flextable is weird)
   overall_flextable <- overall_flextable %>%
     flextable::hline(i = ~ dplyr::lead(`Category` == 'Overall'),  border = officer::fp_border(width = 1))  %>%
-    flextable::bold(j = 1:3, i = ~ `Category` == 'Overall')
+    flextable::bold(j = 1:3, i = ~ `Category` == 'Overall') %>%
+    flex_header()
 
   return(overall_flextable)
 }
@@ -233,6 +335,8 @@ format_package_details <- function(formatted_pkg_scores, color_headers = TRUE){
       flextable::color(color = "darkred", j = 1, i = ~ grepl("High Risk", Category))
   }
 
+  category_scores_flextable <- flex_header(category_scores_flextable)
+
   return(category_scores_flextable)
 }
 
@@ -269,15 +373,7 @@ format_testing_scores <- function(formatted_pkg_scores){
     flextable::color(color = "red", j = 3, i = ~ `Risk` == 'NA - unexpected') %>%
     flextable::set_caption(flex_caption)
 
-  # testing_scores_flextable <- testing_scores_flextable %>%
-  #   flextable::compose(
-  #     j = 2, i = ~ Result == "Failed",
-  #     value = flextable::as_paragraph(
-  #       `Result`, " ", flextable::as_chunk("\u274c", props = flextable::fp_text_default(color = "red", font.size = 9))
-  #     )
-  #   )
-
-
+  testing_scores_flextable <- flex_header(testing_scores_flextable)
 
   return(testing_scores_flextable)
 }
@@ -308,7 +404,8 @@ format_metadata <- function(metadata_list){
     flextable_formatted(all_info_tbl) %>%
     basic_flex_styles() %>%
     flextable::set_header_labels(Category = "Category", Value = "Value") %>%
-    flextable::set_caption("Execution and Machine Information")
+    flextable::set_caption("Execution and Machine Information") %>%
+    flex_header()
 
   return(system_info_flextable)
 }
@@ -340,8 +437,7 @@ prepare_dependency_versions <- function(df) {
   flextable_formatted(df) %>%
     flextable::set_caption("R Dependency Versions") %>%
     flextable::set_header_labels(package = "Package", version = "Version") %>%
-    # TODO: Create helper to avoid repeating these next lines in several spots.
-    basic_flex_styles()
+    basic_flex_styles() %>% flex_header() %>% flex_stripe(border = FALSE)
 }
 
 #' Format vector of comments text
@@ -606,6 +702,12 @@ format_traceability_matrix <- function(
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+
+    # Add stripe and other formatting details
+    exported_func_flex <- exported_func_flex %>%
+      flex_header() %>% flex_footer(bold = TRUE) %>% flex_stripe() %>%
+      autofit_flex(pg_width = 7)
+
     return(exported_func_flex)
   }
 }
@@ -647,7 +749,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
       dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
       format_colnames_to_title()
 
-    # Create flextable
+    # Create flextable and format
     covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
       flextable::set_caption("Test Coverage") %>%
       flextable::align(align = "right", part = "all", j=2) %>%
@@ -658,6 +760,9 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
         )),
         colwidths = c(2)
       )
+    covr_results_flex <- covr_results_flex %>% flex_header() %>%
+      flex_footer(footer_bg = "transparent", footer_ft = "black") %>%
+      flex_stripe(border = FALSE)
   } else {
     covr_results_flex <- NULL
   }
