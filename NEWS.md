@@ -1,3 +1,18 @@
+# mpn.scorecard 0.4.0
+
+## New features and change
+
+ - Various table formatting improvements. The `traceability matrix`, 
+ `R dependency versions`, and `test coverage` tables are now striped (each row  
+ alternates in color) to help distinguish between rows for potentially large 
+ tables. (#58)
+
+## Bug Fixes
+
+ - Longer file paths and export names would occasionally overlap across columns.
+ To address this, a text wrapping method was defined and additional cell padding
+ was added. (#57)
+
 # mpn.scorecard 0.3.0
 
 ## New features and changes
