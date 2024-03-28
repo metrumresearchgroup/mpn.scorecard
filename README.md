@@ -170,4 +170,5 @@ browseURL(pdf_sum_path)
 
 The report provides additional context, session info, proof points,
 etc., but will render a table that looks like the one below:
+
 <img src="man/figures/summary_tab.png" align="center" style = "width:750px;" />
