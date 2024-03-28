@@ -1,15 +1,15 @@
 Package: mpn.scorecard
 Title: Generate a scorecard with various measures of R package quality and risk
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
-    c(person(given = "Seth",
-           family = "Green",
-           role = c("aut", "cre"),
-           email = "sethg@metrumrg.com"),
-    person(given = "Kyle",
+    c(person(given = "Kyle",
            family = "Barrett",
-           role = c("aut"),
+           role = c("aut", "cre"),
            email = "barrettk@metrumrg.com"),
+    person(given = "Seth",
+           family = "Green",
+           role = c("aut"),
+           email = "sethg@metrumrg.com"),
     person(given = "Kyle",
            family = "Meyer",
            role = c("aut"),
