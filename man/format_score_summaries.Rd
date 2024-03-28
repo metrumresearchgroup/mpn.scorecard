@@ -7,7 +7,8 @@
 format_score_summaries(risk_summary_df, digits = 2)
 }
 \arguments{
-\item{risk_summary_df}{summary dataframe containing overall scores, risks, and package info for each package}
+\item{risk_summary_df}{summary dataframe containing overall scores, risks,
+and package info for each package}
 
 \item{digits}{number of digits to round scores to}
 }
