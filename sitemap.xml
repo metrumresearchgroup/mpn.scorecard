@@ -55,6 +55,9 @@
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/filter_symbol_functions.html</loc>
   </url>
   <url>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/flex_stripe.html</loc>
+  </url>
+  <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/flextable_formatted.html</loc>
   </url>
   <url>
@@ -155,5 +158,8 @@
   </url>
   <url>
     <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/unpack_tarball.html</loc>
+  </url>
+  <url>
+    <loc>https://metrumresearchgroup.github.io/mpn.scorecard/reference/wrap_text.html</loc>
   </url>
 </urlset>

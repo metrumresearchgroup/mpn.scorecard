@@ -42,7 +42,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><code>mpn.scorecard</code> is an R package designed to score other R packages on key attributes that help evaluate the risk of adding them to <a href="https://mpn.metworx.com/docs/" class="external-link">MPN</a>. <code>mpn.scorecard</code> is essentially a wrapper of the <a href="https://github.com/pharmaR/riskmetric" class="external-link">riskmetric</a> R package, with some additional features related to the scoring and outputs. Each package is first evaluated based on code documentation, maintenance and sustainability, and transparency. Code coverage and <code>R CMD Check</code> results are then tabulated and saved out to a specified location. These metrics are summarized in a scorecard report.</p>
+<p><code>mpn.scorecard</code> is an R package designed to score other R packages on key attributes that help evaluate the risk of adding them to <a href="https://mpn.metworx.com/docs/" class="external-link">MPN</a>. <code>mpn.scorecard</code> leans heavily on the metrics developed by R Validation Hub’s <a href="https://github.com/pharmaR/riskmetric" class="external-link">riskmetric</a> R package, and has additional features related to the scoring and outputs. Each package is first evaluated based on code documentation, maintenance and sustainability, and transparency. Code coverage and <code>R CMD Check</code> results are then tabulated and saved out to a specified location. These metrics are summarized in a scorecard report.</p>
 <div class="section level2">
 <h2 id="scoring-a-package">Scoring a Package<a class="anchor" aria-label="anchor" href="#scoring-a-package"></a>
 </h2>
@@ -91,7 +91,13 @@
 <code class="sourceCode R"><span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/score_pkg.html">score_pkg</a></span><span class="op">(</span></span>
 <span>  pkg <span class="op">=</span> <span class="st">"package_3.1.0.tar.gz"</span>,</span>
 <span>  out_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"results"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; rcmdcheck for package_3.1.0 passed</span></span>
+<span></span>
+<span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="va">results_dir</span><span class="op">)</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.check.rds</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.covr.rds</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.scorecard.json</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="rendering-a-scorecard">Rendering a Scorecard<a class="anchor" aria-label="anchor" href="#rendering-a-scorecard"></a>
@@ -151,14 +157,23 @@
 <span>  pkg <span class="op">=</span> <span class="st">"package_3.1.0.tar.gz"</span>,</span>
 <span>  out_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"results"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; rcmdcheck for package_3.1.0 passed</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/make_traceability_matrix.html">make_traceability_matrix</a></span><span class="op">(</span><span class="st">"package_3.1.0.tar.gz"</span>, <span class="va">results_dir</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/make_traceability_matrix.html">make_traceability_matrix</a></span><span class="op">(</span><span class="st">"package_3.1.0.tar.gz"</span>, results_dir <span class="op">=</span> <span class="va">results_dir</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="va">results_dir</span><span class="op">)</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.check.rds</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.covr.rds</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.export_doc.rds</span></span>
+<span><span class="co">#&gt; /tmp/RtmpTFIt3N/results/package_3.1.0/package_3.1.0.scorecard.json</span></span>
 <span></span>
 <span><span class="va">pdf_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/render_scorecard.html">render_scorecard</a></span><span class="op">(</span></span>
 <span>  results_dir <span class="op">=</span> <span class="va">results_dir</span>,</span>
 <span>  risk_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.7</span><span class="op">)</span>,</span>
 <span>  add_traceability <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/browseURL.html" class="external-link">browseURL</a></span><span class="op">(</span><span class="va">pdf_path</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/trac_matrix.png" align="center" style="width:900px;"></p>
 </div>
 <div class="section level2">
@@ -171,11 +186,14 @@
 </h2>
 <p>If multiple packages have been scored, you can summarize each of the packages in a summary report using <code>render_scorecard_summary</code>, providing an easy way of summarizing the overall risk associated with each package:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result_dirs</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_chr</a></span><span class="op">(</span><span class="va">pkg_tars</span>, <span class="op">~</span> <span class="fu"><a href="reference/score_pkg.html">score_pkg</a></span><span class="op">(</span><span class="va">.x</span>, <span class="va">out_dir</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pkg_tars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"package_3.1.0.tar.gz"</span>, <span class="st">"pkg1_2.0.4.tar.gz"</span>, <span class="st">"pkg2_1.6.3.tar.gz"</span>, <span class="st">"pkg3_0.3.0.tar.gz"</span><span class="op">)</span></span>
+<span><span class="va">result_dirs</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_chr</a></span><span class="op">(</span><span class="va">pkg_tars</span>, <span class="op">~</span> <span class="fu"><a href="reference/score_pkg.html">score_pkg</a></span><span class="op">(</span><span class="va">.x</span>, <span class="va">out_dir</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pdf_sum_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/render_scorecard_summary.html">render_scorecard_summary</a></span><span class="op">(</span><span class="va">result_dirs</span>, snapshot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/browseURL.html" class="external-link">browseURL</a></span><span class="op">(</span><span class="va">pdf_sum_path</span><span class="op">)</span></span></code></pre></div>
+<p>The report provides additional context, session info, proof points, etc., but will render a table that looks like the one below:</p>
+<p><img src="reference/figures/summary_tab.png" align="center" style="width:750px;"></p>
 </div>
 </div>
 
@@ -209,8 +227,8 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Seth Green <br><small class="roles"> Author, maintainer </small>  </li>
-<li>Kyle Barrett <br><small class="roles"> Author </small>  </li>
+<li>Kyle Barrett <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Seth Green <br><small class="roles"> Author </small>  </li>
 <li>Kyle Meyer <br><small class="roles"> Author </small>  </li>
 </ul>
 </div>
@@ -228,7 +246,7 @@
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Seth Green, Kyle Barrett, Kyle Meyer.</p>
+<p>Developed by Kyle Barrett, Seth Green, Kyle Meyer.</p>
 </div>
 
 <div class="pkgdown">

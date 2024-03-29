@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
       </span>
     </div>
 
@@ -53,7 +53,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">format_traceability_matrix</span><span class="op">(</span><span class="va">exports_df</span>, return_vals <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">format_traceability_matrix</span><span class="op">(</span><span class="va">exports_df</span>, wrap_cols <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -62,8 +62,8 @@
 <dd><p>tibble. Output of <code><a href="make_traceability_matrix.html">make_traceability_matrix()</a></code></p></dd>
 
 
-<dt>return_vals</dt>
-<dd><p>Logical (T/F). If <code>TRUE</code>, return the objects instead of printing them out for <code>rmarkdown</code>. Used for testing.</p></dd>
+<dt>wrap_cols</dt>
+<dd><p>logical (T/F). If <code>TRUE</code>, wrap columns</p></dd>
 
 </dl></div>
 
@@ -75,7 +75,7 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Seth Green, Kyle Barrett, Kyle Meyer.</p>
+  <p></p><p>Developed by Kyle Barrett, Seth Green, Kyle Meyer.</p>
 </div>
 
 <div class="pkgdown">
