@@ -9,7 +9,7 @@
 <!-- badges: start -->
 
 [![Build
-Status](https://github-drone.metrumrg.com/api/badges/metrumresearchgroup/mpn.scorecard/status.svg)](https://github-drone.metrumrg.com/metrumresearchgroup/mpn.scorecard)
+Status](https://github.com/metrumresearchgroup/mpn.scorecard/actions/workflows/main.yaml/badge.svg)](https://github.com/metrumresearchgroup/mpn.scorecard/actions/workflows/main.yaml)
 <!-- badges: end -->
 
 `mpn.scorecard` is an R package designed to score other R packages on
