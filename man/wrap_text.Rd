@@ -25,7 +25,7 @@ Note that the order you specify these values matters.}
 characters specified via \code{wrap_sym}. If \code{TRUE}, will first soft wrap, and then
 enforce the specified \code{width}.}
 
-\item{intent}{logical (T/F). If \code{TRUE}, indent new lines by two spaces.}
+\item{indent}{logical (T/F). If \code{TRUE}, indent new lines by two spaces.}
 }
 \description{
 Wrap a vector of strings using specific characters

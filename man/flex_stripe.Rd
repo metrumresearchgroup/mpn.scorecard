@@ -14,11 +14,11 @@ flex_stripe(
 \arguments{
 \item{tab}{a flextable}
 
+\item{odd_body_bg, even_body_bg}{the background color of odd and even rows for
+the main body of \code{tab}. Note that all font is black for the body.}
+
 \item{border}{Logical (T/F). If \code{TRUE}, add horizontal borders and a vertical
 border after the first column.}
-
-\item{odd_body, even_body}{the background color of odd and even rows for the
-main body of \code{tab}. Note that all font is black for the body.}
 }
 \description{
 Helper to apply flextable styling for alternating row background color

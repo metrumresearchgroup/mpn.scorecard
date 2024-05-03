@@ -160,8 +160,8 @@ flex_footer <- function(
 #' Helper to apply flextable styling for alternating row background color
 #'
 #' @param tab a flextable
-#' @param odd_body,even_body the background color of odd and even rows for the
-#'   main body of `tab`. Note that all font is black for the body.
+#' @param odd_body_bg,even_body_bg the background color of odd and even rows for
+#'   the main body of `tab`. Note that all font is black for the body.
 #' @param border Logical (T/F). If `TRUE`, add horizontal borders and a vertical
 #'   border after the first column.
 #' @keywords internal

@@ -125,7 +125,7 @@ deprecate_warning <- function(version, what, details = NULL){
 #' @param strict logical (T/F). If `FALSE`, will soft wrap based on the
 #'  characters specified via `wrap_sym`. If `TRUE`, will first soft wrap, and then
 #'  enforce the specified `width`.
-#' @param intent logical (T/F). If `TRUE`, indent new lines by two spaces.
+#' @param indent logical (T/F). If `TRUE`, indent new lines by two spaces.
 #'
 #' @details
 #' `stringr::str_wrap` is not strict with the width for word characters, so
