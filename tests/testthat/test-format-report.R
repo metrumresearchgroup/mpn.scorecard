@@ -155,6 +155,32 @@ describe("formatting functions", {
     expect_equal(unique(test_files), c("test-myscript.R", ""))
   })
 
+  it("format_traceability_matrix: exports missing def", {
+    scenario <- dplyr::filter(
+      pkg_dirs[["pkg_setups_df"]],
+      pkg_type == "fail_func_syntax"
+    )
+    stopifnot(nrow(scenario) == 1)
+    res_dir <- scenario[["pkg_result_dir"]]
+    tarfile <- scenario[["tar_file"]]
+
+    export_doc_path <- get_result_path(res_dir, "export_doc.rds")
+    on.exit(unlink(export_doc_path))
+
+    expect_false(fs::file_exists(export_doc_path))
+    expect_warning(
+      exports_df <- make_traceability_matrix(res_dir, pkg_tar_path = tarfile),
+      "Failed to parse"
+    )
+    expect_true(fs::file_exists(export_doc_path))
+
+    tbl <- format_traceability_matrix(exports_df)
+    expect_equal(
+      unique(unname(unlist(tbl$footer$dataset))),
+      "Testing directories: tests/testthat"
+    )
+  })
+
   it("format_appendix", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
