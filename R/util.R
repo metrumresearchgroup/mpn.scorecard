@@ -162,6 +162,10 @@ wrapi_text <- function(
 
   checkmate::assert_character(str)
   checkmate::assert_true(length(str) == 1)
+  if (is.na(str)) {
+    return(str)
+  }
+
   str_new <- str
 
   # Get max number of characters per line (splits on '\n')
