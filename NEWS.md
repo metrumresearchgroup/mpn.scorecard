@@ -1,3 +1,11 @@
+# mpn.scorecard 0.4.1
+
+## Bug Fixes
+
+ - Due to a regression in the 0.4.0 release, an error was triggered when
+   formatting the traceability matrix of a package with exports in its namespace
+   that couldn't be mapped to a code file. (#65)
+
 # mpn.scorecard 0.4.0
 
 ## New features and change
