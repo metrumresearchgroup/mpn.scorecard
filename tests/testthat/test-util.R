@@ -40,4 +40,25 @@ test_that("wrap_text(): past offenders", {
     wrap_text("abcde", width = 2, wrap_sym = NULL, strict = TRUE),
     "ab\ncd\ne"
   )
+
+  expect_identical(
+    wrap_text("abcdefghij", width = 4, wrap_sym = NULL, strict = TRUE),
+    "abcd\nefgh\nij"
+  )
+
+  expect_identical(
+    wrap_text(
+      "test-foo.R\ntest-foo_bar.R",
+      width = 8, wrap_sym = NULL, strict = TRUE
+    ),
+    "test-foo\n.R\ntest-foo\n_bar.R"
+  )
+
+  expect_identical(
+    wrap_text(
+      "test-foo.R\ntest-foo_bar.R",
+      width = 4, wrap_sym = NULL, strict = TRUE
+    ),
+    "test\n-foo\n.R\ntest\n-foo\n_bar\n.R"
+  )
 })

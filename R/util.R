@@ -181,22 +181,23 @@ wrapi_text <- function(
       if(is.null(start)) add else paste(start, add, sep = sep)
     }
 
-    start <- NULL; shift <- 0
+    start <- NULL
+    shift <- 1
     npieces <- length(pieces)
     for (i in 2:npieces) {
-      pieces_sep <- pieces[(1 + shift):i]
+      pieces_sep <- pieces[shift:i]
       add <- paste0(pieces_sep, collapse = wrap_chr)
       s <- cat_start(start = start, add = add, sep = wrap_chr)
       if(max_line_char(s) <= width){
         next
       }else{
-        pieces_start <- pieces[(1 + shift):(i-1)]
+        pieces_start <- pieces[shift:(i - 1)]
         add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
         if (i == npieces) {
           s <- cat_start(start = start, add = add, sep = wrap_chr)
         }else{
           start <- cat_start(start = start, add = add, sep = wrap_chr)
-          shift <- shift + i
+          shift <- i + 1
         }
       }
     }
