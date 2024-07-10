@@ -34,3 +34,10 @@ test_that("wrap_text() works", {
   expect_equal(wrap_str, "test-modify-model-\nfield.R\ntest-submit-models.R")
   expect_equal(max_line_char(wrap_str), 20)
 })
+
+test_that("wrap_text(): past offenders", {
+  expect_identical(
+    wrap_text("abcde", width = 2, wrap_sym = NULL, strict = TRUE),
+    "ab\ncd\ne"
+  )
+})

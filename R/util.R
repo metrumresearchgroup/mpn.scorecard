@@ -192,9 +192,9 @@ wrapi_text <- function(
         pieces_start <- pieces[(1 + shift):(i-1)]
         add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
         if(i == length(pieces)){
-          s <- cat_start(start = start, add = add, sep = newline_sep)
+          s <- cat_start(start = start, add = add, sep = wrap_chr)
         }else{
-          start <- cat_start(start = start, add = add, sep = newline_sep)
+          start <- cat_start(start = start, add = add, sep = wrap_chr)
           shift <- shift + i
         }
       }
