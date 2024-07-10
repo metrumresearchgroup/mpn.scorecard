@@ -160,8 +160,7 @@ wrapi_text <- function(
     indent = FALSE
 ){
 
-  checkmate::assert_character(str)
-  checkmate::assert_true(length(str) == 1)
+  checkmate::assert_string(str, na.ok = TRUE)
   if (is.na(str)) {
     return(str)
   }
