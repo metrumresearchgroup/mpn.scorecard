@@ -191,8 +191,14 @@ wrapi_text <- function(
       if(max_line_char(s) <= width){
         next
       }else{
-        pieces_start <- pieces[shift:(i - 1)]
-        add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
+        if (shift == i) {
+          # `start` includes everything aside from the current piece.
+          add <- paste0("\n", pieces[i])
+        } else {
+          pieces_start <- pieces[shift:(i - 1)]
+          add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
+        }
+
         if (i == npieces) {
           s <- cat_start(start = start, add = add, sep = wrap_chr)
         }else{

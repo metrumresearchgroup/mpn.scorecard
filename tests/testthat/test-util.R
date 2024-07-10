@@ -61,4 +61,9 @@ test_that("wrap_text(): past offenders", {
     ),
     "test\n-foo\n.R\ntest\n-foo\n_bar\n.R"
   )
+
+  expect_identical(
+    wrap_text("foo/bar/baz", width = 4),
+    "foo/\nbar/\nbaz"
+  )
 })
