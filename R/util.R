@@ -182,7 +182,8 @@ wrapi_text <- function(
     }
 
     start <- NULL; shift <- 0
-    for(i in 2:length(pieces)){
+    npieces <- length(pieces)
+    for (i in 2:npieces) {
       pieces_sep <- pieces[(1 + shift):i]
       add <- paste0(pieces_sep, collapse = wrap_chr)
       s <- cat_start(start = start, add = add, sep = wrap_chr)
@@ -191,7 +192,7 @@ wrapi_text <- function(
       }else{
         pieces_start <- pieces[(1 + shift):(i-1)]
         add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
-        if(i == length(pieces)){
+        if (i == npieces) {
           s <- cat_start(start = start, add = add, sep = wrap_chr)
         }else{
           start <- cat_start(start = start, add = add, sep = wrap_chr)
