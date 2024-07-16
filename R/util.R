@@ -160,8 +160,7 @@ wrapi_text <- function(
     indent = FALSE
 ){
 
-  checkmate::assert_character(str)
-  checkmate::assert_true(length(str) == 1)
+  checkmate::assert_string(str, na.ok = TRUE)
   if (is.na(str)) {
     return(str)
   }
@@ -182,21 +181,29 @@ wrapi_text <- function(
       if(is.null(start)) add else paste(start, add, sep = sep)
     }
 
-    start <- NULL; shift <- 0
-    for(i in 2:length(pieces)){
-      pieces_sep <- pieces[(1 + shift):i]
+    start <- NULL
+    shift <- 1
+    npieces <- length(pieces)
+    for (i in 2:npieces) {
+      pieces_sep <- pieces[shift:i]
       add <- paste0(pieces_sep, collapse = wrap_chr)
       s <- cat_start(start = start, add = add, sep = wrap_chr)
       if(max_line_char(s) <= width){
         next
       }else{
-        pieces_start <- pieces[(1 + shift):(i-1)]
-        add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
-        if(i == length(pieces)){
-          s <- cat_start(start = start, add = add, sep = newline_sep)
+        if (shift == i) {
+          # `start` includes everything aside from the current piece.
+          add <- paste0("\n", pieces[i])
+        } else {
+          pieces_start <- pieces[shift:(i - 1)]
+          add <- paste(paste0(pieces_start, collapse = wrap_chr), pieces[i], sep = newline_sep)
+        }
+
+        if (i == npieces) {
+          s <- cat_start(start = start, add = add, sep = wrap_chr)
         }else{
-          start <- cat_start(start = start, add = add, sep = newline_sep)
-          shift <- shift + i
+          start <- cat_start(start = start, add = add, sep = wrap_chr)
+          shift <- i + 1
         }
       }
     }

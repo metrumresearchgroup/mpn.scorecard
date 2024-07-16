@@ -34,3 +34,36 @@ test_that("wrap_text() works", {
   expect_equal(wrap_str, "test-modify-model-\nfield.R\ntest-submit-models.R")
   expect_equal(max_line_char(wrap_str), 20)
 })
+
+test_that("wrap_text(): past offenders", {
+  expect_identical(
+    wrap_text("abcde", width = 2, wrap_sym = NULL, strict = TRUE),
+    "ab\ncd\ne"
+  )
+
+  expect_identical(
+    wrap_text("abcdefghij", width = 4, wrap_sym = NULL, strict = TRUE),
+    "abcd\nefgh\nij"
+  )
+
+  expect_identical(
+    wrap_text(
+      "test-foo.R\ntest-foo_bar.R",
+      width = 8, wrap_sym = NULL, strict = TRUE
+    ),
+    "test-foo\n.R\ntest-foo\n_bar.R"
+  )
+
+  expect_identical(
+    wrap_text(
+      "test-foo.R\ntest-foo_bar.R",
+      width = 4, wrap_sym = NULL, strict = TRUE
+    ),
+    "test\n-foo\n.R\ntest\n-foo\n_bar\n.R"
+  )
+
+  expect_identical(
+    wrap_text("foo/bar/baz", width = 4),
+    "foo/\nbar/\nbaz"
+  )
+})
