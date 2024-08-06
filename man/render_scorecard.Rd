@@ -33,5 +33,4 @@ If a plain text comments file is found in \code{results_dir}, it will automatica
 \strong{Note} that it must follow the naming convention of \verb{<pkg_name>_<pkg_version>.comments.txt}
 
 If a traceability matrix is found in \code{results_dir}, it will automatically be included unless overridden via \code{add_traceability}.
-\strong{Note} that it must follow the naming convention of \verb{<pkg_name>_<pkg_version>.export_doc.rds}
 }

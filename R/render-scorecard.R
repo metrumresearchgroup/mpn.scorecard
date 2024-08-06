@@ -16,7 +16,6 @@
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.comments.txt`
 #'
 #' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
-#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
 #'
 #' @export
 render_scorecard <- function(
