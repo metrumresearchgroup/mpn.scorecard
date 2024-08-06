@@ -22,3 +22,4 @@ reference:
   contents:
   - render_scorecard
   - render_scorecard_summary
+  - external_scores

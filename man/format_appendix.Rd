@@ -4,7 +4,7 @@
 \alias{format_appendix}
 \title{Format Appendix}
 \usage{
-format_appendix(extra_notes_data, return_vals = FALSE)
+format_appendix(extra_notes_data, return_vals = FALSE, scorecard_type = "R")
 }
 \arguments{
 \item{extra_notes_data}{named list. Output of \code{\link[=create_extra_notes]{create_extra_notes()}}}

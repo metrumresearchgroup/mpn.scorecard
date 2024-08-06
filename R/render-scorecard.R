@@ -1,6 +1,10 @@
-#' Take a JSON from score_pkg() and render a pdf
+#' Render a scorecard PDF from a directory of results
 #'
-#' @param results_dir directory containing json file and individual results. Output file path from [score_pkg()]
+#' Create a scorecard from a results directory prepared by [score_pkg()] or an
+#' external scorer (see [external_scores]).
+#'
+#' @param results_dir Directory with scoring results. This is the path returned
+#'   by [score_pkg()].
 #' @param risk_breaks A numeric vector of length 2, with both numbers being
 #'   between 0 and 1. These are used for the "breaks" when classifying scores
 #'   into Risk categories. For example, for the default value of `c(0.3, 0.7)`,
@@ -30,12 +34,18 @@ render_scorecard <- function(
   out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
+  if (file.exists(get_result_path(results_dir, "pkg.json"))) {
+    param_fn <- get_render_params_external
+  } else {
+    param_fn <- get_render_params
+  }
+
   rendered_file <- rmarkdown::render(
     system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
     output_dir = results_dir,
     output_file = basename(out_file),
     quiet = TRUE,
-    params = get_render_params(results_dir, risk_breaks, add_traceability)
+    params = param_fn(results_dir, risk_breaks, add_traceability)
   )
 
   return(invisible(rendered_file))
@@ -113,6 +123,11 @@ scorecard_json_compat <- function(data, path) {
 #'
 #' @keywords internal
 format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
+  stype <- pkg_scores[["scorecard_type"]]
+  if (is.null(stype)) {
+    abort("bug: scorecard_type is unexpectedly absent from pkg_scores")
+  }
+  check_label <- if (identical(stype, "R")) "R CMD CHECK" else "check"
 
   # build list of formatted tibbles
   pkg_scores$formatted <- list()
@@ -135,7 +150,9 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
         score = ifelse(.x == "NA", NA_integer_, .x)
       ) %>%
         mutate(
-          result = map_answer(.data$score, .data$criteria),
+          result = map_answer(.data$score, .data$criteria,
+            include_check_score = identical(stype, "R")
+          ),
           risk = map_risk(.data$score, risk_breaks)
         )
     }) %>% purrr::list_rbind()
@@ -148,7 +165,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
           sprintf("%.2f%%", .data$score * 100),
           .data$result
         ),
-        criteria = ifelse(.data$criteria == "check", "R CMD CHECK", "coverage")
+        criteria = ifelse(.data$criteria == "check", check_label, "coverage")
       )
     }
 

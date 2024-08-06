@@ -44,7 +44,8 @@ Imports:
     stringr,
     tibble,
     tidyselect,
-    tidyr
+    tidyr,
+    yaml
 Suggests:
     devtools,
     pdftools,
