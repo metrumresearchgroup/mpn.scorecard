@@ -30,8 +30,12 @@ check_exists_and_overwrite <- function(path, overwrite) {
 get_result_path <- function(
     out_dir,
     ext = c(
-      "scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt",
-      "summary.pdf", "export_doc.rds", "mitigation.txt"
+      "scorecard.json", "scorecard.pdf", "comments.txt", "mitigation.txt",
+      # Internally scored
+      "check.rds", "covr.rds", "export_doc.rds", "summary.pdf",
+      # Externally scored
+      "check.txt", "coverage.json", "matrix.yaml", "metadata.json", "pkg.json",
+      "scores.json"
     )
 ){
 
