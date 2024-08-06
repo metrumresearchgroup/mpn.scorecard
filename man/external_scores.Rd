@@ -70,8 +70,9 @@ Example:
 into four categories: "testing", "documentation", "maintenance", and
 "transparency". Each category must have a least one score.
 
-For the testing category, both "check and "coverage" scores are required.
-"check" should be 1 if the tests passed and 0 if they failed. "coverage"
+For the testing category, "check is required. "check" should be 1 if the
+tests passed and 0 if they failed. "coverage" is required if the
+\verb{<package>_<version>.coverage.json} coverage" file exists.  The value
 should match the "overall" value from \verb{<package>_<version>.coverage.json},
 divided by 100.
 

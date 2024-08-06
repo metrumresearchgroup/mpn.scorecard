@@ -74,8 +74,9 @@
 #'    into four categories: "testing", "documentation", "maintenance", and
 #'    "transparency". Each category must have a least one score.
 #'
-#'    For the testing category, both "check and "coverage" scores are required.
-#'    "check" should be 1 if the tests passed and 0 if they failed. "coverage"
+#'    For the testing category, "check is required. "check" should be 1 if the
+#'    tests passed and 0 if they failed. "coverage" is required if the
+#'    `<package>_<version>.coverage.json` coverage" file exists.  The value
 #'    should match the "overall" value from `<package>_<version>.coverage.json`,
 #'    divided by 100.
 #'
@@ -178,6 +179,19 @@ get_render_params_external <- function(results_dir, risk_breaks, add_traceabilit
     tmat <- NULL
   }
 
+  has_cov_score <- !is.null(pkg_scores[["scores"]][["testing"]][["coverage"]])
+  cov_file <- get_result_path(results_dir, "coverage.json")
+  has_cov_file <- file.exists(cov_file)
+  if (has_cov_score && has_cov_file) {
+    cov <- read_coverage_results(results_dir)
+  } else if (has_cov_score) {
+    abort(c("Coverage is in scores but coverage file is missing:", cov_file))
+  } else if (has_cov_file) {
+    abort("Coverage file exists but scores do not include a coverage value.")
+  } else {
+    cov <- NULL
+  }
+
   list(
     set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
     scorecard_footer = format_scorecard_version(
@@ -186,7 +200,7 @@ get_render_params_external <- function(results_dir, risk_breaks, add_traceabilit
     pkg_scores = format_scores_for_render(pkg_scores, risk_breaks),
     comments_block = check_for_comments(results_dir),
     extra_notes_data = list(
-      cov_results_df = read_coverage_results(results_dir),
+      cov_results_df = cov,
       check_output = read_check_output(results_dir)
     ),
     exports_df = tmat

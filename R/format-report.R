@@ -832,6 +832,12 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE, scorecard_typ
     # R CMD Check
     cat(sub_header_strs[1])
     cat_verbatim(check_output)
+
+    if (is.null(cov_results_df)) {
+      # This is an externally scored package without coverage.
+      return(invisible(NULL))
+    }
+
     cat("\\newpage")
     # Coverage
     cat(sub_header_strs[2])

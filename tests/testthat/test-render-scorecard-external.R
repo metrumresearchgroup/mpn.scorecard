@@ -38,4 +38,26 @@ describe("render scorecard for external scores", {
     fs::file_delete(pdf_path)
     expect_error(render_scorecard(rdir, add_traceability = TRUE))
   })
+
+  it("render_scorecard - without coverage", {
+    rdir <- local_create_external_results()
+    fs::file_delete(get_result_path(rdir, "coverage.json"))
+
+    expect_error(render_scorecard(rdir), "coverage file is missing")
+
+    scores <- jsonlite::read_json(get_result_path(rdir, "scores.json"))
+    scores[["testing"]][["coverage"]] <- NULL
+    jsonlite::write_json(scores, get_result_path(rdir, "scores.json"),
+      auto_unbox = TRUE
+    )
+
+    pdf_path <- render_scorecard(rdir)
+    toc <- pdftools::pdf_toc(pdf = pdf_path)[["children"]]
+    appendix <- toc[[4]]
+    expect_identical(appendix[["title"]], "Appendix")
+    expect_identical(
+      purrr::map_chr(appendix[["children"]], "title"),
+      c("System Info", "Check output")
+    )
+  })
 })
