@@ -25,11 +25,7 @@ describe("score_pkg", {
     pkg_scores <- jsonlite::fromJSON(json_path)
 
     # Check json attributes
-    expect_equal(
-      names(pkg_scores),
-      c("mpn_scorecard_version","pkg_name", "pkg_version", "out_dir",
-        "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
-    )
+    expect_identical(names(pkg_scores), SCORECARD_JSON_KEYS)
 
     # These tests also serve to confirm the correct environment vars in `local_check_envvar` were set
     # Check category scores
@@ -70,11 +66,7 @@ describe("score_pkg", {
     pkg_scores <- jsonlite::fromJSON(json_path)
 
     # Check json attributes
-    expect_equal(
-      names(pkg_scores),
-      c("mpn_scorecard_version", "pkg_name", "pkg_version", "out_dir",
-        "pkg_tar_path", "md5sum_check", "scores", "metadata", "category_scores")
-    )
+    expect_identical(names(pkg_scores), SCORECARD_JSON_KEYS)
 
     expect_equal(pkg_scores$scores$testing$check, 0)
     expect_equal(pkg_scores$scores$testing$covr, "NA") # NA character when read from json

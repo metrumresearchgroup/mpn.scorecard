@@ -17,3 +17,15 @@ DOCUMENTATION_METRICS <- c("has_vignettes", "has_website", "has_news") #, export
 MAINTENANCE_METRICS <- c("has_maintainer", "news_current")#, "last_30_bugs_status")
 TRANSPARENCY_METRICS <- c("has_source_control", "has_bug_reports_url")
 TESTING_METRICS <- c("check", "covr")
+
+SCORECARD_JSON_KEYS <- c(
+  "mpn_scorecard_version",
+  "pkg_name",
+  "pkg_version",
+  "out_dir",
+  "pkg_tar_path",
+  "md5sum_check",
+  "scores",
+  "metadata",
+  "category_scores"
+)
