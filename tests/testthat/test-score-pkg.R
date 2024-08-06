@@ -37,7 +37,7 @@ describe("score_pkg", {
 
     # check individual scores
     expect_equal(pkg_scores$scores$testing$check, 1)
-    expect_equal(pkg_scores$scores$testing$covr, 1)
+    expect_equal(pkg_scores$scores$testing$coverage, 1)
 
   })
 
@@ -69,7 +69,7 @@ describe("score_pkg", {
     expect_identical(names(pkg_scores), SCORECARD_JSON_KEYS)
 
     expect_equal(pkg_scores$scores$testing$check, 0)
-    expect_equal(pkg_scores$scores$testing$covr, "NA") # NA character when read from json
+    expect_equal(pkg_scores$scores$testing$coverage, "NA") # NA character when read from json
     expect_equal(pkg_scores$category_scores$testing, 0) # confirm overall category score is still a number
 
   })
@@ -91,7 +91,7 @@ describe("score_pkg", {
     pkg_scores <- jsonlite::fromJSON(json_path)
 
     expect_equal(pkg_scores$scores$testing$check, 1)
-    expect_identical(pkg_scores$scores$testing$covr, "NA")
+    expect_identical(pkg_scores$scores$testing$coverage, "NA")
 
     covr_res <- readRDS(get_result_path(result_dir, "covr.rds"))
     expect_s3_class(covr_res$errors, "callr_timeout_error")
@@ -155,7 +155,7 @@ describe("score_pkg", {
     expect_equal(res$category_scores$overall, 0.5)
 
     # With failed coverage
-    pkg_scores$scores$testing$covr <- NA
+    pkg_scores$scores$testing$coverage <- NA
     res <- calc_overall_scores(pkg_scores)
     expect_equal(res$category_scores$testing, 0.5)
     expect_equal(res$category_scores$overall, 0.3)

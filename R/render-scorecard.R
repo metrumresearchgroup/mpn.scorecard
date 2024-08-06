@@ -35,6 +35,7 @@ render_scorecard <- function(
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
+  pkg_scores <- scorecard_json_compat(pkg_scores, json_path)
   check_scores_valid(pkg_scores, json_path)
 
   # map scores to risk and format into tables to be written to PDF
@@ -84,6 +85,22 @@ render_scorecard <- function(
 
 }
 
+scorecard_json_compat <- function(data, path) {
+  # Handle files written by score_pkg() before it renamed "covr" to "coverage".
+  tscores <- data[["scores"]][["testing"]]
+  if (is.null(tscores[["coverage"]])) {
+
+    covr_val <- tscores[["covr"]]
+    if (is.null(covr_val)) {
+      abort(paste("Expected either 'coverage' or 'covr' value in", path))
+    }
+    tscores[["coverage"]] <- covr_val
+    tscores[["covr"]] <- NULL
+    data[["scores"]][["testing"]] <- tscores
+  }
+
+  return(data)
+}
 
 #' Prepare the raw risk scores to be rendered into PDF
 #'
@@ -126,7 +143,7 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
         result = ifelse(
-          .data$criteria == "covr" & !is.na(.data$score),
+          .data$criteria == "coverage" & !is.na(.data$score),
           sprintf("%.2f%%", .data$score * 100),
           .data$result
         ),
@@ -187,7 +204,7 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
       } else {
         paste0("Passing (score: ", .x, ")")
       }
-    }else if(.y != "covr"){
+    } else if (.y != "coverage") {
       if (.x == answer_breaks[1]) {
         "No"
       } else if(.x == answer_breaks[2]) {

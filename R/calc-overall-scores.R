@@ -14,8 +14,8 @@ calc_overall_scores <- function(scorelist) {
   scorelist$category_scores <- purrr::map(categories, ~{
     indiv_scores <- unlist(scorelist$scores[[.x]])
     # Penalize coverage failures: NA --> 0
-    if("covr" %in% names(indiv_scores) && is.na(indiv_scores[["covr"]])){
-      indiv_scores[["covr"]] <- 0
+    if ("coverage" %in% names(indiv_scores) && is.na(indiv_scores[["coverage"]])) {
+      indiv_scores[["coverage"]] <- 0
     }
    round(mean(indiv_scores), 3)
   }) %>% purrr::set_names(categories)
