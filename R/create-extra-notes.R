@@ -34,7 +34,7 @@ create_extra_notes <- function(
 
   return(
     list(
-      covr_results_df = covr_results_df,
+      cov_results_df = covr_results_df,
       check_output = check_results$stdout
     )
   )

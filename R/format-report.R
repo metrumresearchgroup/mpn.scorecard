@@ -762,7 +762,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
 
   ### Covr Results ###
   # Format Table
-  covr_results_df <- extra_notes_data$covr_results_df
+  covr_results_df <- extra_notes_data$cov_results_df
   if (is.numeric(covr_results_df$test_coverage)) {
     covr_results_df <- covr_results_df %>%
       dplyr::mutate(test_coverage = sprintf("%.2f%%", .data$test_coverage)) %>%
