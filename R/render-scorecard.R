@@ -24,13 +24,27 @@ render_scorecard <- function(
     overwrite = FALSE,
     add_traceability = "auto"
 ) {
+  checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
+  checkmate::assert_string(results_dir)
+  out_file <- get_result_path(results_dir, "scorecard.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
+
+  rendered_file <- rmarkdown::render(
+    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
+    output_dir = results_dir,
+    output_file = basename(out_file),
+    quiet = TRUE,
+    params = get_render_params(results_dir, risk_breaks, add_traceability)
+  )
+
+  return(invisible(rendered_file))
+}
+
+get_render_params <- function(results_dir, risk_breaks, add_traceability) {
   json_path <- get_result_path(results_dir, "scorecard.json")
-
-  # input checking
   checkmate::assert_string(json_path)
   checkmate::assert_file_exists(json_path)
-  checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
@@ -41,12 +55,6 @@ render_scorecard <- function(
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
   comments_block <- check_for_comments(results_dir)
-
-  # Output file
-  checkmate::assert_string(results_dir)
-  out_file <- get_result_path(results_dir, "scorecard.pdf")
-  check_exists_and_overwrite(out_file, overwrite)
-
 
   # Appendix
   extra_notes_data <- create_extra_notes(results_dir)
@@ -62,26 +70,15 @@ render_scorecard <- function(
     as.character(utils::packageVersion("mpn.scorecard"))
   )
 
-  # Render rmarkdown
-  rendered_file <- rmarkdown::render(
-    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = results_dir,
-    output_file = basename(out_file),
-    quiet = TRUE,
-    params = list(
-      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
-      scorecard_footer = mpn_scorecard_ver,
-      pkg_scores = formatted_pkg_scores,
-      comments_block = comments_block,
-      extra_notes_data = extra_notes_data,
-      exports_df = exports_df,
-      dep_versions_df = dep_versions_df
-    )
+  list(
+    set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
+    scorecard_footer = mpn_scorecard_ver,
+    pkg_scores = formatted_pkg_scores,
+    comments_block = comments_block,
+    extra_notes_data = extra_notes_data,
+    exports_df = exports_df,
+    dep_versions_df = dep_versions_df
   )
-
-  # Render to PDF, invisibly return the path to the PDF
-  return(invisible(rendered_file))
-
 }
 
 scorecard_json_compat <- function(data, path) {
