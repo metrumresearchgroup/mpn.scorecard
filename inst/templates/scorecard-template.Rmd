@@ -21,11 +21,11 @@ header-includes:
 params:
   set_title: "Scorecard"
   scorecard_footer: "Generated with mpn.scorecard"
-  pkg_scores: "`r list()`"
-  comments_block: "r NULL"
-  extra_notes_data: "r NULL"
-  exports_df: "r NULL"
-  dep_versions_df: "`r NA`"
+  pkg_scores: null
+  comments_block: null
+  extra_notes_data: null
+  exports_df: null
+  dep_versions_df: null
 title: >
   `r params$set_title`
 subtitle: 'MPN Scorecard'
@@ -98,7 +98,7 @@ format_metadata(formatted_pkg_scores$metadata)
 ```
 
 ```{r, results = "asis"}
-if (identical(params$dep_versions_df, NA)) {
+if (is.null(params$dep_versions_df)) {
   stop("Required versions_df parameter not specified.")
 }
 format_dependency_versions(params$dep_versions_df)
