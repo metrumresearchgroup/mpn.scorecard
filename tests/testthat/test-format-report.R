@@ -27,9 +27,13 @@ describe("formatting functions", {
       expect_true(all(grepl(paste0(RISK_LEVELS, collapse = "|"), scores_df$risk)))
 
       # ensure all category criteria are present
-      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK", "coverage")
-      expected_criteria <- expected_criteria[!grepl("check|covr", expected_criteria)]
-      expect_true(all(scores_df$criteria %in% expected_criteria))
+      expect_setequal(
+        scores_df[["criteria"]],
+        c(
+          "R CMD CHECK", "coverage",
+          DOCUMENTATION_METRICS, MAINTENANCE_METRICS, TRANSPARENCY_METRICS
+        )
+      )
 
       # Check overall category scores
       overall_scores_df <- formatted_pkg_scores$formatted$overall_scores
