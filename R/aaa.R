@@ -22,6 +22,7 @@ SCORECARD_JSON_KEYS <- c(
   "mpn_scorecard_version",
   "pkg_name",
   "pkg_version",
+  "scorecard_type",
   "out_dir",
   "pkg_tar_path",
   "md5sum_check",

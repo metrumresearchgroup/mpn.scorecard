@@ -86,6 +86,11 @@ render_scorecard <- function(
 }
 
 scorecard_json_compat <- function(data, path) {
+  # Handle files written by score_pkg() before it included scorecard_type.
+  if (is.null(data[["scorecard_type"]])) {
+    data[["scorecard_type"]] <- "R"
+  }
+
   # Handle files written by score_pkg() before it renamed "covr" to "coverage".
   tscores <- data[["scores"]][["testing"]]
   if (is.null(tscores[["coverage"]])) {

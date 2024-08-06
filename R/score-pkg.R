@@ -57,6 +57,7 @@ score_pkg <- function(
     mpn_scorecard_version = mpn_scorecard_ver,
     pkg_name = pkg_name,
     pkg_version = pkg_ver,
+    scorecard_type = "R",
     out_dir = out_dir,
     pkg_tar_path = pkg,
     md5sum_check = tools::md5sum(pkg),
