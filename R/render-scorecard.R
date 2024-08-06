@@ -184,6 +184,7 @@ map_risk <- function(scores, risk_breaks) {
 #' @param scores vector of risk scores
 #' @param criteria vector of criteria names
 #' @param answer_breaks breaks determining 'Yes'/'Passing' or 'No'/'Failed'. `NA` has special handling. See details.
+#' @param include_check_score Whether to include score in the result check.
 #'
 #' @details
 #' If value is not found in `answer_breaks`, it is skipped over
@@ -193,7 +194,8 @@ map_risk <- function(scores, risk_breaks) {
 #' covr is skipped over unless it is `NA` (indicates test failures), as this is formatted as a percent separately
 #'
 #' @keywords internal
-map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
+map_answer <- function(scores, criteria, answer_breaks = c(0, 1),
+                       include_check_score = TRUE) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
   purrr::map2_chr(scores, criteria, ~ {
@@ -202,7 +204,11 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
       if(is.na(.x) || .x == answer_breaks[1]) {
         "Failed"
       } else {
-        paste0("Passing (score: ", .x, ")")
+        if (isTRUE(include_check_score)) {
+          paste0("Passing (score: ", .x, ")")
+        } else {
+          "Passing"
+        }
       }
     } else if (.y != "coverage") {
       if (.x == answer_breaks[1]) {
