@@ -762,14 +762,14 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
 
   ### Covr Results ###
   # Format Table
-  covr_results_df <- extra_notes_data$cov_results_df
-  if (is.numeric(covr_results_df$test_coverage)) {
-    covr_results_df <- covr_results_df %>%
+  cov_results_df <- extra_notes_data$cov_results_df
+  if (is.numeric(cov_results_df$test_coverage)) {
+    cov_results_df <- cov_results_df %>%
       dplyr::mutate(test_coverage = sprintf("%.2f%%", .data$test_coverage)) %>%
       format_colnames_to_title()
 
     # Create flextable and format
-    covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
+    cov_results_flex <- flextable_formatted(cov_results_df, pg_width = 4) %>%
       flextable::set_caption("Test Coverage") %>%
       flextable::align(align = "right", part = "all", j=2) %>%
       flextable::add_footer_row(
@@ -779,11 +779,11 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
         )),
         colwidths = c(2)
       )
-    covr_results_flex <- covr_results_flex %>% flex_header() %>%
+    cov_results_flex <- cov_results_flex %>% flex_header() %>%
       flex_footer(footer_bg = "transparent", footer_ft = "black") %>%
       flex_stripe(border = FALSE)
   } else {
-    covr_results_flex <- NULL
+    cov_results_flex <- NULL
   }
 
   ### R CMD Check Results ###
@@ -792,7 +792,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
   if(isTRUE(return_vals)){
     return(
       list(
-        covr_results_flex = covr_results_flex,
+        cov_results_flex = cov_results_flex,
         check_output = check_output
       )
     )
@@ -806,21 +806,21 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
     cat(sub_header_strs[2])
     cat("\n")
 
-    if (is.null(covr_results_flex)) {
-      err_type <- covr_results_df$code_file
+    if (is.null(cov_results_flex)) {
+      err_type <- cov_results_df$code_file
       if (identical(err_type, "File coverage failed")) {
         cat("\n\nCalculating code coverage failed with following error:\n\n")
-        cat_verbatim(covr_results_df$test_coverage)
+        cat_verbatim(cov_results_df$test_coverage)
       } else if (identical(err_type, "No coverage results")) {
         cat(
           "\n\n", "Unable to calculate coverage: ",
-          covr_results_df$test_coverage, "\n\n"
+          cov_results_df$test_coverage, "\n\n"
         )
       } else {
         stop("Unknown error type: ", err_type)
       }
     } else {
-      cat(knitr::knit_print(covr_results_flex))
+      cat(knitr::knit_print(cov_results_flex))
     }
 
     cat("\n")

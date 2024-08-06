@@ -193,13 +193,13 @@ describe("formatting functions", {
     extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
 
     # Test covr dataframe
-    covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
+    covr_results_df <- extra_notes_frmt$cov_results_flex$body$dataset
     expect_equal(
-      names(format_colnames_to_title(extra_notes_data$covr_results_df)),
+      names(format_colnames_to_title(extra_notes_data$cov_results_df)),
       names(covr_results_df)
     )
     expect_equal(
-      unique(unname(unlist(extra_notes_frmt$covr_results_flex$footer$dataset))),
+      unique(unname(unlist(extra_notes_frmt$cov_results_flex$footer$dataset))),
       paste(
         "Test coverage is calculated per script, rather than per function.",
         "See Traceability Matrix for function-to-test-file mapping."
