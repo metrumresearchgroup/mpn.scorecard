@@ -238,6 +238,17 @@ describe("formatting functions", {
       "Unable to calculate R dependency table due to failing `R CMD check`."
     )
   })
+
+  it("format_metadata handles NULL input", {
+    flex_df <- format_metadata(list(date = "2024-01-01", executor = "foo"))
+    expect_identical(
+      flex_df[["body"]][["dataset"]],
+      data.frame(
+        Category = c("Date", "Executor"),
+        Value = c("2024-01-01", "foo")
+      )
+    )
+  })
 })
 
 describe("cat_verbatim", {

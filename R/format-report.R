@@ -388,16 +388,22 @@ format_testing_scores <- function(formatted_pkg_scores){
 #'
 #' @keywords internal
 format_metadata <- function(metadata_list){
-  # Create system info table
-  executor_tbl <- data.frame(executor = metadata_list$executor)
-  data_tbl <- data.frame(date = metadata_list$date)
-  env_vars_tbl <- as.data.frame(t(unlist(metadata_list$info$env_vars)))
-  system_info_tbl <- as.data.frame(t(unlist(metadata_list$info$sys)))
+  date <- metadata_list[["date"]]
+  if (is.null(date)) {
+    abort("`date` required in `metadata_list`")
+  }
+  executor <- metadata_list[["executor"]]
+  if (is.null(executor)) {
+    abort("`executor` required in `metadata_list`")
+  }
 
+  info <- metadata_list[["info"]]
+  data <- c(date = date, executor = executor, info[["sys"]], info[["env_vars"]])
 
-  all_info_tbl <- cbind(data_tbl, executor_tbl, system_info_tbl, env_vars_tbl)
-  all_info_tbl <- data.frame(Category = stringr::str_to_title(names(all_info_tbl)),
-                             Value = unlist(all_info_tbl))
+  all_info_tbl <- data.frame(
+    Category = stringr::str_to_title(names(data)),
+    Value = unname(unlist(data))
+  )
 
   # Create flextable
   system_info_flextable <-
