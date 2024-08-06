@@ -44,7 +44,7 @@ render_scorecard <- function(
   comments_block <- check_for_comments(results_dir)
 
   # Output file
-  checkmate::assert_string(results_dir, null.ok = TRUE)
+  checkmate::assert_string(results_dir)
   out_file <- get_result_path(results_dir, "scorecard.pdf")
   check_exists_and_overwrite(out_file, overwrite)
 
