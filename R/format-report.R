@@ -807,7 +807,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
     cat("\n")
 
     if (is.null(covr_results_flex)) {
-      err_type <- covr_results_df$r_script
+      err_type <- covr_results_df$code_file
       if (identical(err_type, "File coverage failed")) {
         cat("\n\nCalculating code coverage failed with following error:\n\n")
         cat_verbatim(covr_results_df$test_coverage)

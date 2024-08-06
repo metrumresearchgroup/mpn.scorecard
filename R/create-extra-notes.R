@@ -16,18 +16,18 @@ create_extra_notes <- function(
   covr_results <- readRDS(covr_path)
   if (inherits(covr_results$errors, "error")) {
     covr_results_df <- data.frame(
-      r_script = "File coverage failed",
+      code_file = "File coverage failed",
       test_coverage = conditionMessage(covr_results$errors)
     )
   } else if (length(covr_results$coverage$filecoverage)) {
     covr_results_df <- covr_results$coverage$filecoverage %>% as.data.frame()
     covr_results_df <- covr_results_df %>%
-      mutate(r_script = row.names(covr_results_df)) %>%
-      dplyr::select("r_script", "test_coverage" = ".")
+      mutate(code_file = row.names(covr_results_df)) %>%
+      dplyr::select("code_file", "test_coverage" = ".")
     row.names(covr_results_df) <- NULL
   } else {
     covr_results_df <- data.frame(
-      r_script = "No coverage results",
+      code_file = "No coverage results",
       test_coverage = covr_results$notes
     )
   }
