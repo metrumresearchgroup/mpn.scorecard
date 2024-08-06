@@ -1,5 +1,5 @@
 
-#' @importFrom tidyselect everything
+#' @importFrom tidyselect everything all_of
 NULL
 
 

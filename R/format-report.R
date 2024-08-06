@@ -701,7 +701,7 @@ format_traceability_matrix <- function(
       exported_func_df <- exported_func_df %>%
         dplyr::mutate(
           dplyr::across(
-            "exported_function":"documentation",
+            all_of(c("exported_function", "code_file", "documentation")),
             function(x) wrap_text(x, width = 24, indent = TRUE, strict = TRUE)
           ),
           # Tests can be longer due to page width (pg_width) settings (we make it wider)
