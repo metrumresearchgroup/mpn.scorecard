@@ -687,11 +687,14 @@ format_traceability_matrix <- function(
       )
 
     # Get testing directories for caption
-    test_dirs <- exported_func_df %>% tidyr::unnest(test_dirs) %>% dplyr::pull(test_dirs) %>% unique()
-    test_dirs <- test_dirs[test_dirs != ""] %>% paste(collapse = ", ")
-
-    # Remove testing directory column (not a column due to horizontal space limits)
-    exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+    if ("test_dirs" %in% names(exported_func_df)) {
+      test_dirs <- exported_func_df %>% tidyr::unnest(test_dirs) %>% dplyr::pull(test_dirs) %>% unique()
+      test_dirs <- test_dirs[test_dirs != ""] %>% paste(collapse = ", ")
+      # Remove testing directory column (not a column due to horizontal space limits)
+      exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+    } else {
+      test_dirs <- NULL
+    }
 
     # Format Table
     if(isTRUE(wrap_cols)){
@@ -709,11 +712,15 @@ format_traceability_matrix <- function(
 
     # Create flextable
     exported_func_flex <- flextable_formatted(exported_func_df, pg_width = 7, font_size = 9) %>%
-      flextable::set_caption("Traceability Matrix") %>%
-      flextable::add_footer_row(
+      flextable::set_caption("Traceability Matrix")
+
+    if (!is.null(test_dirs)) {
+      exported_func_flex <- flextable::add_footer_row(
+        exported_func_flex,
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+    }
 
     # Add stripe and other formatting details
     exported_func_flex <- exported_func_flex %>%
