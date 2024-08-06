@@ -414,6 +414,10 @@ format_metadata <- function(metadata_list){
 # format()), but "format_" is used for consistency with other functions in this
 # file.
 format_dependency_versions <- function(df) {
+  if (is.null(df)) {
+    return(invisible(NULL))
+  }
+
   out <- prepare_dependency_versions(df)
   if (inherits(out, "flextable")) {
     # Note: knit_print.flextable() does _not_ print to stdout.

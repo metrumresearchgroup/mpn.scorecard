@@ -98,9 +98,6 @@ format_metadata(formatted_pkg_scores$metadata)
 ```
 
 ```{r, results = "asis"}
-if (is.null(params$dep_versions_df)) {
-  stop("Required versions_df parameter not specified.")
-}
 format_dependency_versions(params$dep_versions_df)
 ```
 
