@@ -18,7 +18,10 @@ MAINTENANCE_METRICS <- c("has_maintainer", "news_current")#, "last_30_bugs_statu
 TRANSPARENCY_METRICS <- c("has_source_control", "has_bug_reports_url")
 TESTING_METRICS <- c("check", "coverage")
 
+MPN_SCORECARD_FORMAT <- "1.0"
+
 SCORECARD_JSON_KEYS <- c(
+  "mpn_scorecard_format",
   "mpn_scorecard_version",
   "pkg_name",
   "pkg_version",

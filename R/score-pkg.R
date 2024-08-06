@@ -54,6 +54,7 @@ score_pkg <- function(
 
   # start building up scorecard list
   res <- list(
+    mpn_scorecard_format = MPN_SCORECARD_FORMAT,
     mpn_scorecard_version = mpn_scorecard_ver,
     pkg_name = pkg_name,
     pkg_version = pkg_ver,
