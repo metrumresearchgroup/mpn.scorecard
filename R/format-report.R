@@ -758,7 +758,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
   covr_results_df <- extra_notes_data$covr_results_df
   if (is.numeric(covr_results_df$test_coverage)) {
     covr_results_df <- covr_results_df %>%
-      dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
+      dplyr::mutate(test_coverage = sprintf("%.2f%%", .data$test_coverage)) %>%
       format_colnames_to_title()
 
     # Create flextable and format

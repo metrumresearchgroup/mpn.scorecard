@@ -85,7 +85,7 @@ describe("formatting functions", {
     expect_true(all(c("Criteria", "Score", "Result", "Risk") %in% names(flex_df$body$dataset)))
     expect_true(all(c("Criteria", "Result", "Risk") %in% flex_df$col_keys))
     expect_equal(flex_df$body$dataset$Score, c(1, 1))
-    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100%"))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100.00%"))
 
     ## High rcmdcheck score ##
     result_dir <- result_dirs_select[["pass_no_docs"]]
@@ -97,7 +97,7 @@ describe("formatting functions", {
     flex_df <- format_testing_scores(formatted_pkg_scores)
 
     expect_equal(flex_df$body$dataset$Score, c(0.75, 1))
-    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.75)", "100%"))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.75)", "100.00%"))
 
 
     ## Failing rcmdcheck score ##

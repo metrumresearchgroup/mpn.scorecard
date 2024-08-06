@@ -126,7 +126,9 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
         result = ifelse(
-          (.data$criteria == "covr" & !is.na(.data$score)), paste0(.data$score*100, "%"), .data$result
+          .data$criteria == "covr" & !is.na(.data$score),
+          sprintf("%.2f%%", .data$score * 100),
+          .data$result
         ),
         criteria = ifelse(.data$criteria == "check", "R CMD CHECK", "coverage")
       )
