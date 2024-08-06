@@ -40,6 +40,11 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
 library(dplyr)
 library(flextable)
 set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
+
+scorecard_type <- params[["pkg_scores"]][["scorecard_type"]]
+if (is.null(scorecard_type)) {
+  stop("pkg_scores unexpectedly does not have 'scorecard_type' field")
+}
 ```
 
 ```{r setup_data}
@@ -85,7 +90,7 @@ trace_matrix_notes(params$exports_df)
 ```
 
 ```{r}
-format_traceability_matrix(params$exports_df)
+format_traceability_matrix(params$exports_df, scorecard_type = scorecard_type)
 ```
 
 \newpage
@@ -102,7 +107,7 @@ format_dependency_versions(params$dep_versions_df)
 ```
 
 ```{r, results = "asis"}
-format_appendix(params$extra_notes_data)
+format_appendix(params$extra_notes_data, scorecard_type = scorecard_type)
 ```
 
 

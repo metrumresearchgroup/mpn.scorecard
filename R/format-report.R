@@ -680,7 +680,8 @@ format_colnames_to_title <- function(df){
 #' @keywords internal
 format_traceability_matrix <- function(
     exports_df,
-    wrap_cols = TRUE
+    wrap_cols = TRUE,
+    scorecard_type = "R"
 ){
   checkmate::assert_logical(wrap_cols)
 
@@ -702,12 +703,29 @@ format_traceability_matrix <- function(
       test_dirs <- NULL
     }
 
+    if ("exported_function" %in% names(exported_func_df)) {
+      # Align internal scoring with external format.
+      exported_func_df <- dplyr::rename(exported_func_df,
+        entrypoint = "exported_function"
+      )
+    }
+
+    entry_name <- switch(scorecard_type,
+      "R" = "Exported Function",
+      "cli" = "Command",
+      "Entry Point"
+    )
+    exported_func_df <- dplyr::rename(
+      exported_func_df,
+      !!entry_name := "entrypoint"
+    )
+
     # Format Table
     if(isTRUE(wrap_cols)){
       exported_func_df <- exported_func_df %>%
         dplyr::mutate(
           dplyr::across(
-            all_of(c("exported_function", "code_file", "documentation")),
+            all_of(c(entry_name, "code_file", "documentation")),
             function(x) wrap_text(x, width = 24, indent = TRUE, strict = TRUE)
           ),
           # Tests can be longer due to page width (pg_width) settings (we make it wider)
@@ -765,8 +783,13 @@ trace_matrix_notes <- function(exports_df){
 #' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
 #'
 #' @keywords internal
-format_appendix <- function(extra_notes_data, return_vals = FALSE){
-  sub_header_strs <- c("\n## R CMD Check\n\n", "\n## Test coverage\n\n")
+format_appendix <- function(extra_notes_data, return_vals = FALSE, scorecard_type = "R") {
+  check_title <- if (identical(scorecard_type, "R")) {
+    "R CMD Check"
+  } else {
+    "Check output"
+  }
+  sub_header_strs <- c(paste0("\n## ", check_title, "\n\n"), "\n## Test coverage\n\n")
 
   ### Covr Results ###
   # Format Table

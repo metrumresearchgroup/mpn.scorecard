@@ -2,7 +2,7 @@
 % Please edit documentation in R/render-scorecard.R
 \name{render_scorecard}
 \alias{render_scorecard}
-\title{Take a JSON from score_pkg() and render a pdf}
+\title{Render a scorecard PDF from a directory of results}
 \usage{
 render_scorecard(
   results_dir,
@@ -12,7 +12,8 @@ render_scorecard(
 )
 }
 \arguments{
-\item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
+\item{results_dir}{Directory with scoring results. This is the path returned
+by \code{\link[=score_pkg]{score_pkg()}}.}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores
@@ -26,7 +27,8 @@ is "Medium Risk", and \verb{0.7 <= score < 1} is "High Risk".}
 Defaults to "auto", which will include the matrix if found.}
 }
 \description{
-Take a JSON from score_pkg() and render a pdf
+Create a scorecard from a results directory prepared by \code{\link[=score_pkg]{score_pkg()}} or an
+external scorer (see \link{external_scores}).
 }
 \details{
 If a plain text comments file is found in \code{results_dir}, it will automatically be included.
