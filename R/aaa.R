@@ -12,6 +12,7 @@ RISK_LEVELS <-  c("NA - unexpected", "High Risk", "Medium Risk", "Low Risk")
 
 utils::globalVariables(c("."))
 
+METRIC_CATEGORIES <- c("testing", "documentation", "maintenance", "transparency")
 
 DOCUMENTATION_METRICS <- c("has_vignettes", "has_website", "has_news") #, export_help)
 MAINTENANCE_METRICS <- c("has_maintainer", "news_current")#, "last_30_bugs_status")

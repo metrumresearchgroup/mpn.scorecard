@@ -221,6 +221,26 @@ build_pkg_scores <- function(results_dir) {
     metadata = list(jsonlite::read_json(meta_json))
   )
 
+  to_drop <- c(
+    "mpn_scorecard_version", "out_dir", "pkg_tar_path", "md5sum_check",
+    "category_scores"
+  )
+  extkeys <- SCORECARD_JSON_KEYS[!SCORECARD_JSON_KEYS %in% to_drop]
+  assert_json_keys(res, extkeys)
+  assert_json_keys(res[["metadata"]], c("date", "executor"))
+
+  scores <- res[["scores"]]
+  # In general, these score names aren't a hard-coded set, but there should at
+  # least be one per category...
+  assert_json_keys(scores, METRIC_CATEGORIES)
+  nscores_per_cat <- purrr::map_int(scores[METRIC_CATEGORIES], length)
+  if (any(nscores_per_cat < 1)) {
+    no_scores <- names(scores[METRIC_CATEGORIES])[nscores_per_cat < 1]
+    abort(c("The following categories do not have any scores:", no_scores))
+  }
+  # ... and check score should be present.
+  assert_json_keys(scores[["testing"]], "check")
+
   return(calc_overall_scores(res))
 }
 
@@ -230,6 +250,10 @@ read_traceability_matrix <- function(results_dir) {
 
   entries <- yaml::read_yaml(fname)
   entries <- purrr::discard(entries, function(e) isTRUE(e[["skip"]]))
+  for (e in entries) {
+    assert_keys(e, c("entrypoint", "code", "doc", "tests"), yaml::as.yaml)
+  }
+
   tibble::tibble(
     entrypoint = purrr::map_chr(entries, "entrypoint"),
     code_file = purrr::map_chr(entries, "code"),
@@ -252,8 +276,28 @@ read_coverage_results <- function(results_dir) {
 
   data <- jsonlite::read_json(fname)
   filecov <- data[["files"]]
+  for (e in filecov) {
+    assert_json_keys(e, c("file", "coverage"))
+  }
+
   tibble::tibble(
     code_file = purrr::map_chr(filecov, "file"),
     test_coverage = purrr::map_dbl(filecov, "coverage")
   )
+}
+
+assert_json_keys <- function(entry, keys) {
+  assert_keys(
+    entry,
+    keys,
+    function(...) jsonlite::toJSON(..., auto_unbox = TRUE, pretty = TRUE)
+  )
+}
+
+assert_keys <- function(entry, keys, render_fn) {
+  for (k in keys) {
+    if (is.null(entry[[k]])) {
+      abort(paste0("entry is missing key: ", k, "\n", render_fn(entry)))
+    }
+  }
 }
