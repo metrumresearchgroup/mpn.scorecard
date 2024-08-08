@@ -7,7 +7,8 @@
 summarize_package_results(result_dirs)
 }
 \arguments{
-\item{result_dirs}{A vector of output directories}
+\item{result_dirs}{A vector of output directories, each one produced by
+\code{\link[=score_pkg]{score_pkg()}}. \link{external_scores} are not supported.}
 }
 \value{
 a dataframe

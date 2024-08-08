@@ -21,11 +21,11 @@ header-includes:
 params:
   set_title: "Scorecard"
   scorecard_footer: "Generated with mpn.scorecard"
-  pkg_scores: "`r list()`"
-  comments_block: "r NULL"
-  extra_notes_data: "r NULL"
-  exports_df: "r NULL"
-  dep_versions_df: "`r NA`"
+  pkg_scores: null
+  comments_block: null
+  extra_notes_data: null
+  exports_df: null
+  dep_versions_df: null
 title: >
   `r params$set_title`
 subtitle: 'MPN Scorecard'
@@ -40,6 +40,11 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
 library(dplyr)
 library(flextable)
 set_flextable_defaults(font.color = "#333333", border.color = "#999999", padding = 4, fonts_ignore = TRUE)
+
+scorecard_type <- params[["pkg_scores"]][["scorecard_type"]]
+if (is.null(scorecard_type)) {
+  stop("pkg_scores unexpectedly does not have 'scorecard_type' field")
+}
 ```
 
 ```{r setup_data}
@@ -85,7 +90,7 @@ trace_matrix_notes(params$exports_df)
 ```
 
 ```{r}
-format_traceability_matrix(params$exports_df)
+format_traceability_matrix(params$exports_df, scorecard_type = scorecard_type)
 ```
 
 \newpage
@@ -98,14 +103,11 @@ format_metadata(formatted_pkg_scores$metadata)
 ```
 
 ```{r, results = "asis"}
-if (identical(params$dep_versions_df, NA)) {
-  stop("Required versions_df parameter not specified.")
-}
 format_dependency_versions(params$dep_versions_df)
 ```
 
 ```{r, results = "asis"}
-format_appendix(params$extra_notes_data)
+format_appendix(params$extra_notes_data, scorecard_type = scorecard_type)
 ```
 
 

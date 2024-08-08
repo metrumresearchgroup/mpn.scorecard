@@ -4,7 +4,12 @@
 \alias{map_answer}
 \title{Use answer_breaks to map results into character strings}
 \usage{
-map_answer(scores, criteria, answer_breaks = c(0, 1))
+map_answer(
+  scores,
+  criteria,
+  answer_breaks = c(0, 1),
+  include_check_score = TRUE
+)
 }
 \arguments{
 \item{scores}{vector of risk scores}
@@ -12,6 +17,8 @@ map_answer(scores, criteria, answer_breaks = c(0, 1))
 \item{criteria}{vector of criteria names}
 
 \item{answer_breaks}{breaks determining 'Yes'/'Passing' or 'No'/'Failed'. \code{NA} has special handling. See details.}
+
+\item{include_check_score}{Whether to include score in the result check.}
 }
 \description{
 Use answer_breaks to map results into character strings

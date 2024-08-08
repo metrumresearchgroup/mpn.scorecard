@@ -72,4 +72,8 @@ describe("summarize_package_results", {
     )
   })
 
+  it("aborts on external scores", {
+    rdir <- local_create_external_results()
+    expect_error(render_scorecard_summary(rdir), "not supported")
+  })
 })

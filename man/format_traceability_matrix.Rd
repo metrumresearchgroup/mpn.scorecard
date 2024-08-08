@@ -4,7 +4,7 @@
 \alias{format_traceability_matrix}
 \title{Format Traceability Matrix}
 \usage{
-format_traceability_matrix(exports_df, wrap_cols = TRUE)
+format_traceability_matrix(exports_df, wrap_cols = TRUE, scorecard_type = "R")
 }
 \arguments{
 \item{exports_df}{tibble. Output of \code{\link[=make_traceability_matrix]{make_traceability_matrix()}}}

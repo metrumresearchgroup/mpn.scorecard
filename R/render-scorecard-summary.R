@@ -1,7 +1,8 @@
 
 #' Render PDF summary of scorecards
 #'
-#' @param result_dirs A vector of output directories
+#' @param result_dirs A vector of output directories, each one produced by
+#'   [score_pkg()]. [external_scores] are not supported.
 #' @param snapshot A report subtitle indicating the grouping of these packages, such as an MPN snapshot. See details.
 #' @param out_dir Output directory for saving scorecard summary. If `NULL`, assumes all `result_dirs` point to the same output directory
 #' @inheritParams render_scorecard
@@ -22,6 +23,8 @@ render_scorecard_summary <- function(result_dirs,
   if(!is.null(snapshot)){
     snapshot <- paste('MPN Snapshot', snapshot)
   }
+
+  assert_no_external(result_dirs)
 
   # Format overall scores and risk
   overall_risk_summary <- build_risk_summary(result_dirs, risk_breaks, out_dir)
@@ -142,7 +145,7 @@ build_risk_summary <- function(result_dirs,
 #' @returns a dataframe
 #' @export
 summarize_package_results <- function(result_dirs){
-
+  assert_no_external(result_dirs)
   json_paths <- get_result_path(result_dirs, "scorecard.json")
 
   risk_summary_df <- tibble::tibble(
@@ -169,4 +172,10 @@ summarize_package_results <- function(result_dirs){
 
 
   return(risk_summary_df)
+}
+
+assert_no_external <- function(result_dirs, call = rlang::caller_env()) {
+  if (any(fs::file_exists(get_result_path(result_dirs, "pkg.json")))) {
+    abort("External scores are not supported.", call = call)
+  }
 }

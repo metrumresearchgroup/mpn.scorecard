@@ -7,7 +7,8 @@
 build_risk_summary(result_dirs, risk_breaks, out_dir, append_out_dir = FALSE)
 }
 \arguments{
-\item{result_dirs}{A vector of output directories}
+\item{result_dirs}{A vector of output directories, each one produced by
+\code{\link[=score_pkg]{score_pkg()}}. \link{external_scores} are not supported.}
 
 \item{risk_breaks}{A numeric vector of length 2, with both numbers being
 between 0 and 1. These are used for the "breaks" when classifying scores

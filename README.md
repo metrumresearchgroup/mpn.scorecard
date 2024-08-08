@@ -172,3 +172,12 @@ The report provides additional context, session info, proof points,
 etc., but will render a table that looks like the one below:
 
 <img src="man/figures/summary_tab.png" align="center" style = "width:750px;" />
+
+## Rendering scorecards for non-R packages
+
+The workflow described above focuses on **R** packages. Generating
+scorecards for other types of packages is also supported. In this case,
+the scoring happens outside of `mpn.scorecard`, and a directory of
+results is fed to `render_scorecard`. The required input format is
+described at
+[`?external_scores`](https://metrumresearchgroup.github.io/mpn.scorecard/reference/external_scores.html).

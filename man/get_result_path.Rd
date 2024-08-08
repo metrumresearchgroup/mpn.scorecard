@@ -6,8 +6,9 @@
 \usage{
 get_result_path(
   out_dir,
-  ext = c("scorecard.json", "scorecard.pdf", "check.rds", "covr.rds", "comments.txt",
-    "summary.pdf", "export_doc.rds", "mitigation.txt")
+  ext = c("scorecard.json", "scorecard.pdf", "comments.txt", "mitigation.txt",
+    "check.rds", "covr.rds", "export_doc.rds", "summary.pdf", "check.txt",
+    "coverage.json", "matrix.yaml", "metadata.json", "pkg.json", "scores.json")
 )
 }
 \arguments{
