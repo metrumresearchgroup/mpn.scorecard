@@ -66,4 +66,22 @@ describe("formatting functions with external scores", {
       "check\noutput\n"
     )
   })
+
+  it("format_appendix: no per file coverage", {
+    results_dir <- local_create_external_results()
+    covfile <- get_result_path(results_dir, "coverage.json")
+    cov <- jsonlite::read_json(covfile)
+    cov[["files"]] <- list()
+    jsonlite::write_json(cov, covfile)
+
+    expect_output(
+      format_appendix(
+        list(
+          check_output = "anything",
+          cov_results_df = read_coverage_results(results_dir)
+        )
+      ),
+      "Per file test coverage not provided"
+    )
+  })
 })

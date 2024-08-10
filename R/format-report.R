@@ -861,6 +861,8 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE, scorecard_typ
       } else {
         stop("Unknown error type: ", err_type)
       }
+    } else if (nrow(cov_results_df) == 0) {
+      cat("Per file test coverage not provided.")
     } else {
       cat(knitr::knit_print(cov_results_flex))
     }
