@@ -207,6 +207,18 @@ describe("formatting functions", {
     )
   })
 
+  it("format_appendix: covr failure", {
+    expect_output(
+      format_appendix(
+        list(
+          check_output = "anything",
+          cov_results_df = list(code_file = "File coverage failed")
+        )
+      ),
+      "Calculating code coverage failed"
+    )
+  })
+
   it("dependency versions", {
     setups <- pkg_dirs$pkg_setups_df
 
