@@ -730,7 +730,7 @@ format_traceability_matrix <- function(
           ),
           # Tests can be longer due to page width (pg_width) settings (we make it wider)
           test_files = purrr::map_chr(.data$test_files, function(tests){
-            wrap_text(tests, width = 40, strict = TRUE, wrap_sym = NULL)
+            wrap_text(tests, width = 40, strict = TRUE)
           })
         )
     }
