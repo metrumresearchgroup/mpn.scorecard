@@ -1,6 +1,10 @@
-#' Take a JSON from score_pkg() and render a pdf
+#' Render a scorecard PDF from a directory of results
 #'
-#' @param results_dir directory containing json file and individual results. Output file path from [score_pkg()]
+#' Create a scorecard from a results directory prepared by [score_pkg()] or an
+#' external scorer (see [external_scores]).
+#'
+#' @param results_dir Directory with scoring results. This is the path returned
+#'   by [score_pkg()].
 #' @param risk_breaks A numeric vector of length 2, with both numbers being
 #'   between 0 and 1. These are used for the "breaks" when classifying scores
 #'   into Risk categories. For example, for the default value of `c(0.3, 0.7)`,
@@ -16,7 +20,6 @@
 #' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.comments.txt`
 #'
 #' If a traceability matrix is found in `results_dir`, it will automatically be included unless overridden via `add_traceability`.
-#' **Note** that it must follow the naming convention of `<pkg_name>_<pkg_version>.export_doc.rds`
 #'
 #' @export
 render_scorecard <- function(
@@ -25,28 +28,43 @@ render_scorecard <- function(
     overwrite = FALSE,
     add_traceability = "auto"
 ) {
+  checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
+  checkmate::assert_string(results_dir)
+  out_file <- get_result_path(results_dir, "scorecard.pdf")
+  check_exists_and_overwrite(out_file, overwrite)
+
+  if (file.exists(get_result_path(results_dir, "pkg.json"))) {
+    param_fn <- get_render_params_external
+  } else {
+    param_fn <- get_render_params
+  }
+
+  rendered_file <- rmarkdown::render(
+    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
+    output_dir = results_dir,
+    output_file = basename(out_file),
+    quiet = TRUE,
+    params = param_fn(results_dir, risk_breaks, add_traceability)
+  )
+
+  return(invisible(rendered_file))
+}
+
+get_render_params <- function(results_dir, risk_breaks, add_traceability) {
   json_path <- get_result_path(results_dir, "scorecard.json")
-
-  # input checking
   checkmate::assert_string(json_path)
   checkmate::assert_file_exists(json_path)
-  checkmate::assert_numeric(risk_breaks, lower = 0, upper = 1, len = 2)
 
   # load scores from JSON
   pkg_scores <- jsonlite::fromJSON(json_path)
+  pkg_scores <- scorecard_json_compat(pkg_scores, json_path)
   check_scores_valid(pkg_scores, json_path)
 
   # map scores to risk and format into tables to be written to PDF
   formatted_pkg_scores <- format_scores_for_render(pkg_scores, risk_breaks)
 
   comments_block <- check_for_comments(results_dir)
-
-  # Output file
-  checkmate::assert_string(results_dir, null.ok = TRUE)
-  out_file <- get_result_path(results_dir, "scorecard.pdf")
-  check_exists_and_overwrite(out_file, overwrite)
-
 
   # Appendix
   extra_notes_data <- create_extra_notes(results_dir)
@@ -62,28 +80,38 @@ render_scorecard <- function(
     as.character(utils::packageVersion("mpn.scorecard"))
   )
 
-  # Render rmarkdown
-  rendered_file <- rmarkdown::render(
-    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = results_dir,
-    output_file = basename(out_file),
-    quiet = TRUE,
-    params = list(
-      set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
-      scorecard_footer = mpn_scorecard_ver,
-      pkg_scores = formatted_pkg_scores,
-      comments_block = comments_block,
-      extra_notes_data = extra_notes_data,
-      exports_df = exports_df,
-      dep_versions_df = dep_versions_df
-    )
+  list(
+    set_title = paste("Scorecard:", pkg_scores$pkg_name, pkg_scores$pkg_version),
+    scorecard_footer = mpn_scorecard_ver,
+    pkg_scores = formatted_pkg_scores,
+    comments_block = comments_block,
+    extra_notes_data = extra_notes_data,
+    exports_df = exports_df,
+    dep_versions_df = dep_versions_df
   )
-
-  # Render to PDF, invisibly return the path to the PDF
-  return(invisible(rendered_file))
-
 }
 
+scorecard_json_compat <- function(data, path) {
+  # Handle files written by score_pkg() before it included scorecard_type.
+  if (is.null(data[["scorecard_type"]])) {
+    data[["scorecard_type"]] <- "R"
+  }
+
+  # Handle files written by score_pkg() before it renamed "covr" to "coverage".
+  tscores <- data[["scores"]][["testing"]]
+  if (is.null(tscores[["coverage"]])) {
+
+    covr_val <- tscores[["covr"]]
+    if (is.null(covr_val)) {
+      abort(paste("Expected either 'coverage' or 'covr' value in", path))
+    }
+    tscores[["coverage"]] <- covr_val
+    tscores[["covr"]] <- NULL
+    data[["scores"]][["testing"]] <- tscores
+  }
+
+  return(data)
+}
 
 #' Prepare the raw risk scores to be rendered into PDF
 #'
@@ -95,6 +123,11 @@ render_scorecard <- function(
 #'
 #' @keywords internal
 format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
+  stype <- pkg_scores[["scorecard_type"]]
+  if (is.null(stype)) {
+    abort("bug: scorecard_type is unexpectedly absent from pkg_scores")
+  }
+  check_label <- if (identical(stype, "R")) "R CMD CHECK" else "check"
 
   # build list of formatted tibbles
   pkg_scores$formatted <- list()
@@ -117,7 +150,9 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
         score = ifelse(.x == "NA", NA_integer_, .x)
       ) %>%
         mutate(
-          result = map_answer(.data$score, .data$criteria),
+          result = map_answer(.data$score, .data$criteria,
+            include_check_score = identical(stype, "R")
+          ),
           risk = map_risk(.data$score, risk_breaks)
         )
     }) %>% purrr::list_rbind()
@@ -126,9 +161,11 @@ format_scores_for_render <- function(pkg_scores, risk_breaks = c(0.3, 0.7)) {
     if(category_name == "testing"){
       formatted_df <- formatted_df %>% mutate(
         result = ifelse(
-          (.data$criteria == "covr" & !is.na(.data$score)), paste0(.data$score*100, "%"), .data$result
+          .data$criteria == "coverage" & !is.na(.data$score),
+          sprintf("%.2f%%", .data$score * 100),
+          .data$result
         ),
-        criteria = ifelse(.data$criteria == "check", "R CMD CHECK", "coverage")
+        criteria = ifelse(.data$criteria == "check", check_label, "coverage")
       )
     }
 
@@ -165,6 +202,7 @@ map_risk <- function(scores, risk_breaks) {
 #' @param scores vector of risk scores
 #' @param criteria vector of criteria names
 #' @param answer_breaks breaks determining 'Yes'/'Passing' or 'No'/'Failed'. `NA` has special handling. See details.
+#' @param include_check_score Whether to include score in the result check.
 #'
 #' @details
 #' If value is not found in `answer_breaks`, it is skipped over
@@ -174,7 +212,8 @@ map_risk <- function(scores, risk_breaks) {
 #' covr is skipped over unless it is `NA` (indicates test failures), as this is formatted as a percent separately
 #'
 #' @keywords internal
-map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
+map_answer <- function(scores, criteria, answer_breaks = c(0, 1),
+                       include_check_score = TRUE) {
   checkmate::assert_numeric(scores, lower = 0, upper = 1)
   answer_breaks <- sort(answer_breaks)
   purrr::map2_chr(scores, criteria, ~ {
@@ -183,9 +222,13 @@ map_answer <- function(scores, criteria, answer_breaks = c(0, 1)) {
       if(is.na(.x) || .x == answer_breaks[1]) {
         "Failed"
       } else {
-        paste0("Passing (score: ", .x, ")")
+        if (isTRUE(include_check_score)) {
+          paste0("Passing (score: ", .x, ")")
+        } else {
+          "Passing"
+        }
       }
-    }else if(.y != "covr"){
+    } else if (.y != "coverage") {
       if (.x == answer_breaks[1]) {
         "No"
       } else if(.x == answer_breaks[2]) {

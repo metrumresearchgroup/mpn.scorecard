@@ -388,16 +388,22 @@ format_testing_scores <- function(formatted_pkg_scores){
 #'
 #' @keywords internal
 format_metadata <- function(metadata_list){
-  # Create system info table
-  executor_tbl <- data.frame(executor = metadata_list$executor)
-  data_tbl <- data.frame(date = metadata_list$date)
-  env_vars_tbl <- as.data.frame(t(unlist(metadata_list$info$env_vars)))
-  system_info_tbl <- as.data.frame(t(unlist(metadata_list$info$sys)))
+  date <- metadata_list[["date"]]
+  if (is.null(date)) {
+    abort("`date` required in `metadata_list`")
+  }
+  executor <- metadata_list[["executor"]]
+  if (is.null(executor)) {
+    abort("`executor` required in `metadata_list`")
+  }
 
+  info <- metadata_list[["info"]]
+  data <- c(date = date, executor = executor, info[["sys"]], info[["env_vars"]])
 
-  all_info_tbl <- cbind(data_tbl, executor_tbl, system_info_tbl, env_vars_tbl)
-  all_info_tbl <- data.frame(Category = stringr::str_to_title(names(all_info_tbl)),
-                             Value = unlist(all_info_tbl))
+  all_info_tbl <- data.frame(
+    Category = stringr::str_to_title(names(data)),
+    Value = unname(unlist(data))
+  )
 
   # Create flextable
   system_info_flextable <-
@@ -414,6 +420,10 @@ format_metadata <- function(metadata_list){
 # format()), but "format_" is used for consistency with other functions in this
 # file.
 format_dependency_versions <- function(df) {
+  if (is.null(df)) {
+    return(invisible(NULL))
+  }
+
   out <- prepare_dependency_versions(df)
   if (inherits(out, "flextable")) {
     # Note: knit_print.flextable() does _not_ print to stdout.
@@ -670,7 +680,8 @@ format_colnames_to_title <- function(df){
 #' @keywords internal
 format_traceability_matrix <- function(
     exports_df,
-    wrap_cols = TRUE
+    wrap_cols = TRUE,
+    scorecard_type = "R"
 ){
   checkmate::assert_logical(wrap_cols)
 
@@ -683,21 +694,43 @@ format_traceability_matrix <- function(
       )
 
     # Get testing directories for caption
-    test_dirs <- exported_func_df %>% tidyr::unnest(test_dirs) %>% dplyr::pull(test_dirs) %>% unique()
-    test_dirs <- test_dirs[test_dirs != ""] %>% paste(collapse = ", ")
+    if ("test_dirs" %in% names(exported_func_df)) {
+      test_dirs <- exported_func_df %>% tidyr::unnest(test_dirs) %>% dplyr::pull(test_dirs) %>% unique()
+      test_dirs <- test_dirs[test_dirs != ""] %>% paste(collapse = ", ")
+      # Remove testing directory column (not a column due to horizontal space limits)
+      exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+    } else {
+      test_dirs <- NULL
+    }
 
-    # Remove testing directory column (not a column due to horizontal space limits)
-    exported_func_df <- exported_func_df %>% dplyr::select(-"test_dirs")
+    if ("exported_function" %in% names(exported_func_df)) {
+      # Align internal scoring with external format.
+      exported_func_df <- dplyr::rename(exported_func_df,
+        entrypoint = "exported_function"
+      )
+    }
+
+    entry_name <- switch(scorecard_type,
+      "R" = "Exported Function",
+      "cli" = "Command",
+      "Entry Point"
+    )
+    exported_func_df <- dplyr::rename(
+      exported_func_df,
+      !!entry_name := "entrypoint"
+    )
 
     # Format Table
     if(isTRUE(wrap_cols)){
       exported_func_df <- exported_func_df %>%
         dplyr::mutate(
-          dplyr::across("exported_function":"documentation", ~
-                          wrap_text(.x, width = 24, indent = TRUE, strict = TRUE)),
+          dplyr::across(
+            all_of(c(entry_name, "code_file", "documentation")),
+            function(x) wrap_text(x, width = 24, indent = TRUE, strict = TRUE)
+          ),
           # Tests can be longer due to page width (pg_width) settings (we make it wider)
           test_files = purrr::map_chr(.data$test_files, function(tests){
-            wrap_text(tests, width = 40, strict = TRUE, wrap_sym = NULL)
+            wrap_text(tests, width = 40, strict = TRUE)
           })
         )
     }
@@ -705,11 +738,15 @@ format_traceability_matrix <- function(
 
     # Create flextable
     exported_func_flex <- flextable_formatted(exported_func_df, pg_width = 7, font_size = 9) %>%
-      flextable::set_caption("Traceability Matrix") %>%
-      flextable::add_footer_row(
+      flextable::set_caption("Traceability Matrix")
+
+    if (!is.null(test_dirs)) {
+      exported_func_flex <- flextable::add_footer_row(
+        exported_func_flex,
         values = flextable::as_paragraph(glue::glue("Testing directories: {test_dirs}")),
         colwidths = c(4)
       )
+    }
 
     # Add stripe and other formatting details
     exported_func_flex <- exported_func_flex %>%
@@ -746,19 +783,29 @@ trace_matrix_notes <- function(exports_df){
 #' @param return_vals Logical (T/F). If `TRUE`, return the objects instead of printing them out for `rmarkdown`. Used for testing.
 #'
 #' @keywords internal
-format_appendix <- function(extra_notes_data, return_vals = FALSE){
-  sub_header_strs <- c("\n## R CMD Check\n\n", "\n## Test coverage\n\n")
+format_appendix <- function(extra_notes_data, return_vals = FALSE, scorecard_type = "R") {
+  check_title <- if (identical(scorecard_type, "R")) {
+    "R CMD Check"
+  } else {
+    "Check output"
+  }
+  sub_header_strs <- c(paste0("\n## ", check_title, "\n\n"), "\n## Test coverage\n\n")
 
   ### Covr Results ###
   # Format Table
-  covr_results_df <- extra_notes_data$covr_results_df
-  if (is.numeric(covr_results_df$test_coverage)) {
-    covr_results_df <- covr_results_df %>%
-      dplyr::mutate(test_coverage = paste0(.data$test_coverage, "%")) %>%
+  cov_results_df <- extra_notes_data$cov_results_df
+  if (is.numeric(cov_results_df$test_coverage)) {
+    cov_results_df <- cov_results_df %>%
+      dplyr::mutate(
+        code_file = wrap_text(.data$code_file,
+          width = 43, indent = TRUE, strict = TRUE
+        ),
+        test_coverage = sprintf("%.2f%%", .data$test_coverage)
+      ) %>%
       format_colnames_to_title()
 
     # Create flextable and format
-    covr_results_flex <- flextable_formatted(covr_results_df, pg_width = 4) %>%
+    cov_results_flex <- flextable_formatted(cov_results_df, pg_width = 4) %>%
       flextable::set_caption("Test Coverage") %>%
       flextable::align(align = "right", part = "all", j=2) %>%
       flextable::add_footer_row(
@@ -768,11 +815,11 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
         )),
         colwidths = c(2)
       )
-    covr_results_flex <- covr_results_flex %>% flex_header() %>%
+    cov_results_flex <- cov_results_flex %>% flex_header() %>%
       flex_footer(footer_bg = "transparent", footer_ft = "black") %>%
       flex_stripe(border = FALSE)
   } else {
-    covr_results_flex <- NULL
+    cov_results_flex <- NULL
   }
 
   ### R CMD Check Results ###
@@ -781,7 +828,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
   if(isTRUE(return_vals)){
     return(
       list(
-        covr_results_flex = covr_results_flex,
+        cov_results_flex = cov_results_flex,
         check_output = check_output
       )
     )
@@ -790,26 +837,34 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE){
     # R CMD Check
     cat(sub_header_strs[1])
     cat_verbatim(check_output)
+
+    if (is.null(cov_results_df)) {
+      # This is an externally scored package without coverage.
+      return(invisible(NULL))
+    }
+
     cat("\\newpage")
     # Coverage
     cat(sub_header_strs[2])
     cat("\n")
 
-    if (is.null(covr_results_flex)) {
-      err_type <- covr_results_df$r_script
+    if (is.null(cov_results_flex)) {
+      err_type <- cov_results_df$code_file
       if (identical(err_type, "File coverage failed")) {
         cat("\n\nCalculating code coverage failed with following error:\n\n")
-        cat_verbatim(covr_results_df$test_coverage)
+        cat_verbatim(cov_results_df$test_coverage)
       } else if (identical(err_type, "No coverage results")) {
         cat(
           "\n\n", "Unable to calculate coverage: ",
-          covr_results_df$test_coverage, "\n\n"
+          cov_results_df$test_coverage, "\n\n"
         )
       } else {
         stop("Unknown error type: ", err_type)
       }
+    } else if (nrow(cov_results_df) == 0) {
+      cat("Per file test coverage not provided.")
     } else {
-      cat(knitr::knit_print(covr_results_flex))
+      cat(knitr::knit_print(cov_results_flex))
     }
 
     cat("\n")

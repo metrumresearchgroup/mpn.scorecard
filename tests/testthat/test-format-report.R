@@ -27,9 +27,13 @@ describe("formatting functions", {
       expect_true(all(grepl(paste0(RISK_LEVELS, collapse = "|"), scores_df$risk)))
 
       # ensure all category criteria are present
-      expected_criteria <- c(names(purrr::list_c(pkg_scores$scores)), "R CMD CHECK", "coverage")
-      expected_criteria <- expected_criteria[!grepl("check|covr", expected_criteria)]
-      expect_true(all(scores_df$criteria %in% expected_criteria))
+      expect_setequal(
+        scores_df[["criteria"]],
+        c(
+          "R CMD CHECK", "coverage",
+          DOCUMENTATION_METRICS, MAINTENANCE_METRICS, TRANSPARENCY_METRICS
+        )
+      )
 
       # Check overall category scores
       overall_scores_df <- formatted_pkg_scores$formatted$overall_scores
@@ -81,7 +85,7 @@ describe("formatting functions", {
     expect_true(all(c("Criteria", "Score", "Result", "Risk") %in% names(flex_df$body$dataset)))
     expect_true(all(c("Criteria", "Result", "Risk") %in% flex_df$col_keys))
     expect_equal(flex_df$body$dataset$Score, c(1, 1))
-    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100%"))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 1)", "100.00%"))
 
     ## High rcmdcheck score ##
     result_dir <- result_dirs_select[["pass_no_docs"]]
@@ -93,7 +97,7 @@ describe("formatting functions", {
     flex_df <- format_testing_scores(formatted_pkg_scores)
 
     expect_equal(flex_df$body$dataset$Score, c(0.75, 1))
-    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.75)", "100%"))
+    expect_equal(flex_df$body$dataset$Result, c("Passing (score: 0.75)", "100.00%"))
 
 
     ## Failing rcmdcheck score ##
@@ -189,17 +193,29 @@ describe("formatting functions", {
     extra_notes_frmt <- format_appendix(extra_notes_data, return_vals = TRUE)
 
     # Test covr dataframe
-    covr_results_df <- extra_notes_frmt$covr_results_flex$body$dataset
+    covr_results_df <- extra_notes_frmt$cov_results_flex$body$dataset
     expect_equal(
-      names(format_colnames_to_title(extra_notes_data$covr_results_df)),
+      names(format_colnames_to_title(extra_notes_data$cov_results_df)),
       names(covr_results_df)
     )
     expect_equal(
-      unique(unname(unlist(extra_notes_frmt$covr_results_flex$footer$dataset))),
+      unique(unname(unlist(extra_notes_frmt$cov_results_flex$footer$dataset))),
       paste(
         "Test coverage is calculated per script, rather than per function.",
         "See Traceability Matrix for function-to-test-file mapping."
       )
+    )
+  })
+
+  it("format_appendix: covr failure", {
+    expect_output(
+      format_appendix(
+        list(
+          check_output = "anything",
+          cov_results_df = list(code_file = "File coverage failed")
+        )
+      ),
+      "Calculating code coverage failed"
     )
   })
 
@@ -232,6 +248,17 @@ describe("formatting functions", {
     expect_identical(
       val,
       "Unable to calculate R dependency table due to failing `R CMD check`."
+    )
+  })
+
+  it("format_metadata handles NULL input", {
+    flex_df <- format_metadata(list(date = "2024-01-01", executor = "foo"))
+    expect_identical(
+      flex_df[["body"]][["dataset"]],
+      data.frame(
+        Category = c("Date", "Executor"),
+        Value = c("2024-01-01", "foo")
+      )
     )
   })
 })

@@ -54,9 +54,11 @@ score_pkg <- function(
 
   # start building up scorecard list
   res <- list(
+    mpn_scorecard_format = MPN_SCORECARD_FORMAT,
     mpn_scorecard_version = mpn_scorecard_ver,
     pkg_name = pkg_name,
     pkg_version = pkg_ver,
+    scorecard_type = "R",
     out_dir = out_dir,
     pkg_tar_path = pkg,
     md5sum_check = tools::md5sum(pkg),
@@ -75,7 +77,7 @@ score_pkg <- function(
   # run check and covr and write results to disk
   rcmdcheck_args$path <- pkg
   res$scores$testing$check <- add_rcmdcheck(out_dir, rcmdcheck_args) # use tarball
-  res$scores$testing$covr <- add_coverage(
+  res$scores$testing$coverage <- add_coverage(
     pkg_source_path,  # must use untarred package dir
     out_dir,
     covr_timeout

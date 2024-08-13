@@ -7,7 +7,8 @@
 check_for_comments(results_dir)
 }
 \arguments{
-\item{results_dir}{directory containing json file and individual results. Output file path from \code{\link[=score_pkg]{score_pkg()}}}
+\item{results_dir}{Directory with scoring results. This is the path returned
+by \code{\link[=score_pkg]{score_pkg()}}.}
 }
 \description{
 Look for comment file and return contents if is found
