@@ -686,7 +686,7 @@ format_traceability_matrix <- function(
   checkmate::assert_logical(wrap_cols)
 
   if(!is.null(exports_df)){
-    if ("exported_function" %in% names(exported_func_df)) {
+    if ("exported_function" %in% names(exports_df)) {
       # Align internal scoring with external format.
       exports_df <- dplyr::rename(exports_df, entrypoint = "exported_function")
     }

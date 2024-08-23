@@ -482,7 +482,7 @@ check_missing_artifact <- function(
     artifact = c("code_file", "documentation", "test_files")
 ){
   artifact <- match.arg(artifact)
-  exports_df_exp <- exports_df %>% tidyr::unnest(artifact)
+  exports_df_exp <- exports_df %>% tidyr::unnest(all_of(artifact))
   na_vals <- is.na(exports_df_exp[[artifact]])
 
   if(any(na_vals)){
