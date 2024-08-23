@@ -4,7 +4,7 @@
 \alias{map_tests_to_functions}
 \title{Map test files and directories to all functions}
 \usage{
-map_tests_to_functions(exports_df, pkg_source_path, verbose)
+map_tests_to_functions(exports_df, pkg_source_path, verbose = FALSE)
 }
 \arguments{
 \item{exports_df}{data.frame with a column, named \code{exported_function},

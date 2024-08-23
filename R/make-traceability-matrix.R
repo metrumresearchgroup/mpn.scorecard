@@ -65,7 +65,7 @@ check_trac_is_possible <- function(pkg_source_path){
 #' @return A data.frame with the columns `exported_function` and `code_file`.
 #'
 #' @keywords internal
-map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
+map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose = FALSE){
 
   # Search for scripts functions are defined in
   funcs_df <- get_toplevel_assignments(pkg_source_path)
@@ -80,14 +80,25 @@ map_functions_to_scripts <- function(exports_df, pkg_source_path, verbose){
     warning(msg)
   }
 
+  # If any functions point to multiple code files, collapse those scripts to a single row
+  funcs_df <- funcs_df %>%
+    dplyr::group_by(.data$func) %>%
+    dplyr::summarize(code_file = list(unique(.data$code_file))) %>%
+    dplyr::ungroup()
+
   exports_df <- dplyr::left_join(exports_df, funcs_df, by = c("exported_function" = "func"))
 
-  if (any(is.na(exports_df$code_file))) {
-    if(isTRUE(verbose)) {
-      missing_from_files <- exports_df$exported_function[is.na(exports_df$code_file)] %>%
-        paste(collapse = "\n")
-      message(glue::glue("The following exports were not found in R/ for {basename(pkg_source_path)}:\n{missing_from_files}\n\n"))
-    }
+  # Convert nested NULL elements to NA for downstream handling
+  #  - Unnesting columns with NULL elements filters out the row
+  exports_df <- exports_df %>% dplyr::mutate(
+    code_file = purrr::map(.data$code_file, function(file.i){
+      if(rlang::is_empty(file.i)) NA_character_ else file.i
+    })
+  )
+
+  # message if any scripts couldn't be mapped back to exports
+  if(isTRUE(verbose)){
+    check_missing_artifact(exports_df, pkg_source_path, artifact = "code_file")
   }
 
   return(exports_df)
@@ -110,7 +121,7 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
     if(isTRUE(verbose)){
       message(glue::glue("No documentation was found in `man/` for package `{basename(pkg_source_path)}`"))
     }
-    return(dplyr::mutate(exports_df, "documentation" = NA))
+    return(dplyr::mutate(exports_df, "documentation" = list(NA_character_)))
   }
 
   docs_df <- purrr::map_dfr(rd_files, function(rd_file.i) {
@@ -122,40 +133,49 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 
     man_name <- paste0("man/", basename(rd_file.i))
 
-    data.frame(
+    tibble::tibble(
       pkg_function = function_names,
       documentation = rep(man_name, length(function_names))
     )
   })
 
-  # if any functions are aliased in more than 1 Rd file, collapse those Rd files to a single row
-  # TODO: is this necessary? is it even possible to have this scenario without R CMD CHECK failing?
+  # Split comma-separated functions that point to the same documentation
+  docs_df <- docs_df %>% dplyr::mutate(
+    pkg_function = strsplit(pkg_function, ",", fixed = TRUE)
+  ) %>% tidyr::unnest(cols = c("pkg_function")) %>%
+    dplyr::distinct()
+
+  # If any functions are aliased in more than 1 Rd file, collapse those Rd files to a single row
   docs_df <- docs_df %>%
     dplyr::group_by(.data$pkg_function) %>%
-    dplyr::summarize(documentation = paste(unique(.data$documentation), collapse = ", ")) %>%
+    dplyr::summarize(documentation = list(unique(.data$documentation))) %>%
     dplyr::ungroup()
 
   # join back to filter to only exported functions
   exports_df <- dplyr::left_join(exports_df, docs_df, by = c("exported_function" = "pkg_function"))
 
+  # Convert nested NULL elements to NA for downstream handling
+  #  - Unnesting columns with NULL elements filters out the row
+  exports_df <- exports_df %>% dplyr::mutate(
+    documentation = purrr::map(.data$documentation, function(file.i){
+      if(rlang::is_empty(file.i)) NA_character_ else file.i
+    })
+  )
+
   # message if any exported functions aren't documented
-  if (any(is.na(exports_df$documentation)) && isTRUE(verbose)) {
-    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$documentation))
-    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
-    code_files_missing <- unique(docs_missing$code_file) %>% paste(collapse = ", ")
-    message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
+  if(isTRUE(verbose)){
+    check_missing_artifact(exports_df, pkg_source_path, artifact = "documentation")
   }
 
   return(exports_df)
 }
-
 
 #' Get tests/testthat directory from package directory
 #'
 #' @inheritParams map_functions_to_scripts
 #'
 #' @keywords internal
-get_testing_dir <- function(pkg_source_path, verbose){
+get_testing_dir <- function(pkg_source_path, verbose = FALSE){
   checkmate::assert_directory_exists(pkg_source_path)
 
   pkg_dir_ls <- list.dirs(pkg_source_path, recursive = FALSE)
@@ -248,7 +268,6 @@ get_tests <- function(
   return(test_names_df)
 }
 
-
 #' Map test files and directories to all functions
 #'
 #' @inheritParams map_functions_to_scripts
@@ -257,7 +276,7 @@ get_tests <- function(
 #'   test files that call the associated exported functions.
 #'
 #' @keywords internal
-map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
+map_tests_to_functions <- function(exports_df, pkg_source_path, verbose = FALSE){
 
   # collect test directories and test files
   test_dirs <- get_testing_dir(pkg_source_path, verbose)
@@ -267,7 +286,7 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
     if (isTRUE(verbose)) {
       message(glue::glue("No testing directories found in {pkg_source_path}"))
     }
-    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
+    return(dplyr::mutate(exports_df, "test_files" = list(NA_character_), "test_dirs" = list("No tests found")))
   }
 
   test_files <- fs::dir_ls(test_dirs, glob = "*.R")
@@ -275,7 +294,7 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
     if (isTRUE(verbose)) {
       message(glue::glue("No test files found in {paste(test_dirs, collapse = ', ')} for {pkg_source_path}"))
     }
-    return(dplyr::mutate(exports_df, "test_files" = list(""), "test_dirs" = list("No tests found")))
+    return(dplyr::mutate(exports_df, "test_files" = list(NA_character_), "test_dirs" = list("No tests found")))
   }
 
   # map over test files and parse all functions called in those files
@@ -307,7 +326,6 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
       return(tibble::tibble(func = character(), test_file = character(), test_dir = character()))
     }
 
-
     return(tibble::tibble(
       func = uniq_funcs,
       test_file = rep(basename(test_file.i), length(uniq_funcs)),
@@ -317,21 +335,29 @@ map_tests_to_functions <- function(exports_df, pkg_source_path, verbose){
 
   # collapse to one row per unique function
   func_test_df <- func_test_df %>% dplyr::group_by(.data$func) %>%
-    dplyr::summarize(test_files = list(unique(.data$test_file)), test_dirs = list(unique(.data$test_dir))) %>%
-    dplyr::ungroup()
+    dplyr::summarize(
+      test_files = list(unique(.data$test_file)),
+      test_dirs = list(unique(.data$test_dir))
+    ) %>% dplyr::ungroup()
 
   # left_join to exports_df to filter back to only this package's exported functions
   exports_df <- dplyr::left_join(exports_df, func_test_df, by = c("exported_function" = "func"))
 
-  # message if any exported functions aren't documented
-  if (any(is.na(exports_df$test_files)) && isTRUE(verbose)) {
-    docs_missing <- exports_df %>% dplyr::filter(is.na(.data$test_files))
-    exports_missing <- unique(docs_missing$exported_function) %>% paste(collapse = "\n")
-    message(glue::glue("In package `{basename(pkg_source_path)}`, the following exported functions were not found in any tests in {paste(test_dirs, collapse = ', ')}: \n{exports_missing}"))
+  # Convert nested NULL elements to NA for downstream handling
+  #  - Unnesting columns with NULL elements filters out the row
+  #  - dont need to do this for testing directories, as they are handled differently
+  exports_df <- exports_df %>% dplyr::mutate(
+    test_files = purrr::map(.data$test_files, function(file.i){
+      if(rlang::is_empty(file.i)) NA_character_ else file.i
+    })
+  )
+
+  # message if any exported functions are missing tests
+  if(isTRUE(verbose)){
+    check_missing_artifact(exports_df, pkg_source_path, artifact = "test_files")
   }
 
   return(exports_df)
-
 }
 
 #' list all package exports
@@ -373,7 +399,7 @@ get_exports <- function(pkg_source_path){
 #'
 #' @keywords internal
 filter_symbol_functions <- function(funcs){
-  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+", "\\%", "<-")
+  ignore_patterns <- c("\\%>\\%", "\\$", "\\[\\[", "\\[", "\\+", "\\%", "<-", "\\*")
   pattern <- paste0("(", paste(ignore_patterns, collapse = "|"), ")")
   funcs_return <- grep(pattern, funcs, value = TRUE, invert = TRUE)
   return(funcs_return)
@@ -417,7 +443,7 @@ get_toplevel_assignments <- function(pkg_source_path){
     calls <- purrr::keep(as.list(exprs), function(e) {
       if (is.call(e)) {
         op <- as.character(e[[1]])
-        return(length(op) == 1 && op %in% c("<-", "=", "setGeneric"))
+        return(length(op) == 1 && op %in% c("<-", "=", "setGeneric", "setMethod"))
       }
       return(FALSE)
     })
@@ -437,8 +463,43 @@ get_toplevel_assignments <- function(pkg_source_path){
       code_file = rep(fs::path_rel(r_file_i, pkg_source_path), length(function_names))
     ))
   })
-  # TODO: do we need to check if there are any funcs defined in multiple files?
+
+  # Remove duplicates (e.g., mrgsolve)
+  pkg_functions <- dplyr::distinct(pkg_functions)
 
   return(pkg_functions)
 }
 
+
+#' Check for missing links in a traceability matrix
+#' @inheritParams map_functions_to_scripts
+#' @param artifact either `"code_file"`, `"documentation"`, or `"test_files"`.
+#'  Must be a column present in `exports_df`.
+#' @keywords internal
+check_missing_artifact <- function(
+    exports_df,
+    pkg_source_path,
+    artifact = c("code_file", "documentation", "test_files")
+){
+  artifact <- match.arg(artifact)
+  exports_df_exp <- exports_df %>% tidyr::unnest(artifact)
+  na_vals <- is.na(exports_df_exp[[artifact]])
+
+  if(any(na_vals)){
+    if(artifact == "code_file"){
+      missing_from_files <- exports_df_exp$exported_function[na_vals] %>%
+        paste(collapse = "\n")
+      message(glue::glue("In package `{basename(pkg_source_path)}`, the following exports were not found in R/:\n{missing_from_files}\n\n"))
+    }else{
+      docs_missing_df <- exports_df_exp %>% dplyr::filter(is.na(!!sym(artifact)))
+      exports_missing <- unique(docs_missing_df$exported_function) %>% paste(collapse = "\n")
+      if(artifact == "documentation"){
+        code_files_missing <- unique(docs_missing_df$code_file) %>% paste(collapse = ", ")
+        message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
+      }else{
+        message(glue::glue("In package `{basename(pkg_source_path)}`, the following exports were not found in any tests: \n{exports_missing}\n\nTesting Directories checked: {paste(test_dirs, collapse = ', ')}"))
+      }
+    }
+  }
+  return(invisible(exports_df))
+}

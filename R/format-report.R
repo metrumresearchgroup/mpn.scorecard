@@ -686,12 +686,41 @@ format_traceability_matrix <- function(
   checkmate::assert_logical(wrap_cols)
 
   if(!is.null(exports_df)){
-    ### Exported Functions ###
-    # Unnest tests and testing directories
+    if ("exported_function" %in% names(exported_func_df)) {
+      # Align internal scoring with external format.
+      exports_df <- dplyr::rename(exports_df, entrypoint = "exported_function")
+    }
+
+    entry_name <- switch(scorecard_type,
+                         "R" = "Exported Function",
+                         "cli" = "Command",
+                         "Entry Point"
+    )
+    exports_df <- dplyr::rename(exports_df, !!entry_name := "entrypoint")
+
+    # Unnest and wrap collapsed columns to display
     exported_func_df <- exports_df %>%
-      mutate(
-        test_files = purrr::map_chr(.data$test_files, ~paste(.x, collapse = "\n"))
+      dplyr::mutate(
+        dplyr::across(
+          all_of(c(entry_name, "code_file", "documentation")),
+          function(col){
+            purrr::map_chr(col, function(cell){
+              if(isTRUE(wrap_cols)){
+                cell <- wrap_text(cell, width = 24, indent = TRUE, strict = TRUE)
+              }
+              paste(cell, collapse = "\n")
+            })
+          }
+        ),
+        # Tests can be longer due to page width (pg_width) settings (we make it wider)
+        test_files = purrr::map_chr(.data$test_files, function(tests){
+          if(isTRUE(wrap_cols)){
+            tests <- wrap_text(tests, width = 40, strict = TRUE)
+          }
+          paste(tests, collapse = "\n")
+        })
       )
+
 
     # Get testing directories for caption
     if ("test_dirs" %in% names(exported_func_df)) {
@@ -703,40 +732,8 @@ format_traceability_matrix <- function(
       test_dirs <- NULL
     }
 
-    if ("exported_function" %in% names(exported_func_df)) {
-      # Align internal scoring with external format.
-      exported_func_df <- dplyr::rename(exported_func_df,
-        entrypoint = "exported_function"
-      )
-    }
-
-    entry_name <- switch(scorecard_type,
-      "R" = "Exported Function",
-      "cli" = "Command",
-      "Entry Point"
-    )
-    exported_func_df <- dplyr::rename(
-      exported_func_df,
-      !!entry_name := "entrypoint"
-    )
-
-    # Format Table
-    if(isTRUE(wrap_cols)){
-      exported_func_df <- exported_func_df %>%
-        dplyr::mutate(
-          dplyr::across(
-            all_of(c(entry_name, "code_file", "documentation")),
-            function(x) wrap_text(x, width = 24, indent = TRUE, strict = TRUE)
-          ),
-          # Tests can be longer due to page width (pg_width) settings (we make it wider)
-          test_files = purrr::map_chr(.data$test_files, function(tests){
-            wrap_text(tests, width = 40, strict = TRUE)
-          })
-        )
-    }
-    exported_func_df <- exported_func_df %>% format_colnames_to_title()
-
     # Create flextable
+    exported_func_df <- exported_func_df %>% format_colnames_to_title()
     exported_func_flex <- flextable_formatted(exported_func_df, pg_width = 7, font_size = 9) %>%
       flextable::set_caption("Traceability Matrix")
 
@@ -798,7 +795,7 @@ format_appendix <- function(extra_notes_data, return_vals = FALSE, scorecard_typ
     cov_results_df <- cov_results_df %>%
       dplyr::mutate(
         code_file = wrap_text(.data$code_file,
-          width = 43, indent = TRUE, strict = TRUE
+                              width = 43, indent = TRUE, strict = TRUE
         ),
         test_coverage = sprintf("%.2f%%", .data$test_coverage)
       ) %>%

@@ -4,7 +4,7 @@
 \alias{map_functions_to_scripts}
 \title{Get all exported functions and map them to R script where they are defined}
 \usage{
-map_functions_to_scripts(exports_df, pkg_source_path, verbose)
+map_functions_to_scripts(exports_df, pkg_source_path, verbose = FALSE)
 }
 \arguments{
 \item{exports_df}{data.frame with a column, named \code{exported_function},

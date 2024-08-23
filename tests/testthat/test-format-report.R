@@ -148,7 +148,7 @@ describe("formatting functions", {
     )
 
     # No tests found for some functions
-    exports_df2$test_files[[2]] <- ""
+    exports_df2$test_files[[2]] <- NA_character_
     exports_df2$test_dirs[2] <- list(NULL)
     exported_func_flex <- format_traceability_matrix(exports_df2)
     exported_func_df <- exported_func_flex$body$dataset
@@ -156,7 +156,7 @@ describe("formatting functions", {
     expect_equal(nrow(exported_func_df), nrow(exports_df2))
     # check test files
     test_files <- exported_func_df$`Test Files`
-    expect_equal(unique(test_files), c("test-myscript.R", ""))
+    expect_equal(unique(test_files), c("test-myscript.R", "NA"))
   })
 
   it("format_traceability_matrix: exports missing def", {

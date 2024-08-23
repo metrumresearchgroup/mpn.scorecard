@@ -235,7 +235,7 @@ wrapi_text <- function(
   # Indent new lines if only one line -initially- existed
   # This stops multi-lined strings (i.e. test scripts) from being intended
   if(isTRUE(indent)){
-    str_new <- str_new %>% gsub("\n", "\n  ", .)
+    str_new <- str_new %>% gsub("\n", "\n\t", .)
   }
 
   return(str_new)
