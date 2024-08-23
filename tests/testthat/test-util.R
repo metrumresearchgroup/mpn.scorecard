@@ -16,7 +16,7 @@ test_that("wrap_text() works", {
   # Indents
   expect_equal(
     wrap_text(str, indent = TRUE),
-    "man/\n  check_nonmem_table_\n  output.Rd"
+    "man/\n\tcheck_nonmem_table_\n\toutput.Rd"
   )
 
   # Strict with no symbols
