@@ -141,7 +141,7 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
 
   # Split comma-separated functions that point to the same documentation
   docs_df <- docs_df %>% dplyr::mutate(
-    pkg_function = strsplit(pkg_function, ",", fixed = TRUE)
+    pkg_function = strsplit(.data$pkg_function, ",", fixed = TRUE)
   ) %>% tidyr::unnest(cols = c("pkg_function")) %>%
     dplyr::distinct()
 
