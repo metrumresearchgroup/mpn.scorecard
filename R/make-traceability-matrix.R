@@ -142,7 +142,7 @@ map_functions_to_docs <- function(exports_df, pkg_source_path, verbose) {
   # Split comma-separated functions that point to the same documentation
   docs_df <- docs_df %>% dplyr::mutate(
     pkg_function = strsplit(.data$pkg_function, ",", fixed = TRUE)
-  ) %>% tidyr::unnest(cols = c("pkg_function")) %>%
+  ) %>% tidyr::unnest(cols = "pkg_function") %>%
     dplyr::distinct()
 
   # If any functions are aliased in more than 1 Rd file, collapse those Rd files to a single row

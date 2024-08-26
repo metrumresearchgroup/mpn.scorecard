@@ -156,7 +156,7 @@ describe("formatting functions", {
     expect_equal(nrow(exported_func_df), nrow(exports_df2))
     # check test files
     test_files <- exported_func_df$`Test Files`
-    expect_equal(unique(test_files), c("test-myscript.R", "NA"))
+    expect_equal(unique(test_files), c("test-myscript.R", ""))
   })
 
   it("format_traceability_matrix: exports missing def", {
