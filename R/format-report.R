@@ -705,6 +705,9 @@ format_traceability_matrix <- function(
           all_of(c(entry_name, "code_file", "documentation")),
           function(col){
             purrr::map_chr(col, function(cell){
+              # Replace NA values with empty strings for display purposes
+              cell[is.na(cell)] <- ""
+              # Wrap text
               if(isTRUE(wrap_cols)){
                 cell <- wrap_text(cell, width = 24, indent = TRUE, strict = TRUE)
               }
@@ -714,8 +717,14 @@ format_traceability_matrix <- function(
         ),
         # Tests can be longer due to page width (pg_width) settings (we make it wider)
         test_files = purrr::map_chr(.data$test_files, function(tests){
+          # Replace NA values with empty strings for display purposes
+          tests[is.na(tests)] <- ""
+          # Wrap text
           if(isTRUE(wrap_cols)){
-            tests <- wrap_text(tests, width = 40, strict = TRUE)
+            # flextable will make its own new line at rendering at 35 characters
+            # given the current column widths. A width of 34 is therefore the largest
+            # we can allow if indents are desired (they wont get triggered by flextable's auto newlines)
+            tests <- wrap_text(tests, width = 34, indent = TRUE, strict = TRUE)
           }
           paste(tests, collapse = "\n")
         })
