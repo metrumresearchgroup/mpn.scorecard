@@ -491,13 +491,14 @@ check_missing_artifact <- function(
         paste(collapse = "\n")
       message(glue::glue("In package `{basename(pkg_source_path)}`, the following exports were not found in R/:\n{missing_from_files}\n\n"))
     }else{
-      docs_missing_df <- exports_df_exp %>% dplyr::filter(is.na(!!sym(artifact)))
-      exports_missing <- unique(docs_missing_df$exported_function) %>% paste(collapse = "\n")
+      missing_df <- exports_df_exp %>% dplyr::filter(is.na(!!sym(artifact)))
+      exports_missing <- unique(missing_df$exported_function) %>% paste(collapse = "\n")
       if(artifact == "documentation"){
-        code_files_missing <- unique(docs_missing_df$code_file) %>% paste(collapse = ", ")
+        code_files_missing <- unique(missing_df$code_file) %>% paste(collapse = ", ")
         message(glue::glue("In package `{basename(pkg_source_path)}`, the R scripts ({code_files_missing}) are missing documentation for the following exports: \n{exports_missing}"))
       }else{
-        message(glue::glue("In package `{basename(pkg_source_path)}`, the following exports were not found in any tests: \n{exports_missing}\n\nTesting Directories checked: {paste(test_dirs, collapse = ', ')}"))
+        test_dirs <- unique(unlist(exports_df_exp$test_dirs)) %>% paste(collapse = ", ")
+        message(glue::glue("In package `{basename(pkg_source_path)}`, the following exports were not found in any tests: \n{exports_missing}\n\nTesting Directories checked: {test_dirs}"))
       }
     }
   }
