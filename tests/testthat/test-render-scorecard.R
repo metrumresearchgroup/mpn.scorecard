@@ -29,6 +29,14 @@ describe("render scorecard and scorecard summary reports", {
     }
   })
 
+  it("render_scorecard - relative path", {
+    rdir <- result_dirs_select[1]
+    withr::with_dir(dirname(rdir), {
+      pdf_path <- render_scorecard(basename(rdir), overwrite = TRUE)
+      on.exit(fs::file_delete(fs::path_abs(pdf_path)), add = TRUE)
+    })
+  })
+
   it("render_scorecard - with traceability matrix", {
 
     # `result_dirs_select` defined in tests/testthat/setup.R
