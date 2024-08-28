@@ -730,7 +730,6 @@ format_traceability_matrix <- function(
         })
       )
 
-
     # Get testing directories for caption
     if ("test_dirs" %in% names(exported_func_df)) {
       test_dirs <- exported_func_df %>% tidyr::unnest(test_dirs) %>% dplyr::pull(test_dirs) %>% unique()
@@ -740,6 +739,11 @@ format_traceability_matrix <- function(
     } else {
       test_dirs <- NULL
     }
+
+    # For exports that span more than a page (usually due to many tests), split
+    # the entry into `export` and `export (cont.)`. This is necessary to ensure
+    # tables do not overflow into the footer
+    exported_func_df <- split_long_rows(exported_func_df)
 
     # Create flextable
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
@@ -762,6 +766,100 @@ format_traceability_matrix <- function(
     return(exported_func_flex)
   }
 }
+
+
+#' Split Long Rows in a Data Frame by Newline Count
+#'
+#' This function processes a data frame to split rows where the content in
+#' specific columns exceeds a specified number of newline characters.
+#' Rows with content that spans more than `n` lines will be split into
+#' multiple rows, with the excess content carried over into continuation
+#' rows. The new rows will be labeled with "(cont.)" to indicate continuation.
+#'
+#' @param exported_func_df A data frame containing columns `code_file`,
+#' `documentation`, and `test_files`, where the contents are character strings
+#' that may span multiple lines.
+#' @param n An integer specifying the maximum number of newline characters
+#' allowed in each row's content. Default is 45.
+#'
+#' @return A data frame with rows split based on newline character count.
+#' Each original row that exceeds the specified number of lines will be split
+#' into multiple rows with continuation labels.
+#'
+#' @note This function assumes the `entry_name`, a column determined early on in
+#' `format_traceability_matrix`, is the first column in the dataframe.
+#' @examples
+#' \dontrun{
+#'
+#' split_df <- split_long_rows(exported_func_df)
+#' }
+#' @keywords internal
+split_long_rows <- function(exported_func_df, n = 45) {
+
+  # Helper function to split content by newlines
+  split_by_newlines <- function(content, n) {
+    content_split <- strsplit(content, "\n")[[1]]
+    split_list <- split(content_split, ceiling(seq_along(content_split) / n))
+    lapply(split_list, paste, collapse = "\n")
+  }
+
+  entry_name <- names(exported_func_df)[1]
+  temp_cols <- c("code_file_split", "documentation_split", "test_files_split", "n_lines")
+
+  # Split contents and create new rows
+  exported_func_df %>%
+    dplyr::mutate(
+      # Split contents if n_lines > n
+      code_file_split = purrr::map(code_file, ~ split_by_newlines(.x, n = n)),
+      documentation_split = purrr::map(documentation, ~ split_by_newlines(.x, n = n)),
+      test_files_split = purrr::map(test_files, ~ split_by_newlines(.x, n = n))
+    ) %>%
+    dplyr::rowwise() %>%
+    # Expand each row if any of the splits are greater than 1
+    dplyr::group_split() %>%
+    purrr::map_dfr(function(row_data) {
+      n_chunks <- max(length(row_data$code_file_split[[1]]),
+                      length(row_data$documentation_split[[1]]),
+                      length(row_data$test_files_split[[1]]))
+
+      # Create a list of new rows
+      purrr::map_dfr(1:n_chunks, function(i) {
+        new_row <- row_data
+
+        # Extract split contents or default to an empty string
+        new_row$code_file <- ifelse(
+          length(new_row$code_file_split[[1]]) >= i,
+          new_row$code_file_split[[1]][[i]],
+          ""
+        )
+        new_row$documentation <- ifelse(
+          length(new_row$documentation_split[[1]]) >= i,
+          new_row$documentation_split[[1]][[i]],
+          ""
+        )
+        new_row$test_files <- ifelse(
+          length(new_row$test_files_split[[1]]) >= i,
+          new_row$test_files_split[[1]][[i]],
+          ""
+        )
+
+        # Label the continuation rows
+        new_row[[entry_name]] <- ifelse(i == 1, new_row[[entry_name]], paste0(new_row[[entry_name]], " (cont.)"))
+
+        # Recalculate the n_lines for the new row
+        new_row$n_lines <- max(
+          length(strsplit(new_row$code_file, "\n")[[1]]),
+          length(strsplit(new_row$documentation, "\n")[[1]]),
+          length(strsplit(new_row$test_files, "\n")[[1]])
+        )
+
+        new_row
+      })
+    }) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-all_of(temp_cols))
+}
+
 
 #' Print boiler plate text about the traceability matrix
 #' @inheritParams format_traceability_matrix
