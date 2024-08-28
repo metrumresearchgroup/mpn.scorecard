@@ -185,6 +185,36 @@ describe("formatting functions", {
     )
   })
 
+  it("format_traceability_matrix creates new entries that span multiple pages", {
+    # Tests that `split_long_rows` works correctly
+    pkg_setup_select <- dplyr::filter(
+      pkg_dirs[["pkg_setups_df"]],
+      pkg_type == "pass_success"
+    )
+
+    result_dir_x <- pkg_setup_select$pkg_result_dir
+    pkg_tar_x <- pkg_setup_select$tar_file
+    exports_df <- make_traceability_matrix(result_dir_x, pkg_tar_path = pkg_tar_x)
+
+    export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
+    on.exit(unlink(export_doc_path))
+
+    # Duplicate test 100 times to create two `export (cont.)` entries
+    exports_df$test_files[[1]] <- paste0("test-myscript_", seq(100), ".R")
+
+    exported_func_flex <- format_traceability_matrix(exports_df)
+    exported_func_df <- exported_func_flex$body$dataset
+    expect_equal(
+      exported_func_df$`Exported Function`,
+      c("myfunction", "myfunction (cont.)", "myfunction (cont.)")
+    )
+
+    # Check that the test scripts are in the right location
+    expect_true(all(grepl(paste(1:40, collapse = "|"), strsplit(exported_func_df[1,]$`Test Files`, "\n")[[1]])))
+    expect_true(all(grepl(paste(41:80, collapse = "|"), strsplit(exported_func_df[2,]$`Test Files`, "\n")[[1]])))
+    expect_true(all(grepl(paste(81:100, collapse = "|"), strsplit(exported_func_df[3,]$`Test Files`, "\n")[[1]])))
+  })
+
   it("format_appendix", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir
