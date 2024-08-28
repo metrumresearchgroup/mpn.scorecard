@@ -810,9 +810,9 @@ split_long_rows <- function(exported_func_df, n = 40) {
   exported_func_df %>%
     dplyr::mutate(
       # Split contents if n_lines > n
-      code_file_split = purrr::map(code_file, ~ split_by_newlines(.x, n = n)),
-      documentation_split = purrr::map(documentation, ~ split_by_newlines(.x, n = n)),
-      test_files_split = purrr::map(test_files, ~ split_by_newlines(.x, n = n))
+      code_file_split = purrr::map(.data$code_file, ~ split_by_newlines(.x, n = n)),
+      documentation_split = purrr::map(.data$documentation, ~ split_by_newlines(.x, n = n)),
+      test_files_split = purrr::map(.data$test_files, ~ split_by_newlines(.x, n = n))
     ) %>%
     dplyr::rowwise() %>%
     # Expand each row if any of the splits are greater than 1
