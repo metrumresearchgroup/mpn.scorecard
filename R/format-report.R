@@ -743,7 +743,7 @@ format_traceability_matrix <- function(
     # For exports that span more than a page (usually due to many tests), split
     # the entry into `export` and `export (cont.)`. This is necessary to ensure
     # tables do not overflow into the footer
-    exported_func_df <- split_long_rows(exported_func_df)
+    exported_func_df <- split_long_rows(exported_func_df, n = 40)
 
     # Create flextable
     exported_func_df <- exported_func_df %>% format_colnames_to_title()
@@ -780,7 +780,7 @@ format_traceability_matrix <- function(
 #' `documentation`, and `test_files`, where the contents are character strings
 #' that may span multiple lines.
 #' @param n An integer specifying the maximum number of newline characters
-#' allowed in each row's content. Default is 45.
+#' allowed in each row's content. Default is 40.
 #'
 #' @return A data frame with rows split based on newline character count.
 #' Each original row that exceeds the specified number of lines will be split
@@ -794,7 +794,7 @@ format_traceability_matrix <- function(
 #' split_df <- split_long_rows(exported_func_df)
 #' }
 #' @keywords internal
-split_long_rows <- function(exported_func_df, n = 45) {
+split_long_rows <- function(exported_func_df, n = 40) {
 
   # Helper function to split content by newlines
   split_by_newlines <- function(content, n) {

@@ -4,7 +4,7 @@
 \alias{split_long_rows}
 \title{Split Long Rows in a Data Frame by Newline Count}
 \usage{
-split_long_rows(exported_func_df, n = 45)
+split_long_rows(exported_func_df, n = 40)
 }
 \arguments{
 \item{exported_func_df}{A data frame containing columns \code{code_file},
@@ -12,7 +12,7 @@ split_long_rows(exported_func_df, n = 45)
 that may span multiple lines.}
 
 \item{n}{An integer specifying the maximum number of newline characters
-allowed in each row's content. Default is 45.}
+allowed in each row's content. Default is 40.}
 }
 \value{
 A data frame with rows split based on newline character count.
