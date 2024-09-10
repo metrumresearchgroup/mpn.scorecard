@@ -464,7 +464,7 @@ get_toplevel_assignments <- function(pkg_source_path){
     ))
   })
 
-  # Remove duplicates (e.g., mrgsolve)
+  # Remove duplicates (e.g., multiple methods)
   pkg_functions <- dplyr::distinct(pkg_functions)
 
   return(pkg_functions)
