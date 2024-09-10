@@ -1,6 +1,6 @@
 Package: mpn.scorecard
 Title: Generate a scorecard with various measures of R package quality and risk
-Version: 0.4.1.8000
+Version: 0.5.0
 Authors@R: 
     c(person(given = "Kyle",
            family = "Barrett",
