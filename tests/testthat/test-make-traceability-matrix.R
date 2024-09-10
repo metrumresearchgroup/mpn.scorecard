@@ -1,5 +1,5 @@
 pull_unique_vals <- function(trac_mat, col){
-  trac_mat %>% tidyr::unnest(col) %>% pull(all_of(col)) %>% unique()
+  trac_mat %>% tidyr::unnest(all_of(col)) %>% dplyr::pull(all_of(col)) %>% unique()
 }
 
 describe("Traceability Matrix", {
