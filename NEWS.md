@@ -1,3 +1,24 @@
+# mpn.scorecard 0.5.0
+
+## New features and change
+
+ - Added support for externally scored packages. `render_scorecard()` can now
+   render a scorecard from a set of files created by an external scorer (i.e.
+   something other than `score_pkg()`). Note that they do not need to be `R`
+   packages (#70).
+ - Exports in the traceability matrix that spanned more than one page (usually 
+  due to linking to many test files), are now split into <export> and 
+  <export (cont.)> to ensure tables do not overflow into the footer (#73).
+ - Expanded support for linking methods to their documentation and relevant test
+   files (#71).
+
+## Bug Fixes
+
+ - Due to a few text wrapping bugs in the traceability matrix, some packages
+   would fail to render a scorecard. (#66)
+ - Other columns in the traceability matrix now indent when overflowing to the 
+   next line (#71) 
+
 # mpn.scorecard 0.4.1
 
 ## Bug Fixes
