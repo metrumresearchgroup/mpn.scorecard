@@ -4,7 +4,7 @@
 \alias{get_testing_dir}
 \title{Get tests/testthat directory from package directory}
 \usage{
-get_testing_dir(pkg_source_path, verbose)
+get_testing_dir(pkg_source_path, verbose = FALSE)
 }
 \arguments{
 \item{pkg_source_path}{a file path pointing to an unpacked/untarred package directory}

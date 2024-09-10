@@ -1,3 +1,6 @@
+pull_unique_vals <- function(trac_mat, col){
+  trac_mat %>% tidyr::unnest(all_of(col)) %>% dplyr::pull(all_of(col)) %>% unique()
+}
 
 describe("Traceability Matrix", {
 
@@ -14,12 +17,9 @@ describe("Traceability Matrix", {
 
     # Confirm values - documentation
     expect_equal(unique(trac_mat$exported_function), "myfunction")
-    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
-    expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-      "test-myscript.R"
-    )
+    expect_equal(pull_unique_vals(trac_mat, "code_file"), "R/myscript.R")
+    expect_equal(pull_unique_vals(trac_mat, "documentation"), "man/myfunction.Rd")
+    expect_equal(pull_unique_vals(trac_mat, "test_files"), "test-myscript.R")
   })
 
 
@@ -38,12 +38,9 @@ describe("Traceability Matrix", {
 
     # Confirm values
     expect_equal(unique(trac_mat$exported_function), "myfunction")
-    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
+    expect_equal(pull_unique_vals(trac_mat, "code_file"), "R/myscript.R")
     expect_true(is.na(unique(trac_mat$documentation)))
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-      "test-myscript.R"
-    )
+    expect_equal(pull_unique_vals(trac_mat, "test_files"), "test-myscript.R")
   })
 
 
@@ -60,12 +57,9 @@ describe("Traceability Matrix", {
 
     # Confirm values
     expect_equal(unique(trac_mat$exported_function), "myfunction")
-    expect_equal(unique(trac_mat$code_file), "R/myscript.R")
-    expect_equal(unique(trac_mat$documentation), "man/myfunction.Rd")
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-      "test-myscript.R"
-    )
+    expect_equal(pull_unique_vals(trac_mat, "code_file"), "R/myscript.R")
+    expect_equal(pull_unique_vals(trac_mat, "documentation"), "man/myfunction.Rd")
+    expect_equal(pull_unique_vals(trac_mat, "test_files"), "test-myscript.R")
 
     # Syntax error (cant find R script)
     # Add syntax error to new script
@@ -84,8 +78,7 @@ describe("Traceability Matrix", {
     )
 
     expect_equal(unique(exports_df$exported_function), "myfunction")
-    expect_equal(unique(exports_df$code_file), "R/myscript.R")
-
+    expect_equal(pull_unique_vals(exports_df, "code_file"), "R/myscript.R")
   })
 
 
@@ -104,7 +97,7 @@ describe("Traceability Matrix", {
     expect_equal(
       res$messages,
       c(
-        glue::glue("The following exports were not found in R/ for {pkg_setup_select$pkg_name}:\n{trac_mat$exported_function}\n\n\n"),
+        glue::glue("In package `{pkg_setup_select$pkg_name}`, the following exports were not found in R/:\n{trac_mat$exported_function}\n\n\n"),
         glue::glue("No documentation was found in `man/` for package `{pkg_setup_select$pkg_name}`\n\n")
       )
     )
@@ -117,12 +110,9 @@ describe("Traceability Matrix", {
 
     # Confirm values
     expect_equal(unique(trac_mat$exported_function), "myfunction")
-    expect_true(is.na(unique(trac_mat$code_file)))
-    expect_true(is.na(unique(trac_mat$documentation)))
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-      "test-myscript.R"
-    )
+    expect_equal(pull_unique_vals(trac_mat, "code_file"), NA_character_)
+    expect_equal(pull_unique_vals(trac_mat, "documentation"), NA_character_)
+    expect_equal(pull_unique_vals(trac_mat, "test_files"), "test-myscript.R")
 
     # Test faulty R/ directory
     new_pkg_source_dir <- tempfile(pattern = "get_toplevel_assignments-")
@@ -164,15 +154,9 @@ describe("Traceability Matrix", {
     export_doc_path <- get_result_path(result_dir_x, "export_doc.rds")
     on.exit(fs::file_delete(export_doc_path), add = TRUE)
 
-    # Confirm values - empty strings will show up as empty cells when formatted with format_traceability_matrix
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_files) %>% pull(test_files) %>% unique(),
-      ""
-    )
-    expect_equal(
-      trac_mat %>% tidyr::unnest(test_dirs) %>% pull(test_dirs) %>% unique(),
-      "No tests found"
-    )
+    # Confirm values
+    expect_equal(pull_unique_vals(trac_mat, "test_files"), NA_character_)
+    expect_equal(pull_unique_vals(trac_mat, "test_dirs"), "No tests found")
   })
 
 
@@ -286,7 +270,7 @@ describe("Traceability Matrix", {
 
   it("map_functions_to_scripts", {
     # `map_functions_to_scripts` should work regardless of documentation presence (in `man/`)
-    template_df <- tibble::tibble(exported_function = "myfunction", code_file = "R/myscript.R")
+    template_df <- tibble::tibble(exported_function = "myfunction", code_file = list("R/myscript.R"))
 
     # Documented correctly
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
@@ -354,7 +338,6 @@ describe("Traceability Matrix", {
     expect_equal(map_tests_df$exported_function, rep("myfunction", 2))
     expect_equal(map_tests_df$test_files, c("test-myscript.R", "test-new_tests.R"))
     expect_equal(map_tests_df$test_dirs, c("tests/testthat", "inst/other_tests"))
-
   })
 
 

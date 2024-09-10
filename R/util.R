@@ -129,12 +129,13 @@ deprecate_warning <- function(version, what, details = NULL){
 #' @param strict logical (T/F). If `FALSE`, will soft wrap based on the
 #'  characters specified via `wrap_sym`. If `TRUE`, will first soft wrap, and then
 #'  enforce the specified `width`.
-#' @param indent logical (T/F). If `TRUE`, indent new lines by two spaces.
+#' @param indent logical (T/F). If `TRUE`, indent new lines via a `markdown` tab
+#' (`'\t'`)
 #'
 #' @details
 #' `stringr::str_wrap` is not strict with the width for word characters, so
 #' a helper function was needed. Rather than being 100% strict at following the
-#' cutoff width, we attempt to split at whitespace specific symbols commonly
+#' cutoff width, we attempt to split at white space and specific symbols commonly
 #' used in function names and file paths. If this splitting is not sufficient,
 #' we then perform a strict operation, whereby we cut the line off at exactly
 #' that width.
@@ -235,7 +236,7 @@ wrapi_text <- function(
   # Indent new lines if only one line -initially- existed
   # This stops multi-lined strings (i.e. test scripts) from being intended
   if(isTRUE(indent)){
-    str_new <- str_new %>% gsub("\n", "\n  ", .)
+    str_new <- str_new %>% gsub("\n", "\n\t", .)
   }
 
   return(str_new)

@@ -25,7 +25,8 @@ Note that the order you specify these values matters.}
 characters specified via \code{wrap_sym}. If \code{TRUE}, will first soft wrap, and then
 enforce the specified \code{width}.}
 
-\item{indent}{logical (T/F). If \code{TRUE}, indent new lines by two spaces.}
+\item{indent}{logical (T/F). If \code{TRUE}, indent new lines via a \code{markdown} tab
+(\code{'\\t'})}
 }
 \description{
 Wrap a vector of strings using specific characters
@@ -33,7 +34,7 @@ Wrap a vector of strings using specific characters
 \details{
 \code{stringr::str_wrap} is not strict with the width for word characters, so
 a helper function was needed. Rather than being 100\% strict at following the
-cutoff width, we attempt to split at whitespace specific symbols commonly
+cutoff width, we attempt to split at white space and specific symbols commonly
 used in function names and file paths. If this splitting is not sufficient,
 we then perform a strict operation, whereby we cut the line off at exactly
 that width.
