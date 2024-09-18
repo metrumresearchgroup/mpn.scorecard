@@ -1,9 +1,8 @@
-pandoc: 2.14.1
-pkgdown: 2.0.9
+pandoc: 3.1.8
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles: {}
-last_built: 2024-05-31T17:51Z
+last_built: 2024-09-18T21:37Z
 urls:
   reference: https://metrumresearchgroup.github.io/mpn.scorecard/reference
   article: https://metrumresearchgroup.github.io/mpn.scorecard/articles
-

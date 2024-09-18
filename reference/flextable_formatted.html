@@ -3,7 +3,7 @@
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.0</span>
       </span>
     </div>
 
@@ -31,14 +31,14 @@
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/metrumresearchgroup/mpn.scorecard" class="external-link">
     <span class="fa fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -67,36 +67,38 @@
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>tab</dt>
+
+
+<dl><dt id="arg-tab">tab<a class="anchor" aria-label="anchor" href="#arg-tab"></a></dt>
 <dd><p>a dataframe or flextable object. Must be coercible to a dataframe</p></dd>
 
 
-<dt>autofit</dt>
+<dt id="arg-autofit">autofit<a class="anchor" aria-label="anchor" href="#arg-autofit"></a></dt>
 <dd><p>logical (T/F). Whether or not to autofit the table.</p></dd>
 
 
-<dt>pg_width</dt>
+<dt id="arg-pg-width">pg_width<a class="anchor" aria-label="anchor" href="#arg-pg-width"></a></dt>
 <dd><p>width (in inches) of the table. Generally 1 inch less than the default word document (8 in.)</p></dd>
 
 
-<dt>column_width</dt>
+<dt id="arg-column-width">column_width<a class="anchor" aria-label="anchor" href="#arg-column-width"></a></dt>
 <dd><p>named vector, where the column names are assigned to the desired <em>relative</em> width.
 If specified, set these column widths before fitting to word document</p></dd>
 
 
-<dt>doc_type</dt>
+<dt id="arg-doc-type">doc_type<a class="anchor" aria-label="anchor" href="#arg-doc-type"></a></dt>
 <dd><p>Word, PDF, or HTML. Controls font size and autofit scaling.</p></dd>
 
 
-<dt>digits</dt>
+<dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
 <dd><p>numeric. Number of digits to round to. If <code>NULL</code>, and <code>as_flextable = TRUE</code>, flextable will round to one digit.</p></dd>
 
 
-<dt>font_size</dt>
+<dt id="arg-font-size">font_size<a class="anchor" aria-label="anchor" href="#arg-font-size"></a></dt>
 <dd><p>font size of the table.</p></dd>
 
 
-<dt>...</dt>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>additional args to be passed to <code>as_flextable()</code> or <code>flextable()</code>.
 Which function, if any, is called depends on the type of <code>tab</code>. If <code>tab</code> is
 already a flextable, neither is called. If <code>tab</code> inherits from
@@ -106,15 +108,13 @@ called.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    
-
-<p>a formatted flextable</p>
+    <p>a formatted flextable</p>
     </div>
     <div id="details">
     <h2>Details</h2>
     <p>column_width is specified using the following convention:</p>
-<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>tab <span class="sc">%&gt;%</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">flextable_word</span>(<span class="at">column_width =</span> <span class="fu">c</span>(<span class="st">"col1"</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">"col2"</span> <span class="ot">=</span> <span class="dv">3</span>))</span></code></pre><p></p></div>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>tab <span class="sc">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">flextable_word</span>(<span class="at">column_width =</span> <span class="fu">c</span>(<span class="st">"col1"</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">"col2"</span> <span class="ot">=</span> <span class="dv">3</span>))</span></code></pre><p></p></div>
 <p><code>flextable</code> by default will make the tables as wide as possible in word. This function will correct the <code>autofit()</code> feature and make the contents fit.
 Other formatting corrections are done depending on the specified <code>doc_type</code></p>
     </div>
@@ -131,15 +131,15 @@ Other formatting corrections are done depending on the specified <code>doc_type<
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 

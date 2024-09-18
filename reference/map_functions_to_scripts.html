@@ -3,7 +3,7 @@
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mpn.scorecard</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.0</span>
       </span>
     </div>
 
@@ -31,14 +31,14 @@
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/metrumresearchgroup/mpn.scorecard" class="external-link">
     <span class="fa fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -53,30 +53,30 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">map_functions_to_scripts</span><span class="op">(</span><span class="va">exports_df</span>, <span class="va">pkg_source_path</span>, <span class="va">verbose</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">map_functions_to_scripts</span><span class="op">(</span><span class="va">exports_df</span>, <span class="va">pkg_source_path</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>exports_df</dt>
+
+
+<dl><dt id="arg-exports-df">exports_df<a class="anchor" aria-label="anchor" href="#arg-exports-df"></a></dt>
 <dd><p>data.frame with a column, named <code>exported_function</code>,
 containing the names of all exported functions. Can also have other columns
 (which will be returned unmodified).</p></dd>
 
 
-<dt>pkg_source_path</dt>
+<dt id="arg-pkg-source-path">pkg_source_path<a class="anchor" aria-label="anchor" href="#arg-pkg-source-path"></a></dt>
 <dd><p>a file path pointing to an unpacked/untarred package directory</p></dd>
 
 
-<dt>verbose</dt>
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical (<code>TRUE</code>/<code>FALSE</code>). If <code>TRUE</code>, show any warnings/messages per function.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    
-
-<p>A data.frame with the columns <code>exported_function</code> and <code>code_file</code>.</p>
+    <p>A data.frame with the columns <code>exported_function</code> and <code>code_file</code>.</p>
     </div>
 
   </div>
@@ -91,15 +91,15 @@ containing the names of all exported functions. Can also have other columns
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 
