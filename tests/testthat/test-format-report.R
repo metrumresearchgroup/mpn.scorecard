@@ -215,6 +215,37 @@ describe("formatting functions", {
     expect_true(all(grepl(paste(81:100, collapse = "|"), strsplit(exported_func_df[3,]$`Test Files`, "\n")[[1]])))
   })
 
+  it("split_long_rows", {
+    # Other formatting is done in format_traceability_matrix before
+    # split_long_rows is called. Integration test will suffice
+    mock_exports_df <- tibble::tibble(
+      exported_function = "example_func",
+      code_file = list("R/example_func.R"),
+      documentation = list("man/example_func.Rd"),
+      test_files = list(rep("test-example_func.R", 60)),
+      test_dirs = list(NULL)
+    )
+
+    mock_exports_flex <- format_traceability_matrix(mock_exports_df)
+    mock_exports_split <- tibble::as_tibble(mock_exports_flex$body$dataset)
+    expect_equal(
+      mock_exports_split$`Exported Function`,
+      c("example_func", "example_func (cont.)")
+    )
+    # Default cutoff for making a new export is 40, so there should be 39 rows
+    expect_equal(stringr::str_count(mock_exports_split$`Test Files`[1], "\n"), 39)
+
+    # Regression test: works when other columns are empty
+    # - This occurred when columns `code_file`, `documentation`, and `test_files`
+    #   were _all_ empty
+    mock_exports_df$code_file <- list(NA_character_)
+    mock_exports_df$documentation <- list(NA_character_)
+    mock_exports_df$test_files <- list(NA_character_)
+    mock_exports_flex <- format_traceability_matrix(mock_exports_df)
+    mock_exports_split <- tibble::as_tibble(mock_exports_flex$body$dataset)
+    expect_equal(mock_exports_split$`Exported Function`, "example_func")
+  })
+
   it("format_appendix", {
     pkg_setup_select <- pkg_dirs$pkg_setups_df %>% dplyr::filter(pkg_type == "pass_success")
     result_dir_x <- pkg_setup_select$pkg_result_dir

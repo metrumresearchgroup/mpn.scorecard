@@ -35,6 +35,9 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
           extra-repositories: 'https://mpn.metworx.com/snapshots/stable/${{ env.MPN_LATEST }}'
+      - name: Install additional system dependencies
+        shell: bash
+        run: sudo apt-get install libpoppler-cpp-dev
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
@@ -61,6 +64,9 @@ jobs:
           r-version: release
           use-public-rspm: true
           extra-repositories: 'https://mpn.metworx.com/snapshots/stable/${{ env.MPN_LATEST }}'
+      - name: Install additional system dependencies
+        shell: bash
+        run: sudo apt-get install libpoppler-cpp-dev
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgpub

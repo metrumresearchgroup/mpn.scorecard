@@ -818,12 +818,17 @@ split_long_rows <- function(exported_func_df, n = 40) {
     # Expand each row if any of the splits are greater than 1
     dplyr::group_split() %>%
     purrr::map_dfr(function(row_data) {
-      n_chunks <- max(length(row_data$code_file_split[[1]]),
-                      length(row_data$documentation_split[[1]]),
-                      length(row_data$test_files_split[[1]]))
+      n_chunks <- max(
+        length(row_data$code_file_split[[1]]),
+        length(row_data$documentation_split[[1]]),
+        length(row_data$test_files_split[[1]]),
+        # Ensure the minimum value is at least 1
+        # i.e. when columns code_file, documentation, and test_files are all empty
+        1
+      )
 
       # Create a list of new rows
-      purrr::map_dfr(1:n_chunks, function(i) {
+      purrr::map_dfr(seq_len(n_chunks), function(i) {
         new_row <- row_data
 
         # Extract split contents or default to an empty string
