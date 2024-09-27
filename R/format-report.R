@@ -828,7 +828,7 @@ split_long_rows <- function(exported_func_df, n = 40) {
       )
 
       # Create a list of new rows
-      purrr::map_dfr(1:n_chunks, function(i) {
+      purrr::map_dfr(seq_len(n_chunks), function(i) {
         new_row <- row_data
 
         # Extract split contents or default to an empty string
