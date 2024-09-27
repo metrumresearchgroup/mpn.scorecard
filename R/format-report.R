@@ -831,22 +831,19 @@ split_long_rows <- function(exported_func_df, n = 40) {
       purrr::map_dfr(1:n_chunks, function(i) {
         new_row <- row_data
 
-        code_split_len <- length(new_row$code_file_split[[1]])
-        doc_split_len <- length(new_row$documentation_split[[1]])
-        test_split_len <- length(new_row$test_files_split[[1]])
         # Extract split contents or default to an empty string
         new_row$code_file <- ifelse(
-          code_split_len >= i && code_split_len != 0,
+          length(new_row$code_file_split[[1]]) >= i,
           new_row$code_file_split[[1]][[i]],
           ""
         )
         new_row$documentation <- ifelse(
-          doc_split_len >= i && doc_split_len != 0,
+          length(new_row$documentation_split[[1]]) >= i,
           new_row$documentation_split[[1]][[i]],
           ""
         )
         new_row$test_files <- ifelse(
-          test_split_len >= i && test_split_len != 0,
+          length(new_row$test_files_split[[1]]) >= i,
           new_row$test_files_split[[1]][[i]],
           ""
         )
