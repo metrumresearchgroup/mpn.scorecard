@@ -1,3 +1,10 @@
+# mpn.scorecard 0.5.1
+
+## Bug Fixes
+
+ - Previously the traceability matrix would error out if code file,
+   documentation, and test file columns were all empty (#76).
+
 # mpn.scorecard 0.5.0
 
 ## New features and change
