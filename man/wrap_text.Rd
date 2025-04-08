@@ -7,7 +7,7 @@
 wrap_text(
   str,
   width = 23,
-  wrap_sym = c("/", "_", "-"),
+  wrap_sym = c("/", "_", "-", " "),
   strict = FALSE,
   indent = FALSE
 )

@@ -144,7 +144,7 @@ deprecate_warning <- function(version, what, details = NULL){
 wrap_text <- function(
     str,
     width = 23,
-    wrap_sym = c("/", "_", "-"),
+    wrap_sym = c("/", "_", "-", " "),
     strict = FALSE,
     indent = FALSE
 ){
@@ -160,7 +160,7 @@ wrap_text <- function(
 wrapi_text <- function(
     str,
     width = 23,
-    wrap_sym = c("/", "_", "-"),
+    wrap_sym = c("/", "_", "-", " "),
     strict = FALSE,
     indent = FALSE
 ){

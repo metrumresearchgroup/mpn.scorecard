@@ -67,3 +67,14 @@ test_that("wrap_text(): past offenders", {
     "foo/\nbar/\nbaz"
   )
 })
+
+test_that("wrap_text() breaks on spaces by default", {
+  expect_identical(
+    wrap_text("foo bar baz", width = 8),
+    "foo bar \nbaz"
+  )
+  expect_identical(
+    wrap_text("foo bar baz", width = 5),
+    "foo \nbar \nbaz"
+  )
+})
