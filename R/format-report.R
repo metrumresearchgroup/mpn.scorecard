@@ -709,7 +709,7 @@ format_traceability_matrix <- function(
               cell[is.na(cell)] <- ""
               # Wrap text
               if(isTRUE(wrap_cols)){
-                cell <- wrap_text(cell, width = 24, indent = TRUE, strict = TRUE)
+                cell <- wrap_text(cell, width = 20, indent = TRUE, strict = TRUE)
               }
               paste(cell, collapse = "\n")
             })
