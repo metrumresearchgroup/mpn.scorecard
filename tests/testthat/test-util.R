@@ -67,3 +67,29 @@ test_that("wrap_text(): past offenders", {
     "foo/\nbar/\nbaz"
   )
 })
+
+test_that("wrap_text() breaks on spaces by default", {
+  expect_identical(
+    wrap_text("foo bar baz", width = 8),
+    "foo bar \nbaz"
+  )
+  expect_identical(
+    wrap_text("foo bar baz", width = 5),
+    "foo \nbar \nbaz"
+  )
+})
+
+test_that("wrap_text(): strict fallback prefers breaking at capital letter", {
+  expect_identical(
+    wrap_text("diffPreviousRevisions", width = 20, strict = TRUE),
+    "diffPrevious\nRevisions"
+  )
+  expect_identical(
+    wrap_text("diffPreviousRevisions", width = 10, strict = TRUE),
+    "diff\nPrevious\nRevisions"
+  )
+  expect_identical(
+    wrap_text("diffPreviousRevisions", width = 5, strict = TRUE),
+    "diff\nPrevi\nous\nRevis\nions"
+  )
+})

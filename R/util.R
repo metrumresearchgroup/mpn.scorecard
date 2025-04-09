@@ -144,7 +144,7 @@ deprecate_warning <- function(version, what, details = NULL){
 wrap_text <- function(
     str,
     width = 23,
-    wrap_sym = c("/", "_", "-"),
+    wrap_sym = c("/", "_", "-", " "),
     strict = FALSE,
     indent = FALSE
 ){
@@ -160,7 +160,7 @@ wrap_text <- function(
 wrapi_text <- function(
     str,
     width = 23,
-    wrap_sym = c("/", "_", "-"),
+    wrap_sym = c("/", "_", "-", " "),
     strict = FALSE,
     indent = FALSE
 ){
@@ -229,8 +229,26 @@ wrapi_text <- function(
 
   # Check if `wrap_sym` characters ensured required width
   if(max_line_char(str_new) > width && isTRUE(strict)){
-    pieces <- unlist(strsplit(str_new, ""))
-    str_new <- paste_pieces(pieces, wrap_chr = "", width)
+    # Try first to get it under the specified width by breaking at mid-string
+    # capital letters.
+    if (isTRUE(grepl("[a-z][A-Z]", str_new))) {
+      # delim can be any stretch of non-regex characters that won't
+      # realistically occur in the string.
+      delim <- "\fBREAK\f"
+      pieces <- unlist(
+        strsplit(
+          gsub("([a-z])([A-Z])", paste0("\\1", delim, "\\2"), str_new),
+          delim,
+          fixed = TRUE
+        )
+      )
+      str_new <- paste_pieces(pieces, wrap_chr = "", width)
+    }
+    # Finally fall back to just breaking it anywhere.
+    if (max_line_char(str_new) > width) {
+      pieces <- unlist(strsplit(str_new, ""))
+      str_new <- paste_pieces(pieces, wrap_chr = "", width)
+    }
   }
 
   # Indent new lines if only one line -initially- existed
