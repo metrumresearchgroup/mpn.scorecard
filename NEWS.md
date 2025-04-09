@@ -1,3 +1,10 @@
+# mpn.scorecard 0.5.2
+
+## Bug Fixes
+
+ - Traceability matrix values are now wrapped more aggressively to make it less
+   likely for text to overflow the column. (#80)
+
 # mpn.scorecard 0.5.1
 
 ## Bug Fixes
