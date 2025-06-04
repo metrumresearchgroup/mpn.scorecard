@@ -6,7 +6,7 @@ output:
     toc_depth: 3
     latex_engine: xelatex
     includes:
-      in_header: header.tex
+      in_header: title.tex
 header-includes:
     - \usepackage{caption}
     - \usepackage{graphicx}

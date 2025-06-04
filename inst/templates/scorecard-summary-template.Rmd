@@ -5,7 +5,7 @@ output:
     toc: true
     toc_depth: 3
     includes:
-      in_header: header.tex
+      in_header: title.tex
   bookdown::pdf_book:
     citation_package: biblatex
 bibliography: ["sum_links.bib"]
