@@ -15,7 +15,7 @@ header-includes:
     - \pagestyle{fancy}
     - \setlength\headheight{24pt}
     - \addtolength{\topmargin}{-4pt}
-    - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo.png}}
+    - \fancyhead[L]{\includegraphics[width=1.25cm]{mpn_logo_header.png}}
     - \rfoot{\thepage} 
     - \fancyfoot[R]{`r params$scorecard_footer`}
 params:
