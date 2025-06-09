@@ -1,3 +1,10 @@
+# mpn.scorecard 0.5.3
+
+## Changes
+
+ - The size of the MPN logo inserted into the scorecard header has been
+   decreased, speeding up the underlying `xelatex` call in some cases. (#82)
+
 # mpn.scorecard 0.5.2
 
 ## Bug Fixes
