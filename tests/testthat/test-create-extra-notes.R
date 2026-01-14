@@ -22,7 +22,14 @@ describe("creating extra notes", {
     extra_notes_data <- create_extra_notes(result_dir_x)
 
     # Confirm values - covr
-    expect_match(extra_notes_data$cov_results_df$test_coverage, "cannot open", fixed = TRUE)
+
+    if (packageVersion("covr") < "3.6.5") {
+      fail_pat <- "cannot open"
+    } else {
+      fail_pat <- "installation did not succeed"
+    }
+
+    expect_match(extra_notes_data$cov_results_df$test_coverage, fail_pat, fixed = TRUE)
     expect_identical(extra_notes_data$cov_results_df$code_file, "File coverage failed")
     # Confirm values - R CMD Check
     expect_match(extra_notes_data$check_output, "ERROR", fixed = TRUE)
