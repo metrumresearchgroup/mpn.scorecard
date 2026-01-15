@@ -19,10 +19,11 @@ jobs:
         config:
           - os: ubuntu-22.04
             r: 4.0.5
+            rspm: 'https://packagemanager.posit.co/cran/__linux__/jammy/2024-02-06'
           - os: ubuntu-22.04
-            r: 4.2.3
+            r: 4.4.2
           - os: ubuntu-22.04
-            r: 4.3.1
+            r: 4.5.1
           - os: ubuntu-latest
             r: release
     env:
@@ -35,6 +36,8 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
           extra-repositories: 'https://mpn.metworx.com/snapshots/stable/${{ env.MPN_LATEST }}'
+        env:
+          RSPM: ${{ matrix.config.rspm }}
       - name: Install additional system dependencies
         shell: bash
         run: sudo apt-get install libpoppler-cpp-dev
@@ -43,7 +46,7 @@ jobs:
           extra-packages: |
             any::pkgdown
             any::rcmdcheck
-          upgrade: 'TRUE'
+          upgrade: ${{ matrix.config.r == '4.0.5' && 'FALSE' || 'TRUE' }}
       - uses: r-lib/actions/check-r-package@v2
       - name: Check pkgdown
         shell: Rscript {0}

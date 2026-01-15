@@ -11,7 +11,7 @@ describe("creating extra notes", {
     expect_equal(unique(extra_notes_data$cov_results_df$test_coverage), 100)
     expect_equal(unique(extra_notes_data$cov_results_df$code_file), "R/myscript.R")
     # Confirm values - R CMD Check
-    expect_true(grepl("Status: OK", extra_notes_data$check_output))
+    expect_match(extra_notes_data$check_output, "Status: OK", fixed = TRUE)
 
   })
 
@@ -22,10 +22,17 @@ describe("creating extra notes", {
     extra_notes_data <- create_extra_notes(result_dir_x)
 
     # Confirm values - covr
-    expect_true(grepl("cannot open", unique(extra_notes_data$cov_results_df$test_coverage)))
+
+    if (packageVersion("covr") < "3.6.5") {
+      fail_pat <- "cannot open"
+    } else {
+      fail_pat <- "installation did not succeed"
+    }
+
+    expect_match(extra_notes_data$cov_results_df$test_coverage, fail_pat, fixed = TRUE)
     expect_identical(extra_notes_data$cov_results_df$code_file, "File coverage failed")
     # Confirm values - R CMD Check
-    expect_true(grepl("ERROR", extra_notes_data$check_output))
+    expect_match(extra_notes_data$check_output, "ERROR", fixed = TRUE)
   })
 
   it("create_extra_notes - no coverage results", {
