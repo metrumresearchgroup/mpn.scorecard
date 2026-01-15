@@ -34,6 +34,7 @@ describe("render scorecard and scorecard summary reports", {
     withr::with_dir(dirname(rdir), {
       pdf_path <- render_scorecard(basename(rdir), overwrite = TRUE)
       on.exit(fs::file_delete(fs::path_abs(pdf_path)), add = TRUE)
+      checkmate::expect_file_exists(pdf_path)
     })
   })
 
