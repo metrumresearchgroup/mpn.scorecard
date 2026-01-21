@@ -1,3 +1,10 @@
+# mpn.scorecard 0.5.4
+
+## Changes
+
+ - The test suite has been updated for compatibility with covr 3.6.5 (#86) and
+   testthat 3.3.0 (#87).
+
 # mpn.scorecard 0.5.3
 
 ## Changes

@@ -1,6 +1,6 @@
 Package: mpn.scorecard
 Title: Generate a scorecard with various measures of R package quality and risk
-Version: 0.5.3
+Version: 0.5.4
 Authors@R: 
     c(person(given = "Kyle",
            family = "Barrett",
@@ -53,4 +53,4 @@ Suggests:
     testthat (>= 2.1.0),
     withr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
