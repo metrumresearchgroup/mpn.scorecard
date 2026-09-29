@@ -44,15 +44,12 @@ render_scorecard <- function(
   # argument, breaking relative path handling.
   pars <- param_fn(results_dir, risk_breaks, add_traceability)
 
-  rendered_file <- rmarkdown::render(
-    system.file(SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE), # TODO: do we want to expose this to users, to pass their own custom template?
-    output_dir = results_dir,
-    output_file = basename(out_file),
+  render_template(
+    "scorecard-template.Rmd",
+    out_file,
     quiet = TRUE,
     params = pars
   )
-
-  return(invisible(rendered_file))
 }
 
 get_render_params <- function(results_dir, risk_breaks, add_traceability) {

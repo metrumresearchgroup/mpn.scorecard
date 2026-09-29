@@ -39,11 +39,9 @@ render_scorecard_summary <- function(result_dirs,
     as.character(utils::packageVersion("mpn.scorecard"))
   )
 
-  # Render rmarkdown
-  rendered_file <- rmarkdown::render(
-    system.file(SUM_SCORECARD_RMD_TEMPLATE, package = "mpn.scorecard", mustWork = TRUE),
-    output_dir = overall_risk_summary$out_dir,
-    output_file = basename(out_file),
+  render_template(
+    "scorecard-summary-template.Rmd",
+    out_file,
     quiet = TRUE,
     params = list(
       overall_risk_summary = overall_risk_summary,
@@ -51,9 +49,6 @@ render_scorecard_summary <- function(result_dirs,
       scorecard_footer = mpn_scorecard_ver
     )
   )
-
-  # Render to PDF, invisibly return the path to the PDF
-  return(invisible(rendered_file))
 }
 
 
