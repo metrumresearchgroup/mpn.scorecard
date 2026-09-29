@@ -26,7 +26,7 @@ score_pkg(
 are automatically appended to this list.}
 
 \item{covr_timeout}{Timeout for covr run to finish. It may be any value
-accepted by \code{\link[callr:r]{callr::r_safe()}} and defaults to \code{Inf} (no timeout).}
+accepted by \code{\link[callr:r_safe]{callr::r_safe()}} and defaults to \code{Inf} (no timeout).}
 }
 \value{
 a directory containing json file (contains all scores), and individual results
