@@ -22,7 +22,7 @@ BugReports: https://github.com/metrumresearchgroup/mpn.scorecard/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
-    R (>= 3.5)
+    R (>= 4.1.0)
 Imports:
     callr,
     checkmate,
