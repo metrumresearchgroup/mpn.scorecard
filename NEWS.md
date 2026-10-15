@@ -1,3 +1,10 @@
+# mpn.scorecard 0.5.5
+
+## Changes
+
+ - `render_scorecard()` and `render_scorecard_summary()` have been updated for
+   compatibility with rmarkdown 2.32 (#89).
+
 # mpn.scorecard 0.5.4
 
 ## Changes
