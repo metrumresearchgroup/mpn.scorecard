@@ -8,22 +8,30 @@ export(score_pkg)
 export(summarize_package_results)
 import(checkmate)
 import(fs)
-importFrom(checkmate,assert_character)
-importFrom(checkmate,assert_numeric)
-importFrom(checkmate,assert_true)
+importFrom(checkmate,
+  assert_character,
+  assert_numeric,
+  assert_true
+)
 importFrom(dplyr,mutate)
-importFrom(flextable,flextable_dim)
-importFrom(flextable,fontsize)
-importFrom(flextable,width)
+importFrom(flextable,
+  flextable_dim,
+  fontsize,
+  width
+)
 importFrom(glue,glue)
 importFrom(magrittr,"%>%")
-importFrom(rlang,"!!")
-importFrom(rlang,"%||%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
-importFrom(rlang,abort)
-importFrom(rlang,inform)
-importFrom(rlang,sym)
-importFrom(rlang,warn)
-importFrom(tidyselect,all_of)
-importFrom(tidyselect,everything)
+importFrom(rlang,
+  "!!",
+  "%||%",
+  ":=",
+  .data,
+  abort,
+  inform,
+  sym,
+  warn
+)
+importFrom(tidyselect,
+  all_of,
+  everything
+)
